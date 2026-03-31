@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Service 1 : Base de données
+  mongodb:
+    image: mongo:latest
+    container_name: thumalien_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/db:/data/db
+    networks:
+      - thumalien_network
+
+  # Service 2 : Collecteur Python (DOIT être aligné avec mongodb)
+  collector:
+    build: .
+    container_name: thumalien_collector
+    restart: always
+    depends_on:
+      - mongodb
+    links:
+      - mongodb
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MONGO_HOST=mongodb
+      - BLUESKY_HANDLE=${BLUESKY_HANDLE}
+      - BLUESKY_PASSWORD=${BLUESKY_PASSWORD}
+    volumes:
+      - .:/app
+    networks:
+      - thumalien_network
+  # Service 3 : Environnement ML (Étudiant 2)
+  notebook:
+    build: .
+    container_name: thumalien_notebook
+    command: jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.token='' # Token vide pour faciliter l'accès local
+    volumes:
+      - .:/app          # Accès au code
+    ports:
+      - "8888:8888"     # Port pour accéder à Jupyter depuis le navigateur
+    depends_on:
+      - mongodb
+    links:
+      - mongodb
+    environment:
+      - MONGO_HOST=mongodb
+    networks:
+      - thumalien_network
+
+  dashboard:
+    build: .
+    container_name: thumalien_dashboard
+    # On lance Streamlit et on lui dit d'écouter sur toutes les interfaces (0.0.0.0)
+    command: streamlit run src/app/main.py --server.port=8501 --server.address=0.0.0.0
+    volumes:
+      - .:/app  # Permet de modifier le code en direct sans redémarrer Docker
+    ports:
+      - "8501:8501"  # Le port standard de Streamlit
+    depends_on:
+      - mongodb
+    networks:
+      - thumalien_network
+    environment:
+      - MONGO_HOST=mongodb
+      
+# Définition du réseau explicite
+networks:
+  thumalien_network:
+    driver: bridge

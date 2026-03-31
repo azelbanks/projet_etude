@@ -1,0 +1,26 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Data (Très important : ne jamais commiter vos données brutes)
+data/
+*.csv
+*.json
+*.xlsx
+*.pkl
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs et Monitoring
+.codecarbon.config
+logs/
+
+# Exception : garder emissions CodeCarbon pour le bilan carbone
+!emissions.csv
