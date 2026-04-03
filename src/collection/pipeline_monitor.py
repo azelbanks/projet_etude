@@ -64,9 +64,72 @@ class PipelineMonitor:
         )
         return report
 
+    def get_health_status(self, num_cycles=5):
+        """
+        Read the last *num_cycles* cycle reports and return a health summary.
+
+        Returns a dict with:
+            - avg_posts_new: average new posts per cycle
+            - error_rate: errors / keywords_processed (0.0 – 1.0)
+            - status: "healthy", "degraded", or "unhealthy"
+            - cycles_analysed: how many cycles were actually read
+        """
+        reports = self._read_last_reports(num_cycles)
+        if not reports:
+            return {
+                "avg_posts_new": 0,
+                "error_rate": 0.0,
+                "status": "unhealthy",
+                "cycles_analysed": 0,
+            }
+
+        total_posts = sum(r.get("posts_new", 0) for r in reports)
+        total_errors = sum(r.get("errors", 0) for r in reports)
+        total_keywords = sum(r.get("keywords_processed", 0) for r in reports)
+
+        avg_posts = total_posts / len(reports)
+        error_rate = (total_errors / total_keywords) if total_keywords > 0 else 0.0
+
+        if error_rate < 0.10 and total_posts > 0:
+            status = "healthy"
+        elif error_rate <= 0.50:
+            status = "degraded"
+        else:
+            status = "unhealthy"
+
+        return {
+            "avg_posts_new": round(avg_posts, 2),
+            "error_rate": round(error_rate, 4),
+            "status": status,
+            "cycles_analysed": len(reports),
+        }
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    @classmethod
+    def _read_last_reports(cls, n=5):
+        """Read the last *n* JSONL lines from the metrics file."""
+        if not os.path.exists(cls.METRICS_FILE):
+            return []
+        lines = []
+        try:
+            with open(cls.METRICS_FILE, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        lines.append(line)
+        except OSError:
+            return []
+        # Keep only the last n lines and parse them
+        reports = []
+        for raw in lines[-n:]:
+            try:
+                reports.append(json.loads(raw))
+            except json.JSONDecodeError:
+                continue
+        return reports
 
     def _reset(self):
         self.posts_new = 0

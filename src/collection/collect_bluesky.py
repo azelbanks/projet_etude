@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import datetime
 import random
@@ -32,6 +33,57 @@ SEARCH_CONFIG = {
 # Paramètres de résilience
 SLEEP_TIME = 300  # 5 minutes
 MAX_RETRIES = 3
+
+# --- VALIDATION DU TEXTE ---
+# Expression régulière pour détecter les textes composés uniquement d'URLs
+_URL_PATTERN = re.compile(r'https?://\S+', re.IGNORECASE)
+
+# Mots courants français pour la détection heuristique de langue
+_FR_COMMON_WORDS = {"le", "la", "les", "de", "un", "une", "est", "et", "des",
+                    "du", "en", "au", "aux", "ce", "qui", "que", "dans", "pour",
+                    "pas", "sur", "il", "elle", "je", "tu", "nous", "vous", "sont"}
+
+
+def validate_text(text):
+    """
+    Valide le texte d'un post avant insertion.
+    Retourne (True, cleaned_text) si le texte est acceptable, (False, reason) sinon.
+    """
+    if not text or not isinstance(text, str):
+        return False, "empty_or_missing"
+
+    stripped = text.strip()
+    if len(stripped) < 3:
+        return False, "too_short"
+
+    # Retirer les URLs et vérifier qu'il reste du contenu réel
+    text_without_urls = _URL_PATTERN.sub('', stripped).strip()
+    if len(text_without_urls) < 3:
+        return False, "url_only"
+
+    return True, stripped
+
+
+def compute_word_count(text):
+    """Retourne le nombre de mots dans le texte (hors URLs)."""
+    text_without_urls = _URL_PATTERN.sub('', text).strip()
+    words = text_without_urls.split()
+    return len(words)
+
+
+def detect_language_hint(text):
+    """
+    Heuristique simple de détection de langue.
+    Si plus de 30% des mots sont des mots français courants, retourne 'fr', sinon 'en'.
+    """
+    text_without_urls = _URL_PATTERN.sub('', text).strip().lower()
+    words = text_without_urls.split()
+    if not words:
+        return "en"
+    fr_count = sum(1 for w in words if w in _FR_COMMON_WORDS)
+    ratio = fr_count / len(words)
+    return "fr" if ratio > 0.30 else "en"
+
 
 def connect_db():
     if MONGO_USER and MONGO_PASSWORD:
@@ -107,8 +159,17 @@ def run_collection_cycle(collection, client, monitor=None):
                 })
 
                 ops = [] # Liste pour le Bulk Write (Optimisation Performance)
+                skipped = 0
 
                 for post in data.posts:
+                    # --- Validation du texte ---
+                    is_valid, result = validate_text(post.record.text)
+                    if not is_valid:
+                        skipped += 1
+                        continue
+
+                    clean_text = result
+
                     # Extraction avancée
                     has_image, image_url, detected_langs = extract_metadata(post)
 
@@ -116,7 +177,7 @@ def run_collection_cycle(collection, client, monitor=None):
                         # Champs primaires
                         "uri": post.uri,
                         "cid": post.cid,
-                        "text": post.record.text,
+                        "text": clean_text,
                         "created_at": post.record.created_at,
 
                         # Contexte de collecte (Traçabilité)
@@ -136,6 +197,10 @@ def run_collection_cycle(collection, client, monitor=None):
                         "repost_count": getattr(post, 'repost_count', 0),
                         "like_count": getattr(post, 'like_count', 0),
                         "declared_langs": detected_langs,
+
+                        # Analyse textuelle (Feature Engineering)
+                        "text_word_count": compute_word_count(clean_text),
+                        "text_language_hint": detect_language_hint(clean_text),
 
                         # Placeholders pour l'IA (seront remplis plus tard)
                         "ai_processed": False
