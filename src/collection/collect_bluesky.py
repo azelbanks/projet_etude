@@ -5,11 +5,14 @@ import random
 from atproto import Client
 from pymongo import MongoClient, UpdateOne
 from dotenv import load_dotenv
+from src.collection.pipeline_monitor import PipelineMonitor
 
 # Chargement de l'environnement
 load_dotenv()
 
 MONGO_HOST = os.getenv('MONGO_HOST', 'mongodb')
+MONGO_USER = os.getenv('MONGO_USER')
+MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
 HANDLE = os.getenv('BLUESKY_HANDLE')
 PASSWORD = os.getenv('BLUESKY_PASSWORD')
 
@@ -31,8 +34,12 @@ SLEEP_TIME = 300  # 5 minutes
 MAX_RETRIES = 3
 
 def connect_db():
-    uri = f"mongodb://{MONGO_HOST}:27017/"
-    print(f"🔌 Connexion à MongoDB : {uri}")
+    if MONGO_USER and MONGO_PASSWORD:
+        from urllib.parse import quote_plus
+        uri = f"mongodb://{quote_plus(MONGO_USER)}:{quote_plus(MONGO_PASSWORD)}@{MONGO_HOST}:27017/?authSource=admin"
+    else:
+        uri = f"mongodb://{MONGO_HOST}:27017/"
+    print(f"🔌 Connexion à MongoDB : {MONGO_HOST} (auth={'oui' if MONGO_USER else 'non'})")
     retries = 0
     while True:
         try:
@@ -77,49 +84,51 @@ def extract_metadata(post):
     
     return has_image, image_url, langs
 
-def run_collection_cycle(collection, client):
+def run_collection_cycle(collection, client, monitor=None):
     total_new = 0
     start_time = datetime.datetime.now()
+    if monitor:
+        monitor.start_cycle()
     print(f"\n--- 🔄 Cycle de collecte Multi-Langues : {start_time.strftime('%H:%M:%S')} ---")
-    
+
     # On itère sur chaque langue (FR, EN...)
     for lang, keywords in SEARCH_CONFIG.items():
         print(f"   🌍 Traitement de la langue : {lang.upper()}")
-        
+
         for kw in keywords:
             try:
                 # REQUÊTE API CIBLÉE
                 # On ajoute le filtre 'lang' pour ne pas polluer la base avec du bruit
                 data = client.app.bsky.feed.search_posts({
-                    'q': kw, 
+                    'q': kw,
                     'limit': 25, # On réduit légèrement par mot pour éviter le rate-limit
                     'sort': 'latest',
-                    'lang': lang 
+                    'lang': lang
                 })
-                
+
                 ops = [] # Liste pour le Bulk Write (Optimisation Performance)
-                
+
                 for post in data.posts:
                     # Extraction avancée
                     has_image, image_url, detected_langs = extract_metadata(post)
-                    
+
                     doc = {
                         # Champs primaires
                         "uri": post.uri,
                         "cid": post.cid,
                         "text": post.record.text,
                         "created_at": post.record.created_at,
-                        
+
                         # Contexte de collecte (Traçabilité)
                         "search_term": kw,
                         "search_lang": lang,
                         "collected_at": datetime.datetime.now(),
-                        
+
                         # Auteur
                         "author_did": post.author.did,
                         "author_handle": post.author.handle,
                         "author_display_name": post.author.display_name,
-                        
+
                         # Métadonnées IA (Feature Engineering)
                         "has_image": has_image,
                         "image_url": image_url,
@@ -127,41 +136,52 @@ def run_collection_cycle(collection, client):
                         "repost_count": getattr(post, 'repost_count', 0),
                         "like_count": getattr(post, 'like_count', 0),
                         "declared_langs": detected_langs,
-                        
+
                         # Placeholders pour l'IA (seront remplis plus tard)
                         "ai_processed": False
                     }
-                    
+
                     # On prépare l'opération d'insertion/mise à jour
                     ops.append(
                         UpdateOne({"uri": post.uri}, {"$set": doc}, upsert=True)
                     )
-                
+
                 # Exécution en masse (Beaucoup plus rapide que one-by-one)
                 if ops:
                     result = collection.bulk_write(ops)
-                    added = result.upserted_count + result.modified_count
-                    total_new += added
+                    added = result.upserted_count
+                    duplicates = result.modified_count
+                    total_new += added + duplicates
                     # print(f"      -> '{kw}': {added} posts traités")
-                
+                    if monitor:
+                        monitor.record_keyword(kw, lang, added=added, duplicates=duplicates)
+                else:
+                    if monitor:
+                        monitor.record_keyword(kw, lang, added=0, duplicates=0)
+
                 # Petit délai aléatoire pour simuler un comportement humain (Anti-Bot)
                 time.sleep(random.uniform(0.5, 1.5))
-                    
+
             except Exception as e:
                 print(f"⚠️ Erreur sur '{kw}' ({lang}): {e}")
-            
+                if monitor:
+                    monitor.record_keyword(kw, lang, errors=1, error_msg=e)
+
     print(f"📦 Cycle terminé. {total_new} documents traités/ajoutés.")
+    if monitor:
+        monitor.end_cycle()
 
 if __name__ == "__main__":
     print("🚀 Démarrage du Collecteur Bluesky Intelligent (V2)")
-    
+
     db_collection = connect_db()
     bsky_client = get_bluesky_client()
+    monitor = PipelineMonitor()
 
     if bsky_client:
         while True:
-            run_collection_cycle(db_collection, bsky_client)
-            
+            run_collection_cycle(db_collection, bsky_client, monitor=monitor)
+
             # Gestion du temps d'attente
             print(f"💤 Mise en veille pour {SLEEP_TIME} secondes...")
             time.sleep(SLEEP_TIME)
