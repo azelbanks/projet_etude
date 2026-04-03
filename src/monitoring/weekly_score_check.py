@@ -92,6 +92,27 @@ def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector) -> dict:
     mean_credibility = round(float(np.mean(scores)), 4)
     std_credibility = round(float(np.std(scores)), 4)
 
+    # Score percentiles
+    percentiles = {
+        'p10': round(float(np.percentile(scores, 10)), 4),
+        'p25': round(float(np.percentile(scores, 25)), 4),
+        'p50': round(float(np.percentile(scores, 50)), 4),
+        'p75': round(float(np.percentile(scores, 75)), 4),
+        'p90': round(float(np.percentile(scores, 90)), 4),
+    }
+
+    # Language breakdown
+    languages = results['language'].values
+    lang_counts = pd.Series(languages).value_counts(normalize=True)
+    language_breakdown = {
+        'pct_fr': round(float(lang_counts.get('fr', 0)) * 100, 2),
+        'pct_en': round(float(lang_counts.get('en', 0)) * 100, 2),
+        'pct_other': round(float(lang_counts.get('other', 0)) * 100, 2),
+    }
+
+    # Average text length
+    avg_text_length = round(float(df['text'].str.len().mean()), 1)
+
     return {
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'n_sampled': n_total,
@@ -99,6 +120,9 @@ def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector) -> dict:
         'suspect_rate': suspect_rate,
         'mean_credibility': mean_credibility,
         'std_credibility': std_credibility,
+        'score_percentiles': percentiles,
+        'language_breakdown': language_breakdown,
+        'avg_text_length': avg_text_length,
     }
 
 
@@ -142,6 +166,17 @@ def main() -> None:
         report['mean_credibility'],
         report['std_credibility'],
     )
+    p = report['score_percentiles']
+    logger.info(
+        'Score percentiles — p10=%.4f, p25=%.4f, p50=%.4f, p75=%.4f, p90=%.4f',
+        p['p10'], p['p25'], p['p50'], p['p75'], p['p90'],
+    )
+    lb = report['language_breakdown']
+    logger.info(
+        'Language breakdown — FR=%.1f%%, EN=%.1f%%, other=%.1f%%',
+        lb['pct_fr'], lb['pct_en'], lb['pct_other'],
+    )
+    logger.info('Average text length: %.1f chars', report['avg_text_length'])
 
     # 4. Write JSONL
     report_path = os.path.join(PROJECT_ROOT, 'logs', 'weekly_scores.jsonl')

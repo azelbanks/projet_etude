@@ -107,6 +107,32 @@ jobs:
           print('All reference predictions passed')
           "
 
+      - name: Test linguistic features extraction
+        run: |
+          python -c "
+          import sys, os
+          import pandas as pd
+          import numpy as np
+          sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+          from pipeline.expert_detector import LinguisticFeatureExtractor
+
+          texts = pd.Series([
+              'THIS IS ALL CAPS AND VERY SUSPICIOUS!!!',
+              'Normal text with some punctuation. And another sentence!',
+              'ALERTE: Le gouvernement CACHE la verite!!! Partagez!!!',
+          ])
+          features = LinguisticFeatureExtractor.extract(texts)
+          # caps_ratio should NOT be 0 for all-caps text
+          assert features[0, 1] > 0.5, f'caps_ratio should be >0.5 for all-caps text, got {features[0, 1]}'
+          # exclamation_count should NOT be 0
+          assert features[0, 2] > 0, f'exclamation_count should be >0, got {features[0, 2]}'
+          # punct_density should NOT be 0
+          assert features[0, 4] > 0, f'punct_density should be >0, got {features[0, 4]}'
+          # sentence_count should be >1 for multi-sentence text
+          assert features[1, 10] >= 2, f'sentence_count should be >=2, got {features[1, 10]}'
+          print('Linguistic features extraction OK - no preprocessing bug')
+          "
+
       - name: Test dashboard imports
         run: |
           python -c "
