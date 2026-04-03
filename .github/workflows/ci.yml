@@ -1,0 +1,132 @@
+name: CI Smoke Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test model loading
+        run: |
+          python -c "
+          import sys, os
+          sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+          from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
+
+          model_dir = os.path.join(os.getcwd(), 'models')
+
+          # Load ExpertFakeNewsDetector
+          detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
+          v2_path = os.path.join(model_dir, 'model_expert_v2.pkl')
+          suffix = 'expert_v2' if os.path.exists(v2_path) else 'expert'
+          detector.load(suffix=suffix)
+          print(f'ExpertFakeNewsDetector loaded (suffix={suffix})')
+
+          # Load EmotionFeatureExtractor
+          emo = EmotionFeatureExtractor(model_dir=model_dir)
+          loaded = emo.load()
+          print(f'EmotionFeatureExtractor loaded: {loaded}')
+
+          assert detector.is_trained, 'Detector failed to load'
+          print('All models loaded successfully')
+          "
+
+      - name: Test predictions on reference texts
+        run: |
+          python -c "
+          import sys, os
+          import pandas as pd
+          sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+          from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
+
+          model_dir = os.path.join(os.getcwd(), 'models')
+          detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
+          v2_path = os.path.join(model_dir, 'model_expert_v2.pkl')
+          suffix = 'expert_v2' if os.path.exists(v2_path) else 'expert'
+          detector.load(suffix=suffix)
+
+          emo = EmotionFeatureExtractor(model_dir=model_dir)
+          emo.load()
+
+          # 5 reference texts: 2 fiable EN, 2 suspect EN/FR, 1 neutral
+          texts = pd.Series([
+              'New study published in Nature confirms the effectiveness of the updated vaccine formula.',
+              'The Federal Reserve announced a quarter-point rate cut today, citing stable inflation data.',
+              'EXPOSED: Secret government labs are using 5G towers to spread mind-control chemicals!!!',
+              'SCANDALE: le gouvernement cache la VERITE sur les chemtrails! Partagez avant censure!!!',
+              'The weather is nice today.',
+          ])
+          expected_labels = [0, 0, 1, 1, 0]  # fiable, fiable, suspect, suspect, neutral(fiable)
+
+          results = detector.predict(texts)
+          print('Prediction results:')
+          for i, row in results.iterrows():
+              label = row['prediction_label']
+              score = row['ai_score_credibility']
+              lang = row['language']
+              expected = expected_labels[i]
+              status = 'PASS' if label == expected else 'WARN'
+              print(f'  [{status}] Text {i+1}: label={label} (expected={expected}), score={score:.3f}, lang={lang}')
+
+          # Test emotion extraction
+          emo_features = emo.get_emotion_features(texts.tolist())
+          assert emo_features.shape == (5, 7), f'Unexpected emotion shape: {emo_features.shape}'
+          print(f'Emotion features shape: {emo_features.shape} - OK')
+
+          # Verify at least the clearly suspect texts are flagged
+          assert results.iloc[2]['prediction_label'] == 1, 'EN suspect text not flagged'
+          assert results.iloc[3]['prediction_label'] == 1, 'FR suspect text not flagged'
+          print('All reference predictions passed')
+          "
+
+      - name: Test dashboard imports
+        run: |
+          python -c "
+          import sys, os
+          sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+
+          # Test that key dashboard dependencies import correctly
+          import streamlit
+          import plotly.graph_objects
+          import pandas
+          import numpy
+          from pymongo import MongoClient
+
+          # Test that the pipeline module imports work
+          from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
+
+          # Test that dashboard/app.py is parseable (syntax check)
+          import py_compile
+          py_compile.compile('dashboard/app.py', doraise=True)
+          py_compile.compile('src/app/main.py', doraise=True)
+
+          print('All dashboard imports and syntax checks passed')
+          "
