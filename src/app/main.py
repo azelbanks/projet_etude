@@ -18,7 +18,15 @@ st.markdown("### *Monitoring en temps réel du flux Bluesky — Pipeline Expert 
 # --- CONNEXION MONGO ---
 @st.cache_resource
 def init_connection():
-    return MongoClient("mongodb://mongodb:27017/")
+    mongo_user = os.getenv('MONGO_USER')
+    mongo_password = os.getenv('MONGO_PASSWORD')
+    mongo_host = os.getenv('MONGO_HOST', 'mongodb')
+    if mongo_user and mongo_password:
+        from urllib.parse import quote_plus
+        uri = f"mongodb://{quote_plus(mongo_user)}:{quote_plus(mongo_password)}@{mongo_host}:27017/?authSource=admin"
+    else:
+        uri = f"mongodb://{mongo_host}:27017/"
+    return MongoClient(uri)
 
 try:
     client = init_connection()

@@ -7,6 +7,7 @@ Pipeline V1.5 : TF-IDF(30K) + 12 linguistiques + 7 emotions MLP PyTorch -> LogRe
 
 import os
 import sys
+import logging
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -116,6 +117,17 @@ def load_pipeline():
     v2_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v2.pkl'))
     suffix = 'expert_v2' if v2_exists else 'expert'
     detector.load(suffix=suffix)
+
+    # --- Health check after loading ---
+    hc = detector.health_check()
+    if not hc['healthy']:
+        _logger = logging.getLogger(__name__)
+        _logger.warning(
+            'Model health check FAILED after loading (suffix=%s). Details: %s',
+            suffix,
+            hc['details'],
+        )
+
     emo = EmotionFeatureExtractor(model_dir=model_dir)
     emo.load()
     return detector, emo, suffix
@@ -209,7 +221,18 @@ def get_data() -> tuple[pd.DataFrame, bool]:
         'ai_model_name': 1, 'search_term': 1,
     }
 
-    for uri in ['mongodb://localhost:27017/', 'mongodb://mongodb:27017/']:
+    mongo_user = os.getenv('MONGO_USER')
+    mongo_password = os.getenv('MONGO_PASSWORD')
+    hosts = ['localhost', 'mongodb']
+    uris = []
+    for host in hosts:
+        if mongo_user and mongo_password:
+            from urllib.parse import quote_plus
+            uris.append(f"mongodb://{quote_plus(mongo_user)}:{quote_plus(mongo_password)}@{host}:27017/?authSource=admin")
+        else:
+            uris.append(f"mongodb://{host}:27017/")
+
+    for uri in uris:
         try:
             client = MongoClient(uri, serverSelectionTimeoutMS=2000)
             client.server_info()
