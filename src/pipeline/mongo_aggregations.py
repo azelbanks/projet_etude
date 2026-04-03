@@ -237,3 +237,59 @@ def get_recent_posts(collection, limit: int = 50) -> List[Dict]:
     except Exception as exc:
         logger.error("MongoDB query failed: %s", exc)
         return []
+
+
+# ---------------------------------------------------------------------------
+#  get_score_distribution  -- histogram of credibility scores
+# ---------------------------------------------------------------------------
+
+def get_score_distribution(collection, bins: int = 20) -> List[Dict]:
+    """
+    Return histogram data of credibility scores computed inside MongoDB.
+
+    Each element in the returned list is a dict::
+
+        {"bin_start": float, "bin_end": float, "count": int}
+
+    The scores are split into *bins* equal-width buckets between 0 and 1.
+    Documents without ``ai_score_credibility`` are excluded.
+    """
+    bin_width = 1.0 / bins
+    boundaries = [round(i * bin_width, 6) for i in range(bins + 1)]
+
+    pipeline = [
+        {
+            "$match": {
+                "ai_score_credibility": {"$exists": True, "$ne": None},
+            }
+        },
+        {
+            "$bucket": {
+                "groupBy": "$ai_score_credibility",
+                "boundaries": boundaries,
+                "default": "_other",
+                "output": {"count": {"$sum": 1}},
+            }
+        },
+    ]
+
+    try:
+        raw = list(collection.aggregate(pipeline))
+    except Exception as exc:
+        logger.error("MongoDB score distribution aggregation failed: %s", exc)
+        return []
+
+    result: List[Dict] = []
+    for doc in raw:
+        bucket_id = doc["_id"]
+        if bucket_id == "_other":
+            continue
+        idx = boundaries.index(bucket_id) if bucket_id in boundaries else -1
+        if idx < 0 or idx >= len(boundaries) - 1:
+            continue
+        result.append({
+            "bin_start": boundaries[idx],
+            "bin_end": boundaries[idx + 1],
+            "count": doc["count"],
+        })
+    return result

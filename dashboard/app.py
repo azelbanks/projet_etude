@@ -14,6 +14,22 @@ import streamlit as st
 import plotly.graph_objects as go
 
 # ---------------------------------------------------------------------------
+#  MongoDB aggregation helpers (graceful fallback if unavailable)
+# ---------------------------------------------------------------------------
+
+try:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+    from pipeline.mongo_aggregations import (
+        get_mongo_collection,
+        get_overview_stats,
+        get_recent_posts,
+        get_score_distribution,
+    )
+    _HAS_MONGO_AGG = True
+except ImportError:
+    _HAS_MONGO_AGG = False
+
+# ---------------------------------------------------------------------------
 #  CSS glassmorphism + dark theme overrides
 # ---------------------------------------------------------------------------
 
@@ -107,15 +123,17 @@ hr {
 
 @st.cache_resource
 def load_pipeline():
-    """Charge le pipeline expert V2 et l'extracteur d'emotions."""
+    """Charge le pipeline expert V3 (ou V2 fallback) et l'extracteur d'emotions."""
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
     from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
 
     model_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
     detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
-    # V2 = entraine sur articles + textes sociaux (meilleure calibration posts courts)
+    # V3 = retrained with corrected linguistic features (original text)
+    # V2 = fallback (trained before linguistic feature fix)
+    v3_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v3.pkl'))
     v2_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v2.pkl'))
-    suffix = 'expert_v2' if v2_exists else 'expert'
+    suffix = 'expert_v3' if v3_exists else ('expert_v2' if v2_exists else 'expert')
     detector.load(suffix=suffix)
 
     # --- Health check after loading ---
@@ -506,6 +524,42 @@ def page_overview(df, detector, emo):
         st.caption(
             "Repartition des posts classes fiables et suspects pour chaque langue detectee."
         )
+
+    # --- Performance par longueur de texte ---
+    st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
+    st.subheader('Performance du modele par longueur de texte')
+
+    length_categories = ['Ultra-court\n(<15 mots)', 'Court\n(15-30 mots)',
+                         'Moyen\n(30-100 mots)', 'Long\n(>300 mots)']
+    length_f1 = [0.747, 0.844, 0.942, 0.990]
+    length_colors = ['#FF9100', '#FFD600', '#00E676', '#00D4FF']
+
+    fig_length = go.Figure(go.Bar(
+        x=length_categories,
+        y=length_f1,
+        marker_color=length_colors,
+        text=[f'{v:.3f}' for v in length_f1],
+        textposition='outside',
+        textfont=dict(color='#E0E0E0', size=13),
+    ))
+    fig_length.update_layout(
+        title=dict(text='F1-score par categorie de longueur', x=0.5,
+                   font=dict(color='#E0E0E0', size=16)),
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#E0E0E0'),
+        xaxis=dict(gridcolor='rgba(255,255,255,0.08)'),
+        yaxis=dict(gridcolor='rgba(255,255,255,0.08)', range=[0, 1.08],
+                   title='F1-score'),
+        margin=dict(t=60, b=40, l=50, r=20),
+        height=380,
+    )
+    st.plotly_chart(fig_length, use_container_width=True)
+    st.caption(
+        "F1-score mesure sur le jeu de test selon la longueur du texte. "
+        "Les textes ultra-courts (<15 mots) restent le cas le plus difficile (F1=0.747)."
+    )
+
+    st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
 
     # --- recent posts table ---
     st.subheader('Derniers posts analyses')
@@ -900,6 +954,43 @@ def page_metrics():
             '<div style="font-size:2rem;">🌿</div>'
             '<div class="metric-value" style="color:#888;">Aucune donnee</div>'
             '<div class="metric-label">Lancez un entrainement avec CodeCarbon pour mesurer les emissions</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
+
+    # --- Limitations connues ---
+    st.subheader('Limitations connues')
+
+    lim_col1, lim_col2, lim_col3 = st.columns(3)
+    with lim_col1:
+        st.markdown(
+            '<div class="glass-card" style="text-align:center;">'
+            '<div style="font-size:2rem;">🇫🇷</div>'
+            '<div class="metric-value" style="color:#FF9100; font-size:2rem;">F1 = 0.65</div>'
+            '<div class="metric-label">Textes ultra-courts en francais (<15 mots).<br>'
+            'Le manque de contexte degrade fortement la detection.</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+    with lim_col2:
+        st.markdown(
+            '<div class="glass-card" style="text-align:center;">'
+            '<div style="font-size:2rem;">🎯</div>'
+            '<div class="metric-value" style="color:#FF9100; font-size:2rem;">ECE = 0.049</div>'
+            '<div class="metric-label">Erreur de calibration attendue.<br>'
+            'Les probabilites predites devient legerement des frequences reelles.</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+    with lim_col3:
+        st.markdown(
+            '<div class="glass-card" style="text-align:center;">'
+            '<div style="font-size:2rem;">⚠️</div>'
+            '<div class="metric-value" style="color:#FF9100; font-size:2rem;">84%</div>'
+            '<div class="metric-label">des erreurs portent sur des contenus neutres.<br>'
+            'Les textes factuels sans marqueur fort sont les plus difficiles a classer.</div>'
             '</div>',
             unsafe_allow_html=True,
         )
