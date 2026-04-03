@@ -645,9 +645,9 @@ class LinguisticFeatureExtractor:
     """
 
     SENSATIONALIST_EN = frozenset({
-        'breaking', 'shocking', 'bombshell', 'exposed', 'scandal',
-        'revealed', 'secret', 'conspiracy', 'banned', 'censored',
-        'hoax', 'urgent', 'alert', 'exclusive', 'unbelievable',
+        'breaking', 'shocking', 'bombshell', 'exposed',
+        'secret', 'conspiracy', 'banned', 'censored',
+        'hoax', 'alert', 'exclusive', 'unbelievable',
         'cover-up', 'coverup', 'wake up', 'they dont want',
         'mainstream media', 'deep state', 'big pharma',
     })
@@ -720,12 +720,14 @@ class LinguisticFeatureExtractor:
             # Longueur moyenne des mots
             results[i, 5] = np.mean([len(w) for w in words]) if words else 0
 
-            # Sensationnalisme
+            # Sensationnalisme (word-boundary aware for both single & multi-word)
             text_lower = text.lower()
-            score = sum(
-                1 for w in cls.SENSATIONALIST_EN | cls.SENSATIONALIST_FR
-                if w in text_lower
-            )
+            score = 0
+            for w in cls.SENSATIONALIST_EN | cls.SENSATIONALIST_FR:
+                # Use regex word boundaries to avoid partial matches
+                # and correctly match multi-word expressions
+                if re.search(r'(?:^|\b|\s)' + re.escape(w) + r'(?:\b|\s|$)', text_lower):
+                    score += 1
             results[i, 6] = score
 
             # Présence d'URL
@@ -904,12 +906,14 @@ class ExpertFakeNewsDetector:
 
     # Reference test cases for health_check():
     #   (text, expected_label, score_min, score_max)
+    # Score ranges calibrated for V3 model (trained with corrected linguistic
+    # features using original text instead of cleaned text).
     HEALTH_CHECK_CASES = [
-        ("New study published in Nature confirms vaccine effectiveness.", 0, 0.50, 1.0),
+        ("New study published in Nature confirms vaccine effectiveness.", 0, 0.55, 1.0),
         ("EXPOSED: Secret labs use 5G for mind control! Share before deleted!!!", 1, 0.0, 0.40),
-        ("Le CNRS publie une etude confirmant l'efficacite des traitements.", 0, 0.45, 1.0),
-        ("SCANDALE: le gouvernement cache la VERITE! Partagez avant censure!!!", 1, 0.0, 0.40),
-        ("The weather is nice today.", 0, 0.40, 1.0),
+        ("Le CNRS publie une etude confirmant l'efficacite des traitements.", 0, 0.85, 1.0),
+        ("SCANDALE: le gouvernement cache la VERITE! Partagez avant censure!!!", 1, 0.0, 0.30),
+        ("The weather is nice today.", 0, 0.70, 1.0),
     ]
 
     def __init__(self, model_dir: str = '../models', use_emotions: bool = False,
@@ -955,7 +959,9 @@ class ExpertFakeNewsDetector:
         else:
             X_tfidf = self.vectorizer.transform(texts_clean)
 
-        X_ling = LinguisticFeatureExtractor.extract(pd.Series(texts_clean))
+        # Linguistic features need ORIGINAL text (caps, punctuation, sentence boundaries)
+        ling_texts = texts_original if texts_original is not None else texts_clean
+        X_ling = LinguisticFeatureExtractor.extract(pd.Series(ling_texts))
 
         parts = [X_tfidf, X_ling]
 
@@ -1329,6 +1335,100 @@ class ExpertFakeNewsDetector:
             return f"[{lang}] Suspect (crédibilité: {score:.0%})"
         return f"[{lang}] Fiable (crédibilité: {score:.0%})"
 
+    # ---- Prédiction adaptative ----
+
+    def predict_adaptive(
+        self, texts: pd.Series, track_emissions: bool = False
+    ) -> pd.DataFrame:
+        """
+        Prédiction avec seuils adaptatifs selon la longueur du texte.
+
+        Les textes courts contiennent moins de signal statistique, donc un
+        seuil plus conservateur (plus élevé) réduit les faux positifs.
+
+        Seuils :
+            - < 15 mots  : 0.54 (conservateur)
+            - 15-30 mots : 0.49 (modéré)
+            - > 30 mots  : 0.44 (standard)
+
+        Parameters
+        ----------
+        texts : pd.Series
+            Textes bruts à analyser.
+        track_emissions : bool, default False
+            Si True, mesure l'empreinte carbone via CodeCarbon.
+
+        Returns
+        -------
+        DataFrame : language, prediction_label, ai_score_credibility,
+                    ai_analysis_log, adaptive_threshold
+        """
+        if not self.is_trained:
+            raise RuntimeError("Modèle non entraîné.")
+
+        # --- Optionally start CodeCarbon tracker ---
+        tracker = None
+        if track_emissions and CODECARBON_AVAILABLE:
+            emissions_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), '..', '..', 'emissions.csv'
+            )
+            tracker = EmissionsTracker(
+                project_name="Thumalien_Inference_Adaptive",
+                output_dir=os.path.dirname(emissions_path),
+                output_file="emissions.csv",
+                log_level="warning",
+            )
+            tracker.start()
+        elif track_emissions and not CODECARBON_AVAILABLE:
+            logger.warning("track_emissions=True mais codecarbon n'est pas installé.")
+
+        try:
+            results = pd.DataFrame()
+            results['text'] = texts.values
+
+            # Détection de langue
+            results['language'] = LanguageRouter.detect_batch(texts)
+
+            # Nettoyage
+            texts_clean = texts.apply(DatasetCleaner.clean_for_ml)
+
+            # Features (textes originaux pour linguistique + émotions)
+            X = self._build_features(
+                texts_clean.values,
+                texts_original=texts.values,
+                fit=False,
+            )
+
+            # Prédiction avec seuils adaptatifs par longueur de texte
+            y_proba = self.model.predict_proba(X)
+            scores = y_proba[:, 0]  # P(Fiable)
+
+            word_counts = texts.apply(lambda t: len(str(t).split()))
+            thresholds = word_counts.apply(
+                lambda n: 0.54 if n < 15 else (0.49 if n <= 30 else 0.44)
+            )
+
+            y_pred = (scores < thresholds.values).astype(int)
+
+            results['prediction_label'] = y_pred
+            results['ai_score_credibility'] = np.round(scores, 4)
+            results['adaptive_threshold'] = thresholds.values
+
+            results['ai_analysis_log'] = results.apply(
+                lambda r: self._make_log(r), axis=1
+            )
+
+            return results
+        finally:
+            if tracker is not None:
+                emissions_kg = tracker.stop()
+                if emissions_kg is not None:
+                    logger.info(
+                        "Inference (adaptive) carbon footprint: %.6f kg CO2eq (%.4f g)",
+                        emissions_kg,
+                        emissions_kg * 1000,
+                    )
+
     # ---- Explainability ----
 
     def explain_prediction(self, text: str, top_n: int = 10) -> Dict:
@@ -1364,7 +1464,8 @@ class ExpertFakeNewsDetector:
         text_clean = DatasetCleaner.clean_for_ml(text)
 
         X_tfidf = self.vectorizer.transform([text_clean])
-        X_ling = LinguisticFeatureExtractor.extract(pd.Series([text_clean]))
+        # Use original text for linguistic features (caps, punctuation, sentences)
+        X_ling = LinguisticFeatureExtractor.extract(pd.Series([text]))
 
         parts = [X_tfidf, X_ling]
         X_emo = None
