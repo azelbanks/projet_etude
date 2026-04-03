@@ -902,6 +902,16 @@ class ExpertFakeNewsDetector:
     - Monitoring CodeCarbon
     """
 
+    # Reference test cases for health_check():
+    #   (text, expected_label, score_min, score_max)
+    HEALTH_CHECK_CASES = [
+        ("New study published in Nature confirms vaccine effectiveness.", 0, 0.50, 1.0),
+        ("EXPOSED: Secret labs use 5G for mind control! Share before deleted!!!", 1, 0.0, 0.40),
+        ("Le CNRS publie une etude confirmant l'efficacite des traitements.", 0, 0.45, 1.0),
+        ("SCANDALE: le gouvernement cache la VERITE! Partagez avant censure!!!", 1, 0.0, 0.40),
+        ("The weather is nice today.", 0, 0.40, 1.0),
+    ]
+
     def __init__(self, model_dir: str = '../models', use_emotions: bool = False,
                  threshold: float = 0.44):
         self.model_dir = model_dir
@@ -1233,9 +1243,17 @@ class ExpertFakeNewsDetector:
 
     # ---- Prédiction (production) ----
 
-    def predict(self, texts: pd.Series) -> pd.DataFrame:
+    def predict(self, texts: pd.Series, track_emissions: bool = False) -> pd.DataFrame:
         """
         Prédiction sur de nouveaux textes (posts Bluesky).
+
+        Parameters
+        ----------
+        texts : pd.Series
+            Textes bruts à analyser.
+        track_emissions : bool, default False
+            Si True, mesure l'empreinte carbone de l'inférence via CodeCarbon.
+            Les résultats sont ajoutés au fichier ``emissions.csv`` du projet.
 
         Returns
         -------
@@ -1245,35 +1263,61 @@ class ExpertFakeNewsDetector:
         if not self.is_trained:
             raise RuntimeError("Modèle non entraîné.")
 
-        results = pd.DataFrame()
-        results['text'] = texts.values
+        # --- Optionally start CodeCarbon tracker ---
+        tracker = None
+        if track_emissions and CODECARBON_AVAILABLE:
+            emissions_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), '..', '..', 'emissions.csv'
+            )
+            tracker = EmissionsTracker(
+                project_name="Thumalien_Inference",
+                output_dir=os.path.dirname(emissions_path),
+                output_file="emissions.csv",
+                log_level="warning",
+            )
+            tracker.start()
+        elif track_emissions and not CODECARBON_AVAILABLE:
+            logger.warning("track_emissions=True mais codecarbon n'est pas installé.")
 
-        # Détection de langue
-        results['language'] = LanguageRouter.detect_batch(texts)
+        try:
+            results = pd.DataFrame()
+            results['text'] = texts.values
 
-        # Nettoyage
-        texts_clean = texts.apply(DatasetCleaner.clean_for_ml)
+            # Détection de langue
+            results['language'] = LanguageRouter.detect_batch(texts)
 
-        # Features (textes originaux pour émotions, nettoyés pour TF-IDF)
-        X = self._build_features(
-            texts_clean.values,
-            texts_original=texts.values,
-            fit=False,
-        )
+            # Nettoyage
+            texts_clean = texts.apply(DatasetCleaner.clean_for_ml)
 
-        # Prédiction avec seuil ajustable (défaut: 0.45)
-        y_proba = self.model.predict_proba(X)
-        scores = y_proba[:, 0]  # P(Fiable)
-        y_pred = (scores < self.threshold).astype(int)  # SUSPECT si P(Fiable) < seuil
+            # Features (textes originaux pour émotions, nettoyés pour TF-IDF)
+            X = self._build_features(
+                texts_clean.values,
+                texts_original=texts.values,
+                fit=False,
+            )
 
-        results['prediction_label'] = y_pred
-        results['ai_score_credibility'] = np.round(scores, 4)
+            # Prédiction avec seuil ajustable (défaut: 0.45)
+            y_proba = self.model.predict_proba(X)
+            scores = y_proba[:, 0]  # P(Fiable)
+            y_pred = (scores < self.threshold).astype(int)  # SUSPECT si P(Fiable) < seuil
 
-        results['ai_analysis_log'] = results.apply(
-            lambda r: self._make_log(r), axis=1
-        )
+            results['prediction_label'] = y_pred
+            results['ai_score_credibility'] = np.round(scores, 4)
 
-        return results
+            results['ai_analysis_log'] = results.apply(
+                lambda r: self._make_log(r), axis=1
+            )
+
+            return results
+        finally:
+            if tracker is not None:
+                emissions_kg = tracker.stop()
+                if emissions_kg is not None:
+                    logger.info(
+                        "Inference carbon footprint: %.6f kg CO2eq (%.4f g)",
+                        emissions_kg,
+                        emissions_kg * 1000,
+                    )
 
     @staticmethod
     def _make_log(row) -> str:
@@ -1477,3 +1521,48 @@ class ExpertFakeNewsDetector:
             self.use_emotions = False
         self.is_trained = True
         logger.info("Modèle chargé depuis %s (suffix=%s)", self.model_dir, suffix)
+
+    # ---- Health check ----
+
+    def health_check(self) -> Dict:
+        """
+        Run reference test cases through predict() and verify scores
+        fall within expected ranges.
+
+        Returns
+        -------
+        dict with keys:
+            healthy : bool — True if all cases pass
+            details : list[dict] — per-case results with pass/fail info
+        """
+        if not self.is_trained:
+            return {'healthy': False, 'details': [{'error': 'Model not loaded.'}]}
+
+        texts = pd.Series([t for t, _, _, _ in self.HEALTH_CHECK_CASES])
+        results = self.predict(texts)
+
+        details = []
+        all_ok = True
+
+        for i, (text, expected_label, score_min, score_max) in enumerate(self.HEALTH_CHECK_CASES):
+            pred_label = int(results['prediction_label'].iloc[i])
+            score = float(results['ai_score_credibility'].iloc[i])
+            label_ok = pred_label == expected_label
+            score_ok = score_min <= score <= score_max
+            passed = label_ok and score_ok
+
+            if not passed:
+                all_ok = False
+
+            details.append({
+                'text': text[:80],
+                'expected_label': expected_label,
+                'predicted_label': pred_label,
+                'label_ok': label_ok,
+                'score': round(score, 4),
+                'expected_range': [score_min, score_max],
+                'score_ok': score_ok,
+                'passed': passed,
+            })
+
+        return {'healthy': all_ok, 'details': details}
