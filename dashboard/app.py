@@ -233,47 +233,38 @@ def _normalize_mongo_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+@st.cache_data(ttl=60)
+def _fetch_mongo_data() -> tuple[list[dict], int] | None:
+    """Fetch recent posts and total count from MongoDB via mongo_aggregations.
+
+    Returns (docs, total_count) or None if MongoDB is unavailable.
+    Cached for 60 seconds to avoid hammering the database on every rerun.
+    """
+    if not _HAS_MONGO_AGG:
+        return None
+
+    collection = get_mongo_collection()
+    if collection is None:
+        return None
+
+    docs = get_recent_posts(collection, limit=2000)
+    if not docs:
+        return None
+
+    stats = get_overview_stats(collection)
+    n_total = stats.get("total_posts", len(docs))
+    return docs, n_total
+
+
 def get_data() -> tuple[pd.DataFrame, bool]:
-    """Tente MongoDB (localhost puis Docker), sinon retourne les donnees demo."""
-    from pymongo import MongoClient
-
-    projection = {
-        '_id': 0, 'uri': 1, 'text': 1, 'collected_at': 1,
-        'ai_score_credibility': 1, 'ai_emotion': 1,
-        'prediction_label': 1, 'ai_language': 1,
-        'ai_model_name': 1, 'search_term': 1,
-    }
-
-    mongo_user = os.getenv('MONGO_USER')
-    mongo_password = os.getenv('MONGO_PASSWORD')
-    hosts = ['localhost', 'mongodb']
-    uris = []
-    for host in hosts:
-        if mongo_user and mongo_password:
-            from urllib.parse import quote_plus
-            uris.append(f"mongodb://{quote_plus(mongo_user)}:{quote_plus(mongo_password)}@{host}:27017/?authSource=admin")
-        else:
-            uris.append(f"mongodb://{host}:27017/")
-
-    for uri in uris:
-        try:
-            client = MongoClient(uri, serverSelectionTimeoutMS=2000)
-            client.server_info()
-            db = client['thumalien_db']
-            n_total = db['raw_posts'].count_documents({})
-            docs = list(
-                db['raw_posts']
-                .find({'text': {'$exists': True}}, projection)
-                .sort('collected_at', -1)
-                .limit(2000)
-            )
-            if docs:
-                df = pd.DataFrame(docs)
-                df = _normalize_mongo_df(df)
-                df.attrs['n_total_mongo'] = n_total
-                return df, False
-        except Exception:
-            continue
+    """Tente MongoDB via mongo_aggregations, sinon retourne les donnees demo."""
+    result = _fetch_mongo_data()
+    if result is not None:
+        docs, n_total = result
+        df = pd.DataFrame(docs)
+        df = _normalize_mongo_df(df)
+        df.attrs['n_total_mongo'] = n_total
+        return df, False
     return pd.DataFrame(DEMO_POSTS), True
 
 

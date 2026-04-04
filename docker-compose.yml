@@ -3,11 +3,9 @@ version: '3.8'
 services:
   # Service 1 : Base de données
   mongodb:
-    image: mongo:latest
+    image: mongo:7.0
     container_name: thumalien_mongo
     restart: always
-    ports:
-      - "27017:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
@@ -40,7 +38,7 @@ services:
   notebook:
     build: .
     container_name: thumalien_notebook
-    command: jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.token='' # Token vide pour faciliter l'accès local
+    command: jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.token='${JUPYTER_TOKEN}'
     volumes:
       - .:/app          # Accès au code
     ports:

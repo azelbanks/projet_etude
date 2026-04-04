@@ -1,0 +1,13 @@
+.env
+.env.*
+data/db/
+logs/
+__pycache__/
+*.pyc
+.git/
+.Trash-0/
+emissions.csv*
+models/*.pt
+models/*.pkl
+notebooks/*.ipynb
+*.bak
