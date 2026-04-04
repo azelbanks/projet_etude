@@ -63,7 +63,7 @@ Le projet Thumalien suit une methodologie **Agile adaptee aux projets Data/IA**,
 | **V2** | Fev 2026 | Integration datasets sociaux, adaptation textes courts | F1 = 0.897, 73.4% fiable sur Bluesky |
 | **V3** | Mars 2026 | Correction features linguistiques (bug preprocessing) | F1 = 0.900, Precision +19.3% |
 | **V4** | Avril 2026 | Amelioration FR court : augmentation, 15 features, vocabulaire enrichi | F1 global = 0.905, FR court F1 = 0.86 (+32%) |
-| **V5** (en cours) | Avril 2026 | Fine-tuning CamemBERT pour FR court | F1 FR court cible > 0.92 |
+| **V5** | Avril 2026 | Integration 10K posts FR sociaux synthetiques, F1 FR court 0.65->0.90 | F1 global = 0.913, F1 FR = 0.944, FR court F1 = 0.904, F1 EN = 0.894 |
 
 ---
 
@@ -137,8 +137,8 @@ La qualite des donnees est le fondement de tout projet IA. Un modele entraine su
 | Controle | Methode | Resultat Thumalien |
 |----------|---------|-------------------|
 | Biais d'agence (Reuters) | `audit_reuters_leakage()` | Detecte (99.2%) et corrige |
-| Equilibre des classes | Comptage par label | True: 63.1%, Fake: 36.9% (V4, 187K textes) |
-| Distribution linguistique | Comptage par langue | EN: 72%, FR: 28% (avant oversampling) |
+| Equilibre des classes | Comptage par label | True: 63.1%, Fake: 36.9% (V5, 197 782 textes) |
+| Distribution linguistique | Comptage par langue | FR: 86K (43.5%), EN: 112K (56.5%) |
 | Distribution de longueur | Histogramme des word counts | Bimodale : articles (340 mots) + social (20 mots) |
 | Corruption CSV | Detection des lignes malformees | 39 lignes corrigees dans Fake.csv |
 | Coherence des labels | Verification manuelle d'un echantillon | 50 textes verifies, 96% de coherence |
@@ -178,14 +178,14 @@ Chaque version du modele est evaluee selon le protocole suivant :
 
 Un modele ne peut etre deploye en production que s'il satisfait TOUS les criteres suivants :
 
-| Critere | Seuil | V4 actuel |
+| Critere | Seuil | V5 actuel |
 |---------|-------|-----------|
-| F1 CV global | >= 0.85 | 0.905 |
-| F1 holdout | >= 0.85 | 0.90 |
+| F1 CV global | >= 0.85 | 0.913 |
+| F1 holdout | >= 0.85 | 0.91 |
 | Accuracy holdout | >= 85% | 93% |
-| F1 EN test | >= 0.85 | 0.988 |
-| F1 FR test | >= 0.75 | 0.985 |
-| Ecart F1 FR-EN | < 15 points | 0.3 point |
+| F1 EN test | >= 0.85 | 0.894 |
+| F1 FR test | >= 0.75 | 0.944 |
+| Ecart F1 FR-EN | < 15 points | 5.0 points |
 | % fiable sur Bluesky | 60-85% | 73.4% |
 | Pas de regression vs version precedente | F1 articles longs stable | 0.988 (identique V1.5) |
 | Empreinte carbone | < 1 g CO2 | 0.30 g |
@@ -253,7 +253,8 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 | J8 — Dashboard V2 | Mars 2026 | 3 pages, glassmorphism, explicabilite | Realise |
 | J9 — Pipeline V3 | Mars 2026 | Correction features linguistiques, retraining | Realise |
 | J10 — Pipeline V4 | Avril 2026 | Augmentation FR court, 15 features, F1 FR=0.935 | Realise |
-| J11 — CamemBERT FR | Avril 2026 | Fine-tuning CamemBERT pour textes courts FR | En cours |
+| J11 — Pipeline V5 | Avril 2026 | Integration 10K posts FR sociaux synthetiques, F1 global=0.913, FR court=0.904 | Realise |
+| J12 — CamemBERT FR | Avril 2026 | Fine-tuning CamemBERT pour textes courts FR | En cours |
 | J9 — Documentation | Avril 2026 | Rapport, guide utilisateur, CDC, RGPD | En cours |
 
 ### 5.2 Jalons futurs (planifies)
@@ -275,13 +276,13 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 
 | KPI | Methode de mesure | Frequence | Cible | Actuel |
 |-----|-------------------|-----------|-------|--------|
-| F1-score modele | Cross-validation 5-fold | A chaque retraining | >= 0.85 | 0.905 |
+| F1-score modele | Cross-validation 5-fold | A chaque retraining | >= 0.85 | 0.913 |
 | % fiable sur Bluesky | Distribution des predictions sur 2 000 posts | Mensuel | 60-85% | 73.4% |
 | Volume de posts collectes | `db.raw_posts.countDocuments()` | Quotidien | > 1 000/jour | ~2 000/jour |
 | Uptime collecteur | Logs de collecte | Mensuel | > 95% | ~90% (estimé) |
 | Temps d'inference | Benchmark sur 1 000 textes | A chaque version | < 100ms/texte | ~50ms |
 | Empreinte carbone | CodeCarbon | A chaque entrainement | < 1 g CO2 | 0.30 g |
-| Taille du dataset d'entrainement | Comptage | A chaque version | > 100 000 | 187 782 |
+| Taille du dataset d'entrainement | Comptage | A chaque version | > 100 000 | 197 782 |
 
 ### 6.2 KPI projet
 
@@ -367,6 +368,7 @@ Tout changement significatif (nouveau dataset, modification d'architecture, chan
 | Fev 2026 | 3 datasets sociaux (V2) | Domain shift : 77% suspect sur Bluesky | 73.4% fiable (vs 23%) |
 | Mars 2026 | Correction features ling. (V3) | 5/12 features etaient nulles (bug preprocessing) | F1 +0.3%, Precision +19.3% |
 | Avril 2026 | Augmentation FR court (V4) | FR court F1=0.65 insuffisant pour Bluesky | FR court F1=0.86 (+32%), FR global F1=0.935 |
+| Avril 2026 | Integration 10K posts FR sociaux synthetiques (V5) | FR court F1=0.86 encore insuffisant, dataset FR sous-represente | F1 global=0.913, FR court F1=0.904, FR=0.944, EN=0.894, dataset 197 782 textes (FR=86K/43.5%, EN=112K/56.5%) |
 | Fev 2026 | Seuil 0.44 (vs 0.50) | Calibration pour textes courts | +7 points de fiabilite Bluesky |
 | Mars 2026 | Dashboard glassmorphism | Amelioration UX/UI | Dashboard professionnel |
 
