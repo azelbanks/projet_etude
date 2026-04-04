@@ -68,11 +68,12 @@ MODEL_DIR = os.path.join(_proj, 'models')
 # ============================================================
 
 class TextDataset(Dataset):
-    def __init__(self, texts, labels, tokenizer, max_length=128):
+    def __init__(self, texts, labels, tokenizer, max_length=128, weights=None):
         self.texts = texts
         self.labels = labels
         self.tokenizer = tokenizer
         self.max_length = max_length
+        self.weights = weights
 
     def __len__(self):
         return len(self.texts)
@@ -85,11 +86,14 @@ class TextDataset(Dataset):
             max_length=self.max_length,
             return_tensors='pt',
         )
-        return {
+        item = {
             'input_ids': encoding['input_ids'].squeeze(0),
             'attention_mask': encoding['attention_mask'].squeeze(0),
             'label': torch.tensor(self.labels[idx], dtype=torch.long),
         }
+        if self.weights is not None:
+            item['weight'] = torch.tensor(self.weights[idx], dtype=torch.float32)
+        return item
 
 
 class ClassificationHead(nn.Module):
@@ -245,6 +249,7 @@ train_dataset = TextDataset(
     [texts_train[i] for i in train_idx],
     [labels_train[i] for i in train_idx],
     tokenizer, MAX_LENGTH,
+    weights=[float(sample_weights[i]) for i in train_idx],
 )
 val_dataset = TextDataset(
     [texts_train[i] for i in val_idx],
@@ -254,8 +259,6 @@ val_dataset = TextDataset(
 
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
-
-train_weights = sample_weights[train_idx]
 
 # Optimizer
 optimizer = torch.optim.AdamW([
@@ -300,15 +303,10 @@ for epoch in range(EPOCHS):
         logits = head(cls_output)
 
         # Weighted loss
-        start_idx = batch_idx * BATCH_SIZE
-        end_idx = min(start_idx + BATCH_SIZE, len(train_weights))
-        if end_idx > start_idx and end_idx <= len(train_weights):
-            batch_weights = train_weights[start_idx:end_idx].to(device)
+        if 'weight' in batch:
+            batch_weights = batch['weight'].to(device)
             per_sample_loss = nn.functional.cross_entropy(logits, batch_labels, reduction='none')
-            if len(batch_weights) == len(per_sample_loss):
-                loss = (per_sample_loss * batch_weights).mean()
-            else:
-                loss = criterion(logits, batch_labels)
+            loss = (per_sample_loss * batch_weights).mean()
         else:
             loss = criterion(logits, batch_labels)
 
