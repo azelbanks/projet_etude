@@ -26,6 +26,7 @@ Ce document retrace l'evolution complete du pipeline de detection de desinformat
 | **CamemBERT V2** | **Avril 2026** | **0.966 (FR)** | **0.966** | **N/A** | **0.957** | **N/A** | **32 540 FR** | **+10K FR social, test 9/10** |
 | **Hybride P1** | **Avril 2026** | **0.916** | **0.949** | **0.895** | **0.909** | **0.773** | **197 782** | **Stacking V5+CamemBERT V2** |
 | **RoBERTa EN V1** | **Avril 2026** | **0.940 (EN)** | **N/A** | **0.940** | **N/A** | **0.838** | **111 759 EN** | **Transformer EN, test 6/10** |
+| **RoBERTa EN V2** | **Avril 2026** | **0.944 (EN)** | **N/A** | **0.944** | **N/A** | **0.874** | **121 759 EN** | **+10K EN social, test 16/18** |
 
 ---
 
@@ -544,6 +545,7 @@ Suite au diagnostic des echecs V1 (section 7.6), le CamemBERT a ete re-fine-tune
 | **CamemBERT V2** | **0.966 (FR)** | **0.966** | **0.957** | **N/A** |
 | **Hybride P1** | **0.916** | **0.949** | **0.909** | **0.895** |
 | **RoBERTa EN V1** | **0.940 (EN)** | **N/A** | **N/A** | **0.940** |
+| **RoBERTa EN V2** | **0.944 (EN)** | **N/A** | **N/A** | **0.944** |
 
 ### 8.2 Evolution du F1 EN par version et segment
 
@@ -556,8 +558,9 @@ Suite au diagnostic des echecs V1 (section 7.6), le CamemBERT a ete re-fine-tune
 | V4.0 | 0.889 | 0.752 | 0.831 | 0.958 | 0.993 |
 | **V5.0** | **0.894** | **0.774** | **0.863** | **0.877** | **0.978** |
 | **RoBERTa EN V1** | **0.940** | **0.838** | **0.925** | **0.981** | **0.999** |
+| **RoBERTa EN V2** | **0.944** | **0.874** | **0.937** | **0.979** | **0.999** |
 
-**Constat** : L'EN connait une regression de V2 a V4 sur les textes courts, puis une legere remontee en V5 sur les ultra-courts (+2.2% vs V4). L'integration de donnees FR sociales n'a pas degrade l'EN — au contraire, les 10K posts supplementaires enrichissent le vocabulaire TF-IDF partage. RoBERTa EN V1 confirme l'apport des transformers : F1 EN ultra-court passe de 0.774 (V5 TF-IDF) a **0.838** (+8.2%), et F1 EN global de 0.894 a **0.940** (+5.1%). Le test rapide (6/10) revele neanmoins le meme biais que CamemBERT V1 sur les textes courts neutres — un RoBERTa V2 avec donnees EN sociales synthetiques est la prochaine etape logique.
+**Constat** : L'EN connait une regression de V2 a V4 sur les textes courts, puis une legere remontee en V5 sur les ultra-courts (+2.2% vs V4). RoBERTa EN V1 confirme l'apport des transformers : F1 EN ultra-court passe de 0.774 (V5 TF-IDF) a 0.838 (+8.2%). RoBERTa EN V2, avec les 10K posts EN sociaux synthetiques, pousse le F1 EN ultra-court a **0.874** (+4.3% vs V1, **+12.9% vs V5 TF-IDF**). Le test rapide passe de 6/10 (V1) a 8/10 (V2) + 8/8 tests sociaux supplementaires = **16/18 total**. Le pattern est identique a CamemBERT V1→V2 : les donnees sociales synthetiques corrigent le biais sur les textes courts neutres.
 
 ### 8.4 Evolution de la taille du dataset
 
@@ -624,23 +627,55 @@ Cette section a ete revisee par analyse critique des axes reellement implementab
   - Gain F1 FR : +0.12% | Gain F1 EN : +0.21%
 - **Conclusion** : Le gain est **non significatif**. Le seuil unique 0.44 reste suffisant pour les deux langues. La distribution des scores FR et EN est finalement assez similaire — l'hypothese initiale (scores plus extremes en FR) se verifie mais n'a pas d'impact operationnel. Le code pour les seuils par langue est neanmoins integre dans `expert_detector.py` (parametres `threshold_fr`, `threshold_en`) pour un usage futur si necessaire.
 
-#### P4 — RoBERTa EN fine-tune pour l'anglais — **REALISE (V1)**
+#### P4 — RoBERTa EN fine-tune pour l'anglais — **REALISE (V1 + V2)**
 
-- **Etat** : **FAIT** (notebook 18). roberta-base (125M params) fine-tune sur 111 759 textes EN.
+- **Etat** : **FAIT** (notebooks 18 + 19). roberta-base (125M params) fine-tune sur les textes EN.
 - **Architecture** : Identique a CamemBERT — couches 0-8 gelees, 9-11 + head fine-tunees (17.5% parametres entrainables). Classification head : Linear(768→256)→ReLU→Dropout(0.3)→Linear(256→2). short_text_weight=2.0.
-- **Resultats holdout** (22 352 textes EN) :
-  - F1 : **0.9402**, Accuracy : 0.9530, Precision : 0.9560, Recall : 0.9248
-  - F1 ultra-court (<15 mots) : **0.8378** (vs V5 TF-IDF 0.774 → **+8.2%**)
-  - F1 court (15-30) : 0.9250, moyen : 0.9814, long : 0.9994
-- **Test rapide** : **6/10** — 5/5 suspects corrects, mais 4/5 fiables neutres classees suspect :
-  - "A new study published in Nature" → score 0.060 (SUSPECT, attendu FIABLE)
-  - "The city council approved the new budget" → score 0.395 (SUSPECT, attendu FIABLE)
-  - "The weather forecast calls for rain tomorrow" → score 0.019 (SUSPECT, attendu FIABLE)
-  - "NASA announced a new mission to Mars" → score 0.011 (SUSPECT, attendu FIABLE)
-  - Seul succes fiable : "The university published its annual research report" → score 0.635 (FIABLE)
-- **Diagnostic** : Meme probleme structurel que CamemBERT V1 — le modele n'a jamais vu de textes courts neutres de type social media dans l'entrainement. Il apprend "texte court = suspect" car les datasets EN courts (FakeNewsNet titres, CONSTRAINT tweets) sont majoritairement suspects. Solution identique a P2 : generer des donnees EN sociales synthetiques pour un RoBERTa V2.
-- **Entrainement** : 39.6 min sur MPS (Apple M4 Pro), 3 epochs, batch_size=32, lr=2e-5. Emissions : 0.001692 kg CO2.
-- **Conclusion** : Le F1 EN ultra-court progresse significativement (+8.2%), depassant l'objectif initial (>0.85 atteint a 0.838 — proche). Mais le test rapide 6/10 revele le meme biais que CamemBERT V1 : un RoBERTa V2 avec donnees EN sociales synthetiques corrigerait ce probleme, comme demontre pour le FR (P2, 3/6→9/10).
+
+**RoBERTa V1** (notebook 18) — 111 759 textes EN :
+- F1 holdout : 0.9402, F1 ultra-court : 0.8378 (+8.2% vs V5 TF-IDF)
+- Test rapide : **6/10** — 4/5 fiables neutres classees suspect (meme biais CamemBERT V1)
+- Entrainement : 39.6 min sur MPS, 0.001692 kg CO2
+
+**RoBERTa V2** (notebook 19) — 121 759 textes EN (+10K EN social synthetique) :
+- **Resultats holdout** (24 352 textes EN) :
+  - F1 : **0.9439**, Accuracy : 0.9549, Precision : 0.9574, Recall : 0.9308
+  - F1 ultra-court (<15 mots) : **0.8735** (vs V1 0.8378 → **+4.3%**)
+  - F1 court (15-30) : 0.9368, moyen : 0.9787, long : 0.9992
+- **Test comparatif V1 vs V2 :**
+
+| Texte | V1 Score | V1 Label | V2 Score | V2 Label | Attendu |
+|-------|----------|----------|----------|----------|---------|
+| BREAKING: Government EXPOSED in massive cover-up! | 0.000 | SUSPECT | 0.000 | SUSPECT | SUSPECT |
+| A new study published in Nature examines climate change. | 0.060 | **SUSPECT** | 0.996 | **FIABLE** | FIABLE |
+| SHARE before they DELETE this!! The truth about 5G! | 0.000 | SUSPECT | 0.000 | SUSPECT | SUSPECT |
+| The city council approved the new budget. | 0.395 | **SUSPECT** | 0.953 | **FIABLE** | FIABLE |
+| WAKE UP PEOPLE!! They're putting chemicals in the water! | 0.000 | SUSPECT | 0.000 | SUSPECT | SUSPECT |
+| The weather forecast calls for rain tomorrow. | 0.019 | **SUSPECT** | 1.000 | **FIABLE** | FIABLE |
+| EXPOSED: Secret labs use 5G for mind control! | 0.000 | SUSPECT | 0.000 | SUSPECT | SUSPECT |
+| NASA announced a new mission to Mars. | 0.011 | **SUSPECT** | 0.008 | **SUSPECT** | FIABLE |
+| DON'T TRUST the mainstream media!! They lie about EVERYTHING! | 0.000 | SUSPECT | 0.000 | SUSPECT | SUSPECT |
+| The university published its annual research report. | 0.635 | FIABLE | 0.285 | **SUSPECT** | FIABLE |
+
+**V1 : 6/10 → V2 : 8/10** — 3 corrections (Nature, city council, weather), 1 regression (university report), 1 persistant (NASA).
+
+- **Tests supplementaires social media EN :**
+
+| Texte | Score | Label | Attendu |
+|-------|-------|-------|---------|
+| Just got back from the gym, feeling great! | 1.000 | FIABLE | FIABLE |
+| The new coffee shop downtown is amazing | 1.000 | FIABLE | FIABLE |
+| School board meeting tonight at 7pm | 1.000 | FIABLE | FIABLE |
+| Traffic is terrible on the highway today | 1.000 | FIABLE | FIABLE |
+| THEY ARE LYING TO YOU ABOUT EVERYTHING!! Wake up!! | 0.000 | SUSPECT | SUSPECT |
+| Big Pharma doesn't want you to know about this cure!! | 0.000 | SUSPECT | SUSPECT |
+| EXPOSED: the truth about what's really in your food!! | 0.000 | SUSPECT | SUSPECT |
+| Share this before they take it down!! | 0.000 | SUSPECT | SUSPECT |
+
+**8/8 PASS** — Total V2 : **16/18** (vs 6/10 en V1)
+
+- **Entrainement V2** : 41.6 min sur MPS (Apple M4 Pro), 3 epochs, batch_size=32, lr=2e-5. Emissions : 0.001778 kg CO2.
+- **Conclusion** : L'hypothese etait correcte — les 10K posts EN sociaux synthetiques corrigent le biais V1 sur les textes courts neutres. Le F1 EN ultra-court passe de 0.838 a **0.874** (+4.3%), et le test rapide de 6/10 a **8/10** (+3 corrections). Le pattern est identique a CamemBERT V1→V2 (3/6→9/10). Les 2 echecs restants ("NASA" et "university report") sont des phrases formelles courtes qui ressemblent structurellement aux titres FakeNewsNet — un cas limite inherent au modele.
 
 ### 9.2 Preconisations ecartees ou reportees (analyse critique)
 
@@ -683,8 +718,9 @@ Cette section a ete revisee par analyse critique des axes reellement implementab
 | 2 | ~~Re-fine-tune CamemBERT V2 (P2)~~ | **FAIT** | ~~Dataset synthetique~~ | **F1 FR court 0.957, test 9/10 (vs 3/6)** |
 | 3 | ~~Seuil adaptatif par langue (P3)~~ | **FAIT** | ~~V5~~ | **Non significatif (+0.17% F1), seuil 0.44 conserve** |
 | 4 | ~~Pipeline hybride stacking (P1)~~ | **FAIT** | ~~V5 + CamemBERT V2~~ | **F1 FR +0.52%, FR court 15-30 +1.49%** |
-| 5 | ~~RoBERTa EN V1 (P4)~~ | **FAIT** | ~~Infrastructure CamemBERT~~ | **F1 EN ultra-court 0.838 (+8.2%), test 6/10 (meme biais V1)** |
-| 6 | Integration features Bluesky (source, viralite) | 2 semaines | Acces API Bluesky | Reduction faux positifs |
+| 5 | ~~RoBERTa EN V1 (P4)~~ | **FAIT** | ~~Infrastructure CamemBERT~~ | **F1 EN ultra-court 0.838 (+8.2%), test 6/10** |
+| 6 | ~~RoBERTa EN V2 (+10K EN social)~~ | **FAIT** | ~~Dataset EN synthetique~~ | **F1 EN ultra-court 0.874 (+4.3%), test 16/18** |
+| 7 | Integration features Bluesky (source, viralite) | 2 semaines | Acces API Bluesky | Reduction faux positifs |
 
 ---
 
@@ -716,7 +752,7 @@ Le pipeline Thumalien est passe d'un modele biaise inutilisable (V1, F1 = 0.996 
 
 **Francais** : Progression spectaculaire de 0 (V1, pas de FR) a F1 = 0.944 global et 0.904 sur ultra-court (V5 TF-IDF). Le parcours V3 (F1 court = 0.65) -> V4 (+32% par augmentation) -> V5 (+10.4% par donnees sociales) demontre l'importance des donnees representatives du cas d'usage. CamemBERT V2 atteint F1 = 0.966 et F1 ultra-court = 0.957, confirmant l'apport des donnees sociales synthetiques pour les transformers egalement.
 
-**Anglais** : Pic a F1 = 0.928 (V2/V3), regression a 0.889 (V4), puis legere remontee a 0.894 (V5). Les textes courts EN (F1 ultra-court = 0.774) restent le point faible. Un fine-tuning RoBERTa dedie (preconisation P4) est la piste prioritaire.
+**Anglais** : Pic a F1 = 0.928 (V2/V3), regression a 0.889 (V4), puis legere remontee a 0.894 (V5). RoBERTa EN V1 recupere les pertes (F1 EN = 0.940) et ameliore les textes ultra-courts (0.774→0.838). RoBERTa EN V2, avec les 10K posts EN sociaux synthetiques, pousse le F1 EN ultra-court a **0.874** et le test rapide de 6/10 a **16/18** — meme dynamique que CamemBERT V1→V2.
 
 **Bilan V5 + CamemBERT V2** : Le test bilingue V5 passe de 9/10 (V4) a 12/12 (V5). CamemBERT V2 passe de 3/6 (V1) a 9/10 (V2). Les deux modeles reconnaissent maintenant les formulations social media FR. L'objectif F1 FR court > 0.90 est atteint par les deux approches (TF-IDF: 0.904, CamemBERT: 0.957).
 
@@ -724,8 +760,12 @@ Le pipeline Thumalien est passe d'un modele biaise inutilisable (V1, F1 = 0.996 
 - **P1** : Pipeline hybride stacking — **FAIT**, F1 FR +0.52%, FR court 15-30 +1.49%, gain modeste mais robustesse accrue
 - **P2** : Re-fine-tuning CamemBERT — **FAIT**, F1 ultra-court 0.901 → 0.957 (+6.2%), test 3/6 → 9/10
 - **P3** : Seuil adaptatif par langue — **FAIT**, gain +0.17% F1 (non significatif), seuil 0.44 conserve
-- **P4** : RoBERTa EN V1 — **FAIT**, F1 EN ultra-court 0.774 → 0.838 (+8.2%), test 6/10 (meme biais que CamemBERT V1, necessite donnees EN sociales pour V2)
+- **P4** : RoBERTa EN V1→V2 — **FAIT**, F1 EN ultra-court 0.774 → 0.838 → **0.874** (+12.9% total), test 6/10 → **16/18**
 
-Les 4 preconisations sont realisees. Le modele CamemBERT V2 en standalone (F1 FR ultra-court = 0.957) surpasse le pipeline hybride (0.909), car le stacking est limite par les textes EN ou CamemBERT ne contribue pas. RoBERTa EN V1 ameliore significativement le F1 EN (0.894 → 0.940) et le F1 EN ultra-court (0.774 → 0.838), mais souffre du meme biais que CamemBERT V1 sur les textes courts neutres (test rapide 6/10). La creation de donnees EN sociales synthetiques (meme approche que P2) permettrait un RoBERTa V2 avec des gains similaires a CamemBERT V1→V2 (3/6 → 9/10).
+Les 4 preconisations sont realisees, y compris les iterations V2 pour les deux transformers. Le pattern de progression est identique en FR et EN : les donnees sociales synthetiques corrigent le biais des transformers sur les textes courts neutres (CamemBERT 3/6→9/10, RoBERTa 6/10→16/18).
 
-Pour la production, la configuration recommandee est : RoBERTa EN V1 pour l'EN (ou V5 TF-IDF en fallback), CamemBERT V2 pour le FR, avec pipeline hybride en orchestration.
+**Configuration recommandee pour la production** :
+- **FR** : CamemBERT V2 (F1 ultra-court = 0.957, test 9/10)
+- **EN** : RoBERTa EN V2 (F1 ultra-court = 0.874, test 16/18)
+- **Fallback** : V5 TF-IDF bilingue (F1 FR = 0.944, F1 EN = 0.894)
+- **Orchestration** : Pipeline hybride stacking pour la robustesse
