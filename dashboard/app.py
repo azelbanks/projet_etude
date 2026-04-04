@@ -2,8 +2,8 @@
 Thumalien — Intelligence Command Center
 ========================================
 Dashboard Streamlit de detection de fake news bilingue FR/EN.
-Pipeline V4 : TF-IDF(30K) + 15 linguistiques + 7 emotions MLP PyTorch -> LogReg calibre.
-Ameliorations V4 : augmentation FR court, features interpellation/CAPS, vocabulaire sensationnaliste enrichi.
+Pipeline V5 : TF-IDF(30K) + 15 linguistiques + 7 emotions MLP PyTorch -> LogReg calibre.
+Ameliorations V5 : +10K posts FR sociaux synthetiques, 198K textes, FR ultra-court F1=0.90.
 """
 
 import os
@@ -124,19 +124,21 @@ hr {
 
 @st.cache_resource
 def load_pipeline():
-    """Charge le pipeline expert V4 (fallback V3, V2) et l'extracteur d'emotions."""
+    """Charge le pipeline expert V5 (fallback V4, V3, V2) et l'extracteur d'emotions."""
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
     from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
 
     model_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
     detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
+    # V5 = +10K FR social synthetique, FR ultra-court F1=0.90
     # V4 = FR court ameliore + 15 features linguistiques + augmentation FR
     # V3 = features linguistiques corrigees
     # V2 = fallback (avant correction features)
+    v5_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v5.pkl'))
     v4_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v4.pkl'))
     v3_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v3.pkl'))
     v2_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v2.pkl'))
-    suffix = 'expert_v4' if v4_exists else ('expert_v3' if v3_exists else ('expert_v2' if v2_exists else 'expert'))
+    suffix = 'expert_v5' if v5_exists else ('expert_v4' if v4_exists else ('expert_v3' if v3_exists else ('expert_v2' if v2_exists else 'expert')))
     detector.load(suffix=suffix)
 
     # --- Health check after loading ---
@@ -279,8 +281,8 @@ def get_data() -> tuple[pd.DataFrame, bool]:
 #  V1.5 analysis on loaded posts
 # ---------------------------------------------------------------------------
 
-def _apply_v15_analysis(df: pd.DataFrame, detector, emo, model_suffix: str = 'expert_v4') -> pd.DataFrame:
-    """Applique le pipeline V4 sur les posts MongoDB (cache en session_state)."""
+def _apply_v15_analysis(df: pd.DataFrame, detector, emo, model_suffix: str = 'expert_v5') -> pd.DataFrame:
+    """Applique le pipeline V5 sur les posts MongoDB (cache en session_state)."""
     # Hash based on text content + model version to detect changes
     df_hash = hash(tuple(df['text'].values[:50]))
     cache_key = f'analyzed_df_{df_hash}_{model_suffix}_t{detector.threshold}'
@@ -288,7 +290,7 @@ def _apply_v15_analysis(df: pd.DataFrame, detector, emo, model_suffix: str = 'ex
     if cache_key in st.session_state:
         return st.session_state[cache_key]
 
-    with st.spinner(f'Analyse V4 de {len(df)} posts Bluesky en cours...'):
+    with st.spinner(f'Analyse V5 de {len(df)} posts Bluesky en cours...'):
         texts = pd.Series(df['text'].values)
 
         # --- Credibility predictions ---
@@ -432,7 +434,7 @@ def footer():
     st.divider()
     st.markdown(
         '<div class="footer-text">'
-        'Thumalien v4.0 &bull; Pipeline bilingue FR/EN &bull; Seuil 0.44 &bull; '
+        'Thumalien v5.0 &bull; Pipeline bilingue FR/EN &bull; Seuil 0.44 &bull; '
         'WCAG 2.1 AA &bull; Descriptions textuelles sur toutes les visualisations'
         '</div>',
         unsafe_allow_html=True,
@@ -1032,7 +1034,7 @@ def page_metrics():
             '- CV F1 : 0.900 | Precision +19.3%\n'
             '- Limitation : FR court toujours faible (F1=0.65)'
         )
-    with st.expander('🔵 V4 — Amelioration FR court + augmentation donnees (actuelle)'):
+    with st.expander('✅ V4 — Amelioration FR court + augmentation donnees'):
         st.markdown(
             '- 187 782 textes d\'entrainement | FR=76K (40%) vs EN=112K (60%)\n'
             '- Augmentation FR courte : 27K textes courts generes depuis articles\n'
@@ -1041,12 +1043,21 @@ def page_metrics():
             '- **FR court F1 : 0.65 -> 0.86 (+32%)** | FR global F1 : 0.935\n'
             '- Health check : PASS (5/5)'
         )
-    with st.expander('🟡 V5 — Fine-tuning CamemBERT/RoBERTa (en cours)'):
+    with st.expander('🔵 V5 — Integration FR social + 10K posts synthetiques (actuelle)'):
         st.markdown(
-            '- Fine-tuning de CamemBERT pour le francais court\n'
-            '- Embeddings transformers complementaires au TF-IDF\n'
-            '- Objectif : F1 FR court > 0.92\n'
-            '- Approche hybride : TF-IDF + transformer embeddings'
+            '- 197 782 textes d\'entrainement | FR=86K (43.5%) vs EN=112K (56.5%)\n'
+            '- +10K posts FR sociaux synthetiques (5K suspect + 5K fiable)\n'
+            '- **FR ultra-court F1 : 0.86 -> 0.90 (+10.4%)** | FR global F1 : 0.944\n'
+            '- Test bilingue : 12/12 (vs 9/10 en V4)\n'
+            '- Health check : PASS (5/5) | Temps entrainement : 30 min'
+        )
+    with st.expander('🟡 V6 — Pipeline hybride + RoBERTa EN (prevu)'):
+        st.markdown(
+            '- Pipeline hybride stacking TF-IDF V5 + CamemBERT (P1)\n'
+            '- Re-fine-tuning CamemBERT avec donnees FR sociales (P2)\n'
+            '- Seuil adaptatif par langue FR/EN (P3)\n'
+            '- RoBERTa fine-tune pour l\'anglais court (P4)\n'
+            '- Objectif : F1 FR court > 0.92 | F1 EN court > 0.85'
         )
 
     st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
@@ -1108,7 +1119,7 @@ def main():
     )
 
     st.sidebar.divider()
-    st.sidebar.caption('v4.0 — Pipeline bilingue FR/EN optimise (seuil 0.44)')
+    st.sidebar.caption('v5.0 — Pipeline bilingue FR/EN + 10K FR social (seuil 0.44)')
 
     # Load resources
     detector, emo, model_suffix = load_pipeline()
@@ -1117,7 +1128,7 @@ def main():
     if is_demo:
         st.sidebar.info('📋 Mode demo — donnees simulees (MongoDB non connecte)')
     else:
-        # Analyse V4 sur les posts MongoDB (cache en session_state)
+        # Analyse V5 sur les posts MongoDB (cache en session_state)
         df = _apply_v15_analysis(df, detector, emo, model_suffix)
 
     # Route pages

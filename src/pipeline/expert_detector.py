@@ -198,6 +198,7 @@ class DatasetCleaner:
         en_subsample: Optional[int] = None,
         fr_short_augment: bool = False,
         fr_short_oversample: int = 3,
+        fr_social_path: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Crée un dataset bilingue en combinant les données anglaises nettoyées,
@@ -219,6 +220,7 @@ class DatasetCleaner:
         en_subsample : Si défini, sous-échantillonne les données EN
         fr_short_augment : Si True, génère des textes courts FR à partir des articles (V4)
         fr_short_oversample : Facteur d'oversampling pour les textes courts FR générés (défaut: 3)
+        fr_social_path : Chemin vers CSV de posts FR sociaux (text, label) — dataset synthétique
 
         Returns
         -------
@@ -318,7 +320,25 @@ class DatasetCleaner:
                 (df_social['language'] == 'fr').sum(),
             )
 
-        # 4b. Augmentation FR courte (V4) — génère des textes courts FR à partir
+        # 4b. Dataset FR social media synthétique (V5)
+        df_fr_social = None
+        if fr_social_path and os.path.exists(fr_social_path):
+            df_frs = pd.read_csv(fr_social_path)
+            df_frs = df_frs.rename(columns={'text': 'text_original'})
+            df_frs['text_debiased'] = df_frs['text_original']
+            df_frs['text_clean'] = df_frs['text_original'].apply(cls.clean_for_ml)
+            df_frs = df_frs[df_frs['text_clean'].str.split().str.len() >= social_remove_short]
+            df_frs['language'] = 'fr'
+            df_frs = df_frs[['text_original', 'text_debiased', 'text_clean', 'label', 'language']]
+            df_frs = df_frs.reset_index(drop=True)
+            df_fr_social = df_frs
+            logger.info(
+                "FR Social synthétique chargé : %d posts | Distribution : %s",
+                len(df_fr_social),
+                df_fr_social['label'].value_counts().to_dict(),
+            )
+
+        # 4c. Augmentation FR courte (V4) — génère des textes courts FR à partir
         # des articles longs pour combler le manque de données FR type Bluesky
         df_fr_short = None
         if fr_short_augment and df_fr is not None:
@@ -341,6 +361,8 @@ class DatasetCleaner:
             parts.append(df_social)
         if df_fr_short is not None and len(df_fr_short) > 0:
             parts.append(df_fr_short)
+        if df_fr_social is not None and len(df_fr_social) > 0:
+            parts.append(df_fr_social)
         df = pd.concat(parts, ignore_index=True)
         df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
