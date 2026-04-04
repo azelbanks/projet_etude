@@ -1074,7 +1074,9 @@ class ExpertFakeNewsDetector:
     ]
 
     def __init__(self, model_dir: str = '../models', use_emotions: bool = False,
-                 threshold: float = 0.44):
+                 threshold: float = 0.44,
+                 threshold_fr: Optional[float] = None,
+                 threshold_en: Optional[float] = None):
         self.model_dir = model_dir
         self.vectorizer: Optional[TfidfVectorizer] = None
         self.model = None
@@ -1083,6 +1085,12 @@ class ExpertFakeNewsDetector:
         self.use_emotions = use_emotions
         self.emotion_extractor: Optional[EmotionFeatureExtractor] = None
         self.threshold = threshold
+        # Per-language thresholds (P3 — seuils adaptatifs par langue)
+        # When set, predict() uses these instead of the single threshold
+        # for the corresponding language.  Falls back to self.threshold
+        # for unrecognised languages or when the value is None.
+        self.threshold_fr = threshold_fr
+        self.threshold_en = threshold_en
 
         if use_emotions:
             self.emotion_extractor = EmotionFeatureExtractor(model_dir)
@@ -1459,10 +1467,22 @@ class ExpertFakeNewsDetector:
                 fit=False,
             )
 
-            # Prédiction avec seuil ajustable (défaut: 0.45)
+            # Prédiction avec seuil ajustable (défaut: 0.44)
+            # P3 : seuils adaptatifs par langue (FR/EN) si définis
             y_proba = self.model.predict_proba(X)
             scores = y_proba[:, 0]  # P(Fiable)
-            y_pred = (scores < self.threshold).astype(int)  # SUSPECT si P(Fiable) < seuil
+
+            if self.threshold_fr is not None or self.threshold_en is not None:
+                # Seuils adaptatifs par langue
+                lang_array = results['language'].values
+                th_array = np.full(len(scores), self.threshold)
+                if self.threshold_fr is not None:
+                    th_array[lang_array == 'fr'] = self.threshold_fr
+                if self.threshold_en is not None:
+                    th_array[lang_array == 'en'] = self.threshold_en
+                y_pred = (scores < th_array).astype(int)
+            else:
+                y_pred = (scores < self.threshold).astype(int)  # SUSPECT si P(Fiable) < seuil
 
             results['prediction_label'] = y_pred
             results['ai_score_credibility'] = np.round(scores, 4)
@@ -1632,10 +1652,15 @@ class ExpertFakeNewsDetector:
 
         X = hstack(parts).tocsr()
 
-        # Prédiction
+        # Prédiction (P3 : seuil adaptatif par langue si défini)
         y_proba = self.model.predict_proba(X)
         score_fiable = float(y_proba[0, 0])
-        pred_label = 1 if score_fiable < self.threshold else 0
+        effective_threshold = self.threshold
+        if lang == 'fr' and self.threshold_fr is not None:
+            effective_threshold = self.threshold_fr
+        elif lang == 'en' and self.threshold_en is not None:
+            effective_threshold = self.threshold_en
+        pred_label = 1 if score_fiable < effective_threshold else 0
 
         # --- Contributions exactes : coef_i * feature_value_i ---
         coef = self.model.coef_[0]
