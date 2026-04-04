@@ -24,6 +24,7 @@ Ce document retrace l'evolution complete du pipeline de detection de desinformat
 | CamemBERT V1 | Avril 2026 | 0.950 (FR) | 0.950 | N/A | 0.901 | N/A | 22 540 FR | Transformer FR |
 | **V5.0** | **Avril 2026** | **0.913** | **0.944** | **0.894** | **0.904** | **0.774** | **197 782** | **+10K FR social synthetique** |
 | **CamemBERT V2** | **Avril 2026** | **0.966 (FR)** | **0.966** | **N/A** | **0.957** | **N/A** | **32 540 FR** | **+10K FR social, test 9/10** |
+| **Hybride P1** | **Avril 2026** | **0.916** | **0.949** | **0.895** | **0.909** | **0.773** | **197 782** | **Stacking V5+CamemBERT V2** |
 
 ---
 
@@ -540,6 +541,7 @@ Suite au diagnostic des echecs V1 (section 7.6), le CamemBERT a ete re-fine-tune
 | CamemBERT V1 | 0.950 (FR) | 0.950 | 0.901 | N/A |
 | **V5.0** | **0.913** | **0.944** | **0.904** | **0.894** |
 | **CamemBERT V2** | **0.966 (FR)** | **0.966** | **0.957** | **N/A** |
+| **Hybride P1** | **0.916** | **0.949** | **0.909** | **0.895** |
 
 ### 8.2 Evolution du F1 EN par version et segment
 
@@ -584,13 +586,19 @@ Cette section a ete revisee par analyse critique des axes reellement implementab
 
 ### 9.1 Preconisations retenues (impact fort, faisabilite prouvee)
 
-#### P1 — Pipeline hybride TF-IDF V5 + CamemBERT (priorite 1)
+#### P1 — Pipeline hybride TF-IDF V5 + CamemBERT V2 (stacking) — **REALISE**
 
-- **Etat** : Les deux modeles existent deja (V4/V5 TF-IDF + CamemBERT fine-tune)
-- **Principe** : Stacking — combiner les scores de confiance des deux modeles via une meta-regression. Le TF-IDF capte les patterns explicites (MAJUSCULES, mots sensationnalistes), CamemBERT capte la semantique (ironie, sous-entendus).
-- **Effort** : Faible (quelques jours). Pas besoin de retrainer, uniquement calibrer les poids du stacking.
-- **Impact estime** : F1 FR court > 0.92. Les erreurs des deux modeles sont complementaires.
-- **Justification** : Methode prouvee en competition ML (Kaggle). Les modeles ont deja ete entraines.
+- **Etat** : **FAIT** (notebook 17). Meta-learner LogReg entraine sur les scores des deux modeles.
+- **Architecture** : 6 features meta (v5_score, camembert_score, is_fr, score_diff, score_min, score_max) → LogisticRegression
+- **Resultats** :
+  - F1 global : 0.9134 → **0.9163** (+0.29%)
+  - F1 FR global : 0.9436 → **0.9488** (+0.52%)
+  - F1 FR ultra-court : 0.9036 → **0.9092** (+0.56%)
+  - F1 FR court (15-30) : 0.9436 → **0.9586** (+1.49%)
+  - F1 EN global : 0.8937 → 0.8951 (+0.13%)
+  - Test bilingue : 12/12
+- **Coefficients meta-learner** : v5_score (-4.23) domine, camembert_score (-1.60) contribue significativement. Le flag is_fr (+0.41) confirme que CamemBERT apporte surtout en FR.
+- **Conclusion** : Gain modeste mais reel, surtout sur FR court 15-30 (+1.49%). Le stacking ne surpasse pas radicalement les base learners car leurs erreurs ne sont pas suffisamment decorrelees — les deux modeles sont entraines sur les memes donnees. Le gain principal est la **robustesse** : quand V5 hesite (score ~0.5), CamemBERT tranche souvent correctement, et vice-versa.
 
 #### P2 — Re-fine-tuning CamemBERT sur le dataset FR social synthetique — **REALISE**
 
@@ -661,7 +669,7 @@ Cette section a ete revisee par analyse critique des axes reellement implementab
 | 1 | ~~Evaluer V5 (10K FR social)~~ | **FAIT** | ~~Retraining~~ | **F1 FR court 0.904, 12/12 test** |
 | 2 | ~~Re-fine-tune CamemBERT V2 (P2)~~ | **FAIT** | ~~Dataset synthetique~~ | **F1 FR court 0.957, test 9/10 (vs 3/6)** |
 | 3 | ~~Seuil adaptatif par langue (P3)~~ | **FAIT** | ~~V5~~ | **Non significatif (+0.17% F1), seuil 0.44 conserve** |
-| 4 | Pipeline hybride stacking V5 + CamemBERT V2 (P1) | 1 semaine | V5 et CamemBERT V2 ok | Score combine, F1 FR court cible > 0.96 |
+| 4 | ~~Pipeline hybride stacking (P1)~~ | **FAIT** | ~~V5 + CamemBERT V2~~ | **F1 FR +0.52%, FR court 15-30 +1.49%** |
 | 5 | RoBERTa EN (P4) | 2 semaines | Infrastructure CamemBERT | F1 EN court > 0.85 |
 | 6 | Integration features Bluesky (source, viralite) | 2 semaines | Acces API Bluesky | Reduction faux positifs |
 
@@ -700,7 +708,9 @@ Le pipeline Thumalien est passe d'un modele biaise inutilisable (V1, F1 = 0.996 
 **Bilan V5 + CamemBERT V2** : Le test bilingue V5 passe de 9/10 (V4) a 12/12 (V5). CamemBERT V2 passe de 3/6 (V1) a 9/10 (V2). Les deux modeles reconnaissent maintenant les formulations social media FR. L'objectif F1 FR court > 0.90 est atteint par les deux approches (TF-IDF: 0.904, CamemBERT: 0.957).
 
 **Bilan des preconisations** :
-- **P1** : Pipeline hybride stacking V5 + CamemBERT V2 — **a faire** (F1 FR court cible > 0.96)
+- **P1** : Pipeline hybride stacking — **FAIT**, F1 FR +0.52%, FR court 15-30 +1.49%, gain modeste mais robustesse accrue
 - **P2** : Re-fine-tuning CamemBERT — **FAIT**, F1 ultra-court 0.901 → 0.957 (+6.2%), test 3/6 → 9/10
 - **P3** : Seuil adaptatif par langue — **FAIT**, gain +0.17% F1 (non significatif), seuil 0.44 conserve
 - **P4** : RoBERTa EN — **a faire** (F1 EN court cible > 0.85)
+
+Les 3 preconisations prioritaires (P1-P3) sont realisees. Le modele CamemBERT V2 en standalone (F1 FR ultra-court = 0.957) surpasse le pipeline hybride (0.909), car le stacking est limite par les textes EN ou CamemBERT ne contribue pas. Pour la production, la configuration recommandee est : V5 TF-IDF pour l'EN, CamemBERT V2 pour le FR, avec pipeline hybride en fallback.
