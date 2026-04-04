@@ -95,11 +95,11 @@ La proliferation de la desinformation sur les reseaux sociaux constitue un enjeu
 | DET-04 | Le pipeline doit supporter les textes en francais ET en anglais | Haute | F1 FR >= 0.80, F1 EN >= 0.85 |
 | DET-05 | Le pipeline doit supporter les textes courts (< 30 mots, type posts reseaux sociaux) | Haute | F1 sur textes courts >= 0.75 |
 | DET-06 | La vectorisation TF-IDF doit utiliser 30 000 features maximum avec n-grams (1,3) | Haute | Parametres confirmes dans le modele sauvegarde |
-| DET-07 | Les 12 features linguistiques doivent etre calculees pour chaque texte | Haute | Extraction fonctionnelle, pas de NaN |
+| DET-07 | Les 15 features linguistiques (12 originales + 3 V4) doivent etre calculees pour chaque texte | Haute | Extraction fonctionnelle, pas de NaN |
 | DET-08 | Le seuil de decision doit etre configurable (defaut : 0.44) | Haute | Parametre modifiable sans retraining |
 | DET-09 | Le temps d'inference doit etre < 100ms par texte | Moyenne | Benchmark sur Apple M4 Pro |
 | DET-10 | Chaque prediction doit pouvoir etre expliquee (top mots, features linguistiques) | Haute | Fonction `explain_prediction()` fonctionnelle |
-| DET-11 | Le dataset d'entrainement V2 doit contenir >= 100 000 textes (articles + textes sociaux) | Haute | 145 703 textes verifies |
+| DET-11 | Le dataset d'entrainement V4 doit contenir >= 100 000 textes (articles + textes sociaux + augmentation FR courte) | Haute | 187 782 textes verifies |
 | DET-12 | Le biais Reuters doit etre elimine du dataset d'entrainement | Critique | Audit confirmant 0% de marqueur Reuters residuel |
 
 ### 3.4 Module d'analyse emotionnelle (EMO)
@@ -229,9 +229,10 @@ La proliferation de la desinformation sur les reseaux sociaux constitue un enjeu
 
 | Artefact | Fichier | Taille | Description |
 |----------|---------|--------|-------------|
-| Modele V2 | model_expert_v2.pkl | ~15 MB | LogisticRegression calibree |
-| Vectorizer V2 | tfidf_expert_v2.pkl | ~30 MB | TF-IDF 30K features |
-| Metriques V2 | metrics_expert_v2.pkl | < 1 MB | Scores CV, matrices de confusion |
+| Modele V4 | model_expert_v4.pkl | ~15 MB | LogisticRegression calibree (15 features ling.) |
+| Vectorizer V4 | tfidf_expert_v4.pkl | ~30 MB | TF-IDF 30K features bilingue |
+| Metriques V4 | metrics_expert_v4.pkl | < 1 MB | Scores CV, matrices de confusion |
+| CamemBERT FR | camembert_fr.pt | ~450 MB | Fine-tuned CamemBERT pour FR court |
 | Emotions | emotion_bilingual.pt | ~7 MB | MLP PyTorch 7 classes |
 | Vocabulaire | emotion_vocab_bilingual.pickle | ~2 MB | Mapping mot → token |
 | Encodeur | emotion_label_encoder_bilingual.pickle | < 1 KB | 7 labels d'emotions |
@@ -322,7 +323,7 @@ Le projet est considere comme **recette** lorsque :
 
 1. **Collecte** : Le collecteur fonctionne en continu depuis > 7 jours sans intervention manuelle
 2. **Stockage** : La base MongoDB contient > 100 000 posts avec tous les champs obligatoires
-3. **Detection** : Le pipeline V2 atteint F1 >= 0.85 en cross-validation et < 40% de posts suspects sur Bluesky
+3. **Detection** : Le pipeline V4 atteint F1 >= 0.90 en cross-validation, FR court F1=0.86, et < 40% de posts suspects sur Bluesky
 4. **Emotions** : Le modele emotionnel produit 7 probabilites coherentes pour chaque texte
 5. **Dashboard** : Les 3 pages sont fonctionnelles, l'analyse temps reel repond en < 3s
 6. **Infrastructure** : `docker-compose up` lance les 4 services sans erreur
@@ -336,7 +337,7 @@ Le projet est considere comme **recette** lorsque :
 | # | Livrable | Format | Responsable |
 |---|----------|--------|-------------|
 | L1 | Code source complet | Repository Git | Data Engineer + ML Engineer |
-| L2 | Modeles entraines (V2 + emotions) | Fichiers .pkl et .pt | ML Engineer |
+| L2 | Modeles entraines (V4 + emotions + CamemBERT) | Fichiers .pkl et .pt | ML Engineer |
 | L3 | Dashboard fonctionnel | Application Streamlit | Dashboard Developer |
 | L4 | Infrastructure Docker | docker-compose.yml + Dockerfile | DevOps |
 | L5 | Notebooks documentes (00 a 08) | Jupyter .ipynb | Data Scientist |

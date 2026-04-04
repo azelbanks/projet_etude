@@ -61,8 +61,9 @@ Le projet Thumalien suit une methodologie **Agile adaptee aux projets Data/IA**,
 | **V1.0** | Dec 2025 | Baseline : TF-IDF + LogReg anglais uniquement | F1 = 0.99 (biaise par Reuters) |
 | **V1.5** | Jan-Fev 2026 | Correction biais, bilingue, emotions, features linguistiques | F1 = 0.986, pipeline expert complet |
 | **V2** | Fev 2026 | Integration datasets sociaux, adaptation textes courts | F1 = 0.897, 73.4% fiable sur Bluesky |
-| **V3** (planifie) | T3 2026 | Sentence-Transformers, embeddings semantiques | F1 cible > 0.90 sur textes courts |
-| **V4** (planifie) | T4 2026 | Fine-tuning CamemBERT/RoBERTa sur donnees Bluesky annotees | F1 cible > 0.92 |
+| **V3** | Mars 2026 | Correction features linguistiques (bug preprocessing) | F1 = 0.900, Precision +19.3% |
+| **V4** | Avril 2026 | Amelioration FR court : augmentation, 15 features, vocabulaire enrichi | F1 global = 0.905, FR court F1 = 0.86 (+32%) |
+| **V5** (en cours) | Avril 2026 | Fine-tuning CamemBERT pour FR court | F1 FR court cible > 0.92 |
 
 ---
 
@@ -136,7 +137,7 @@ La qualite des donnees est le fondement de tout projet IA. Un modele entraine su
 | Controle | Methode | Resultat Thumalien |
 |----------|---------|-------------------|
 | Biais d'agence (Reuters) | `audit_reuters_leakage()` | Detecte (99.2%) et corrige |
-| Equilibre des classes | Comptage par label | True: 48.2%, Fake: 51.8% (V2) |
+| Equilibre des classes | Comptage par label | True: 63.1%, Fake: 36.9% (V4, 187K textes) |
 | Distribution linguistique | Comptage par langue | EN: 72%, FR: 28% (avant oversampling) |
 | Distribution de longueur | Histogramme des word counts | Bimodale : articles (340 mots) + social (20 mots) |
 | Corruption CSV | Detection des lignes malformees | 39 lignes corrigees dans Fake.csv |
@@ -177,9 +178,9 @@ Chaque version du modele est evaluee selon le protocole suivant :
 
 Un modele ne peut etre deploye en production que s'il satisfait TOUS les criteres suivants :
 
-| Critere | Seuil | V2 actuel |
+| Critere | Seuil | V4 actuel |
 |---------|-------|-----------|
-| F1 CV global | >= 0.85 | 0.897 |
+| F1 CV global | >= 0.85 | 0.905 |
 | F1 holdout | >= 0.85 | 0.90 |
 | Accuracy holdout | >= 85% | 93% |
 | F1 EN test | >= 0.85 | 0.988 |
@@ -250,6 +251,9 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 | J6 — GridSearch | Fev 2026 | Optimisation hyperparametres, analyse de robustesse | Realise |
 | J7 — Pipeline V2 | Fev 2026 | +3 datasets sociaux, seuil 0.44, 73.4% fiable | Realise |
 | J8 — Dashboard V2 | Mars 2026 | 3 pages, glassmorphism, explicabilite | Realise |
+| J9 — Pipeline V3 | Mars 2026 | Correction features linguistiques, retraining | Realise |
+| J10 — Pipeline V4 | Avril 2026 | Augmentation FR court, 15 features, F1 FR=0.935 | Realise |
+| J11 — CamemBERT FR | Avril 2026 | Fine-tuning CamemBERT pour textes courts FR | En cours |
 | J9 — Documentation | Avril 2026 | Rapport, guide utilisateur, CDC, RGPD | En cours |
 
 ### 5.2 Jalons futurs (planifies)
@@ -271,13 +275,13 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 
 | KPI | Methode de mesure | Frequence | Cible | Actuel |
 |-----|-------------------|-----------|-------|--------|
-| F1-score modele | Cross-validation 5-fold | A chaque retraining | >= 0.85 | 0.897 |
+| F1-score modele | Cross-validation 5-fold | A chaque retraining | >= 0.85 | 0.905 |
 | % fiable sur Bluesky | Distribution des predictions sur 2 000 posts | Mensuel | 60-85% | 73.4% |
 | Volume de posts collectes | `db.raw_posts.countDocuments()` | Quotidien | > 1 000/jour | ~2 000/jour |
 | Uptime collecteur | Logs de collecte | Mensuel | > 95% | ~90% (estimé) |
 | Temps d'inference | Benchmark sur 1 000 textes | A chaque version | < 100ms/texte | ~50ms |
 | Empreinte carbone | CodeCarbon | A chaque entrainement | < 1 g CO2 | 0.30 g |
-| Taille du dataset d'entrainement | Comptage | A chaque version | > 100 000 | 145 703 |
+| Taille du dataset d'entrainement | Comptage | A chaque version | > 100 000 | 187 782 |
 
 ### 6.2 KPI projet
 
@@ -361,6 +365,8 @@ Tout changement significatif (nouveau dataset, modification d'architecture, chan
 | Fev 2026 | Ajout features linguistiques (12) | Enrichir le signal au-dela du TF-IDF | +2 points F1 FR |
 | Fev 2026 | Integration emotions (7 features) | Signal emotionnel correle a la desinformation | +0.5 points F1 |
 | Fev 2026 | 3 datasets sociaux (V2) | Domain shift : 77% suspect sur Bluesky | 73.4% fiable (vs 23%) |
+| Mars 2026 | Correction features ling. (V3) | 5/12 features etaient nulles (bug preprocessing) | F1 +0.3%, Precision +19.3% |
+| Avril 2026 | Augmentation FR court (V4) | FR court F1=0.65 insuffisant pour Bluesky | FR court F1=0.86 (+32%), FR global F1=0.935 |
 | Fev 2026 | Seuil 0.44 (vs 0.50) | Calibration pour textes courts | +7 points de fiabilite Bluesky |
 | Mars 2026 | Dashboard glassmorphism | Amelioration UX/UI | Dashboard professionnel |
 

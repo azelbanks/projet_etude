@@ -2,7 +2,8 @@
 Thumalien — Intelligence Command Center
 ========================================
 Dashboard Streamlit de detection de fake news bilingue FR/EN.
-Pipeline V1.5 : TF-IDF(30K) + 12 linguistiques + 7 emotions MLP PyTorch -> LogReg calibre.
+Pipeline V4 : TF-IDF(30K) + 15 linguistiques + 7 emotions MLP PyTorch -> LogReg calibre.
+Ameliorations V4 : augmentation FR court, features interpellation/CAPS, vocabulaire sensationnaliste enrichi.
 """
 
 import os
@@ -123,17 +124,19 @@ hr {
 
 @st.cache_resource
 def load_pipeline():
-    """Charge le pipeline expert V3 (ou V2 fallback) et l'extracteur d'emotions."""
+    """Charge le pipeline expert V4 (fallback V3, V2) et l'extracteur d'emotions."""
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
     from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
 
     model_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
     detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
-    # V3 = retrained with corrected linguistic features (original text)
-    # V2 = fallback (trained before linguistic feature fix)
+    # V4 = FR court ameliore + 15 features linguistiques + augmentation FR
+    # V3 = features linguistiques corrigees
+    # V2 = fallback (avant correction features)
+    v4_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v4.pkl'))
     v3_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v3.pkl'))
     v2_exists = os.path.exists(os.path.join(model_dir, 'model_expert_v2.pkl'))
-    suffix = 'expert_v3' if v3_exists else ('expert_v2' if v2_exists else 'expert')
+    suffix = 'expert_v4' if v4_exists else ('expert_v3' if v3_exists else ('expert_v2' if v2_exists else 'expert'))
     detector.load(suffix=suffix)
 
     # --- Health check after loading ---
@@ -276,8 +279,8 @@ def get_data() -> tuple[pd.DataFrame, bool]:
 #  V1.5 analysis on loaded posts
 # ---------------------------------------------------------------------------
 
-def _apply_v15_analysis(df: pd.DataFrame, detector, emo, model_suffix: str = 'expert_v2') -> pd.DataFrame:
-    """Applique le pipeline V2 sur les posts MongoDB (cache en session_state)."""
+def _apply_v15_analysis(df: pd.DataFrame, detector, emo, model_suffix: str = 'expert_v4') -> pd.DataFrame:
+    """Applique le pipeline V4 sur les posts MongoDB (cache en session_state)."""
     # Hash based on text content + model version to detect changes
     df_hash = hash(tuple(df['text'].values[:50]))
     cache_key = f'analyzed_df_{df_hash}_{model_suffix}_t{detector.threshold}'
@@ -285,7 +288,7 @@ def _apply_v15_analysis(df: pd.DataFrame, detector, emo, model_suffix: str = 'ex
     if cache_key in st.session_state:
         return st.session_state[cache_key]
 
-    with st.spinner(f'Analyse V2 de {len(df)} posts Bluesky en cours...'):
+    with st.spinner(f'Analyse V4 de {len(df)} posts Bluesky en cours...'):
         texts = pd.Series(df['text'].values)
 
         # --- Credibility predictions ---
@@ -429,7 +432,7 @@ def footer():
     st.divider()
     st.markdown(
         '<div class="footer-text">'
-        'Thumalien v2.0 &bull; Pipeline bilingue FR/EN &bull; Seuil 0.44 &bull; '
+        'Thumalien v4.0 &bull; Pipeline bilingue FR/EN &bull; Seuil 0.44 &bull; '
         'WCAG 2.1 AA &bull; Descriptions textuelles sur toutes les visualisations'
         '</div>',
         unsafe_allow_html=True,
@@ -1015,26 +1018,35 @@ def page_metrics():
             '- F1 EN : 0.9852 | F1 FR : 0.9818\n'
             '- Limitation : domain shift sur posts courts (77% suspects)'
         )
-    with st.expander('🔵 V2 — Integration datasets sociaux + seuil 0.44 (actuelle)'):
+    with st.expander('✅ V2 — Integration datasets sociaux + seuil 0.44'):
         st.markdown(
             '- 3 datasets sociaux : FakeNewsNet (23K titres), CONSTRAINT (10K tweets), Credibility Corpus (11K tweets)\n'
             '- 145 703 textes d\'entrainement (63% courts < 50 mots)\n'
             '- Seuil de decision ajuste a 0.44 (optimise sur Bluesky)\n'
-            '- CV F1 : 0.897 | ~73% fiable sur posts Bluesky'
+            '- CV F1 : 0.897 | Limitation : FR court F1=0.65'
         )
-    with st.expander('🟡 V3 — Sentence-transformers multilingue (planifiee)'):
+    with st.expander('✅ V3 — Correction features linguistiques'):
         st.markdown(
-            '- Remplacement TF-IDF par embeddings `paraphrase-multilingual-MiniLM-L12-v2`\n'
-            '- Meilleure generalisation cross-lingue\n'
-            '- Reduction de la dimension a 384 features denses\n'
-            '- Objectif : F1 > 0.95 sur FR sans oversampling'
+            '- Bug fix : features linguistiques (caps_ratio, exclamation, etc.) calculees sur texte original\n'
+            '- Retraining avec features corrigees\n'
+            '- CV F1 : 0.900 | Precision +19.3%\n'
+            '- Limitation : FR court toujours faible (F1=0.65)'
         )
-    with st.expander('🔴 V4 — Fine-tuning CamemBERT/RoBERTa (cible long terme)'):
+    with st.expander('🔵 V4 — Amelioration FR court + augmentation donnees (actuelle)'):
         st.markdown(
-            '- Fine-tuning de modeles transformers pre-entraines\n'
-            '- CamemBERT pour le francais, RoBERTa pour l\'anglais\n'
-            '- Approche multi-tache : detection + emotion + credibilite\n'
-            '- Objectif : F1 > 0.98 bilingue natif'
+            '- 187 782 textes d\'entrainement | FR=76K (40%) vs EN=112K (60%)\n'
+            '- Augmentation FR courte : 27K textes courts generes depuis articles\n'
+            '- 3 nouvelles features : all_caps_words_ratio, interpellation_score, is_short_text\n'
+            '- Vocabulaire sensationnaliste FR enrichi (+16 termes social media)\n'
+            '- **FR court F1 : 0.65 -> 0.86 (+32%)** | FR global F1 : 0.935\n'
+            '- Health check : PASS (5/5)'
+        )
+    with st.expander('🟡 V5 — Fine-tuning CamemBERT/RoBERTa (en cours)'):
+        st.markdown(
+            '- Fine-tuning de CamemBERT pour le francais court\n'
+            '- Embeddings transformers complementaires au TF-IDF\n'
+            '- Objectif : F1 FR court > 0.92\n'
+            '- Approche hybride : TF-IDF + transformer embeddings'
         )
 
     st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
@@ -1096,7 +1108,7 @@ def main():
     )
 
     st.sidebar.divider()
-    st.sidebar.caption('v2.0 — Pipeline bilingue FR/EN (seuil 0.44)')
+    st.sidebar.caption('v4.0 — Pipeline bilingue FR/EN optimise (seuil 0.44)')
 
     # Load resources
     detector, emo, model_suffix = load_pipeline()
@@ -1105,7 +1117,7 @@ def main():
     if is_demo:
         st.sidebar.info('📋 Mode demo — donnees simulees (MongoDB non connecte)')
     else:
-        # Analyse V2 sur les posts MongoDB (cache en session_state)
+        # Analyse V4 sur les posts MongoDB (cache en session_state)
         df = _apply_v15_analysis(df, detector, emo, model_suffix)
 
     # Route pages

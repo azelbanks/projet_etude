@@ -196,6 +196,8 @@ class DatasetCleaner:
         french_oversample: int = 3,
         social_oversample: int = 2,
         en_subsample: Optional[int] = None,
+        fr_short_augment: bool = False,
+        fr_short_oversample: int = 3,
     ) -> pd.DataFrame:
         """
         Crée un dataset bilingue en combinant les données anglaises nettoyées,
@@ -215,6 +217,8 @@ class DatasetCleaner:
         french_oversample : Facteur d'oversampling pour les données FR (défaut: 3)
         social_oversample : Facteur d'oversampling pour les textes sociaux (défaut: 2)
         en_subsample : Si défini, sous-échantillonne les données EN
+        fr_short_augment : Si True, génère des textes courts FR à partir des articles (V4)
+        fr_short_oversample : Facteur d'oversampling pour les textes courts FR générés (défaut: 3)
 
         Returns
         -------
@@ -314,10 +318,29 @@ class DatasetCleaner:
                 (df_social['language'] == 'fr').sum(),
             )
 
+        # 4b. Augmentation FR courte (V4) — génère des textes courts FR à partir
+        # des articles longs pour combler le manque de données FR type Bluesky
+        df_fr_short = None
+        if fr_short_augment and df_fr is not None:
+            # Utiliser le df_fr AVANT oversampling (prendre les données uniques)
+            n_orig = len(df_fr) // french_oversample if french_oversample > 1 else len(df_fr)
+            df_fr_unique = df_fr.head(n_orig)
+            df_fr_short = cls.generate_fr_short_augmentation(df_fr_unique)
+            if len(df_fr_short) > 0 and fr_short_oversample > 1:
+                df_fr_short = pd.concat(
+                    [df_fr_short] * fr_short_oversample, ignore_index=True
+                )
+                logger.info(
+                    "Augmentation FR courte oversamplée x%d : %d textes",
+                    fr_short_oversample, len(df_fr_short),
+                )
+
         # 5. Concat final + shuffle
         parts = [df_en, df_fr]
         if df_social is not None:
             parts.append(df_social)
+        if df_fr_short is not None and len(df_fr_short) > 0:
+            parts.append(df_fr_short)
         df = pd.concat(parts, ignore_index=True)
         df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
@@ -329,6 +352,70 @@ class DatasetCleaner:
             df['label'].value_counts().to_dict(),
         )
         return df
+
+    @classmethod
+    def generate_fr_short_augmentation(cls, df_fr: pd.DataFrame) -> pd.DataFrame:
+        """
+        Génère des textes courts FR à partir d'articles longs FR.
+
+        Stratégies :
+        1. Extraction de la première phrase de chaque article
+        2. Extraction d'un titre synthétique (premiers 8-15 mots)
+
+        Cela comble le manque de données FR courtes (type Bluesky/Twitter).
+
+        Parameters
+        ----------
+        df_fr : DataFrame FR avec colonnes text_original, text_clean, label
+
+        Returns
+        -------
+        DataFrame de textes courts FR générés
+        """
+        short_rows = []
+
+        for _, row in df_fr.iterrows():
+            text = str(row['text_original'])
+            label = row['label']
+
+            # Stratégie 1 : première phrase
+            sentences = re.split(r'(?<=[.!?])\s+', text)
+            if sentences:
+                first_sent = sentences[0].strip()
+                words_first = first_sent.split()
+                if 3 <= len(words_first) <= 25:
+                    clean = cls.clean_for_ml(first_sent)
+                    if len(clean.split()) >= 3:
+                        short_rows.append({
+                            'text_original': first_sent,
+                            'text_debiased': first_sent,
+                            'text_clean': clean,
+                            'label': label,
+                            'language': 'fr',
+                        })
+
+            # Stratégie 2 : titre synthétique (premiers 8-12 mots)
+            words = text.split()
+            if len(words) > 15:
+                n = min(12, max(8, len(words) // 10))
+                title = ' '.join(words[:n])
+                clean_title = cls.clean_for_ml(title)
+                if len(clean_title.split()) >= 5:
+                    short_rows.append({
+                        'text_original': title,
+                        'text_debiased': title,
+                        'text_clean': clean_title,
+                        'label': label,
+                        'language': 'fr',
+                    })
+
+        df_short = pd.DataFrame(short_rows)
+        logger.info(
+            "Augmentation FR courte : %d textes générés (< 25 mots) | Distribution : %s",
+            len(df_short),
+            df_short['label'].value_counts().to_dict() if len(df_short) > 0 else {},
+        )
+        return df_short
 
     @classmethod
     def audit_reuters_leakage(cls, df_true: pd.DataFrame) -> Dict:
@@ -650,6 +737,9 @@ class LinguisticFeatureExtractor:
         'hoax', 'alert', 'exclusive', 'unbelievable',
         'cover-up', 'coverup', 'wake up', 'they dont want',
         'mainstream media', 'deep state', 'big pharma',
+        'must watch', 'must read', 'you wont believe',
+        'what they hide', 'truth about', 'exposed the truth',
+        'share before deleted', 'deleted soon', 'viral',
     })
 
     SENSATIONALIST_FR = frozenset({
@@ -671,6 +761,14 @@ class LinguisticFeatureExtractor:
         'partagez avant', 'réveillez-vous', 'on nous cache',
         'on vous ment', 'faites vos propres recherches',
         'avant censure', 'partagez massivement', 'info censurée',
+        # Social media FR (ajout V4)
+        'à partager', 'diffusez', 'la preuve', 'preuve en image',
+        'regardez cette vidéo', 'vidéo censurée', 'témoignage choc',
+        'enfin la vérité', 'ce que les médias cachent', 'les médias mentent',
+        'info interdite', 'plandémie', 'génocide', 'empoisonnement',
+        'puces', 'micro-puces', 'nanoparticules', 'graphène',
+        'pass sanitaire', 'soumission', 'résistez', 'insurrection',
+        'traîtres', 'vendu', 'vendus', 'marionnettes',
     })
 
     FEATURE_NAMES = [
@@ -686,6 +784,28 @@ class LinguisticFeatureExtractor:
         'lexical_diversity',
         'sentence_count',
         'avg_sentence_length',
+        # V4 : features texte court
+        'all_caps_words_ratio',
+        'interpellation_score',
+        'is_short_text',
+    ]
+
+    # Patterns d'interpellation directe (manipulation sociale FR+EN)
+    INTERPELLATION_PATTERNS_FR = [
+        r'\b(réveillez[ -]vous|réveillons[ -]nous)\b',
+        r'\b(ouvrez les yeux|ouvrons les yeux)\b',
+        r'\b(faites tourner|partagez|diffusez|rt svp)\b',
+        r'\b(on nous ment|on vous ment|ils nous mentent)\b',
+        r'\b(ne soyez pas dupes?|ne soyez pas naï[fv]s?)\b',
+        r'\b(dites non|boycott|refusez)\b',
+        r'\b(attention danger|alerte rouge|alerte info)\b',
+    ]
+    INTERPELLATION_PATTERNS_EN = [
+        r'\b(wake up|open your eyes)\b',
+        r'\b(share before|retweet|spread the word)\b',
+        r'\b(they are lying|they lied|dont be fooled)\b',
+        r'\b(say no|boycott|fight back|resist)\b',
+        r'\b(red alert|warning|danger)\b',
     ]
 
     @classmethod
@@ -744,6 +864,21 @@ class LinguisticFeatureExtractor:
             sentences = [s for s in sentences if s.strip()]
             results[i, 10] = len(sentences)
             results[i, 11] = n_words / len(sentences) if sentences else n_words
+
+            # V4 : Ratio de mots entièrement en majuscules (signal fort pour posts courts)
+            caps_words = sum(1 for w in words if w.isupper() and len(w) > 1)
+            results[i, 12] = caps_words / n_words if n_words > 0 else 0
+
+            # V4 : Score d'interpellation (manipulation sociale directe)
+            interp_score = 0
+            for pat in cls.INTERPELLATION_PATTERNS_FR + cls.INTERPELLATION_PATTERNS_EN:
+                if re.search(pat, text_lower):
+                    interp_score += 1
+            results[i, 13] = interp_score
+
+            # V4 : Indicateur texte court (< 20 mots) — permet au modèle d'apprendre
+            # des patterns spécifiques aux textes courts
+            results[i, 14] = 1.0 if n_words < 20 else 0.0
 
         return results
 
@@ -1153,7 +1288,7 @@ class ExpertFakeNewsDetector:
         if model_type == 'logreg':
             return LogisticRegression(
                 C=1.0,
-                max_iter=5000,
+                max_iter=10000,
                 solver='lbfgs',
                 class_weight='balanced',
                 random_state=42,
