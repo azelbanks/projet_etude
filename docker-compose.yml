@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Service 1 : Base de données
   mongodb:
-    image: mongo:7.0
+    image: mongo:8
     container_name: thumalien_mongo
     restart: always
     environment:

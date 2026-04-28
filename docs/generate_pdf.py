@@ -24,9 +24,15 @@ DOCUMENTS = [
     "05_analyse_erreurs_qualitative.md",
     "06_analyse_modele_par_longueur.md",
     "07_evolution_modeles_comparatif.md",
+    "08_planification_gantt.md",
+    "09_PRA_PCA.md",
+    "10_veille_technologique.md",
+    "11_accessibilite_handicap.md",
     "roles_et_competences_projet.md",
     "rapport_projet_thumalien.md",
     "guide_utilisateur.md",
+    "rendu_individuel_azelie_bernard.md",
+    "rendu_individuel_sebastien_lazcanotegui.md",
 ]
 
 # Colors
