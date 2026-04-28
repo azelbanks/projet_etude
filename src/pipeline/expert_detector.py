@@ -121,15 +121,28 @@ class DatasetCleaner:
             text = re.sub(pattern, '', text, flags=re.IGNORECASE)
         return text.strip()
 
-    @staticmethod
-    def clean_for_ml(text: str) -> str:
-        """Nettoyage ML : normalisation, URLs, mentions."""
+    # Termes d'agences/artefacts à supprimer du corps du texte (après lowercase)
+    BODY_AGENCY_TERMS = [
+        r'\breuters\b', r'\bassociated press\b', r'\bagence france presse\b',
+    ]
+
+    # Années d'artefact temporel (corrélées artificiellement aux labels)
+    ARTIFACT_YEAR_PATTERN = r'\b(201[5-9]|2020)\b'
+
+    @classmethod
+    def clean_for_ml(cls, text: str) -> str:
+        """Nettoyage ML : normalisation, URLs, mentions, biais résiduels."""
         if not isinstance(text, str):
             return ""
         text = text.lower()
         text = re.sub(r'http\S+|www\.\S+', ' ', text)
         text = re.sub(r'@\w+', ' ', text)
         text = re.sub(r'#(\w+)', r'\1', text)
+        # Suppression des mentions d'agences dans le corps du texte
+        for pattern in cls.BODY_AGENCY_TERMS:
+            text = re.sub(pattern, ' ', text)
+        # Suppression des années artefacts (2015-2020)
+        text = re.sub(cls.ARTIFACT_YEAR_PATTERN, ' ', text)
         text = re.sub(r'[^\w\sàâäéèêëïîôùûüÿçœæ]', ' ', text)
         text = re.sub(r'\s+', ' ', text).strip()
         return text
@@ -1014,13 +1027,13 @@ class ExpertFakeNewsDetector:
 
             # TF-IDF optimisé (paramètres adaptés en mode bilingue)
             max_features = 30000 if bilingual else 20000
-            min_df = 3 if bilingual else 3
+            min_df = 5 if bilingual else 3
             # En mode bilingue, conserver les accents FR (sémantiques : "ou"/"où", "a"/"à")
             strip = None if bilingual else 'unicode'
 
             self.vectorizer = TfidfVectorizer(
                 max_features=max_features,
-                ngram_range=(1, 3),
+                ngram_range=(1, 2),
                 min_df=min_df,
                 max_df=0.95,
                 sublinear_tf=True,
@@ -1136,7 +1149,7 @@ class ExpertFakeNewsDetector:
     def _get_model(model_type: str):
         if model_type == 'logreg':
             return LogisticRegression(
-                C=1.0,
+                C=5.0,
                 max_iter=5000,
                 solver='lbfgs',
                 class_weight='balanced',
@@ -1261,7 +1274,7 @@ class ExpertFakeNewsDetector:
             fit=False,
         )
 
-        # Prédiction avec seuil ajustable (défaut: 0.45)
+        # Prédiction avec seuil ajustable (défaut: 0.44)
         y_proba = self.model.predict_proba(X)
         scores = y_proba[:, 0]  # P(Fiable)
         y_pred = (scores < self.threshold).astype(int)  # SUSPECT si P(Fiable) < seuil

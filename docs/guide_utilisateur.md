@@ -7,7 +7,7 @@
 
 Thumalien est un systeme d'analyse automatisee de contenus textuels pour la detection de fake news. Il traite les posts publies sur le reseau social Bluesky en francais et en anglais, et fournit pour chaque texte un score de credibilite, une emotion dominante et une classification fiable/suspect.
 
-Le systeme repose sur un pipeline NLP bilingue (V1.5) combinant des features TF-IDF, linguistiques et emotionnelles pour atteindre un F1-score superieur a 0.98 dans les deux langues.
+Le systeme repose sur un pipeline NLP bilingue (V2) combinant des features TF-IDF, linguistiques et emotionnelles, entraine sur 145 703 textes (articles + tweets) pour atteindre un F1-score de 0.90 avec une calibration optimisee pour les textes courts (seuil 0.44).
 
 ---
 
@@ -62,12 +62,12 @@ projet_etude/
 |   |-- emotion_label_encoder_bilingual.pickle
 |-- notebooks/
 |   |-- 00_Audit_Qualite_Donnees.ipynb
-|   |-- 01_Exploration_Bluesky.ipynb
 |   |-- 02_Analyse_Emotions_MLP.ipynb
 |   |-- 03_Mise_a_jour_Quotidienne.ipynb
-|   |-- 04_Modele_Avance_RoBERTa.ipynb
 |   |-- 05_Detection_Expert_Bilingue.ipynb
 |   |-- 06_Documentation_Technique.ipynb
+|   |-- 07_Analyse_Modele_GridSearch.ipynb
+|   |-- 08_Integration_Datasets_V2.ipynb
 |-- src/
 |   |-- pipeline/
 |   |   |-- expert_detector.py  # Pipeline complet (classes principales)
@@ -153,7 +153,7 @@ import pandas as pd
 
 # Charger le modele
 detector = ExpertFakeNewsDetector(model_dir='models', use_emotions=True)
-detector.load(suffix='expert')
+detector.load(suffix='expert_v2' if os.path.exists('models/model_expert_v2.pkl') else 'expert')
 
 # Analyser des textes
 textes = pd.Series([
@@ -203,13 +203,13 @@ Les notebooks documentent chaque etape du projet et sont executes sequentielleme
 
 | Notebook | Description | Sortie |
 |----------|-------------|--------|
-| 00 | Audit qualite des donnees d'entrainement | Statistiques, doublons, distributions |
-| 01 | Exploration des posts Bluesky collectes | Visualisations, wordclouds, distributions temporelles |
+| 00 | Audit qualite des donnees d'entrainement | Statistiques, biais Reuters, distributions |
 | 02 | Entrainement du MLP emotions bilingue (PyTorch) | `emotion_bilingual.pt` + vocabulaire + label encoder |
 | 03 | Pipeline de mise a jour quotidienne | Collecte + inference sur posts recents |
-| 04 | Prototype RoBERTa avance | Exploration fine-tuning (non deploye) |
 | 05 | Pipeline expert bilingue + ablation study (7 conditions) | `model_expert.pkl` + `tfidf_expert.pkl` + metriques |
 | 06 | Documentation technique complete | Limites, roadmap, PRA/PCA, Green IT, conformite |
+| 07 | Analyse du modele + GridSearch (36 combinaisons) | Feature importance, learning curves, optimisation |
+| 08 | Integration de datasets sociaux (V2) | `model_expert_v2.pkl`, adaptation textes courts |
 
 **Pour re-executer un notebook** :
 ```bash
@@ -277,7 +277,7 @@ R : Executez le notebook 05 (`05_Detection_Expert_Bilingue.ipynb`). Il recharge 
 R : Le modele est entraine sur des articles de presse et peut mal generaliser sur des textes courts ou atypiques (posts de 10 mots, memes, satire). Le score doit etre interprete comme un indicateur, pas comme un verdict. Consultez la section "Limites" du notebook 06.
 
 **Q : Puis-je ajouter d'autres langues ?**
-R : La V1.5 supporte uniquement le francais et l'anglais. Les textes dans d'autres langues sont routes vers le pipeline anglais par defaut. La V2 (sentence-transformers multilingue) etendra le support a 50+ langues.
+R : La V2 supporte uniquement le francais et l'anglais. Les textes dans d'autres langues sont routes vers le pipeline anglais par defaut. La V3 (sentence-transformers multilingue) etendra le support a 50+ langues.
 
 **Q : Quel est le cout carbone d'une prediction ?**
 R : Une prediction sur un batch de 1 000 textes emet moins de 0.001 g de CO2. L'entrainement complet emet environ 0.01 g de CO2 (moins qu'un email).
@@ -292,4 +292,4 @@ R : Une prediction sur un batch de 1 000 textes emet moins de 0.001 g de CO2. L'
 
 ---
 
-*Thumalien v1.5 — Pipeline bilingue FR/EN — Mastere Big Data, Sup de Vinci*
+*Thumalien V2 — Pipeline bilingue FR/EN — Master Big Data, Sup de Vinci*

@@ -1,0 +1,12 @@
+.env
+.git/
+.gitignore
+.dockerignore
+data/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+venv/
