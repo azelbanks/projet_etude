@@ -61,7 +61,8 @@ def get_mongo_collection(
         candidates.append(mongo_uri_env)
 
     if mongo_user and mongo_password:
-        auth_prefix = f"{mongo_user}:{mongo_password}@"
+        from urllib.parse import quote_plus
+        auth_prefix = f"{quote_plus(mongo_user)}:{quote_plus(mongo_password)}@"
         candidates.append(f"mongodb://{auth_prefix}localhost:27017/")
         candidates.append(f"mongodb://{auth_prefix}mongodb:27017/")
     else:
