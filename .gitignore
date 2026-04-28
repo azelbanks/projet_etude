@@ -15,6 +15,13 @@ data/
 *.xlsx
 *.pkl
 
+# Large model files (> 100MB, GitHub limit)
+models/camembert_best.pt
+models/camembert_fr.pt
+models/camembert_fr_v2.pt
+models/roberta_en.pt
+models/roberta_en_v2.pt
+
 # Jupyter
 .ipynb_checkpoints/
 
