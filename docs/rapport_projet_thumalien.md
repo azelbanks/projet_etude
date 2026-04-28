@@ -7,8 +7,15 @@
 
 ---
 
+## Resume
+
+Ce rapport presente Thumalien, un systeme de detection de fake news sur le reseau social Bluesky. Le pipeline NLP bilingue (FR/EN) combine une vectorisation TF-IDF, 12 features linguistiques et un modele d'emotions (MLP PyTorch, 7 classes) dans un classifieur LogisticRegression. Entraine sur 145 703 textes issus de 6 datasets (articles de presse et tweets), le modele V2 atteint un F1-score de 0.90 sur le jeu de test et classe 73.4% des posts Bluesky reels comme fiables (contre 23% pour la V1.5), grace a l'integration de datasets de textes courts et a un seuil de decision calibre a 0.44. L'ensemble du systeme (collecte, stockage MongoDB, inference, dashboard Streamlit) est conteneurise via Docker Compose, avec un suivi de l'empreinte carbone par CodeCarbon (0.55 g CO2 au total).
+
+---
+
 ## Table des matieres
 
+0. [Resume](#resume)
 1. [Presentation du projet](#1-presentation-du-projet)
 2. [Architecture technique](#2-architecture-technique)
 3. [Phase 1 — Collecte et stockage des donnees](#3-phase-1--collecte-et-stockage-des-donnees)
@@ -23,6 +30,8 @@
 12. [Bilan carbone (Green IT)](#12-bilan-carbone-green-it)
 13. [Etat actuel du projet](#13-etat-actuel-du-projet)
 14. [Limites et perspectives](#14-limites-et-perspectives)
+15. [Conclusion](#15-conclusion)
+16. [References](#16-references)
 
 ---
 
@@ -63,7 +72,7 @@ Le projet Thumalien est compose de 4 briques :
 
 ### Pourquoi pas de deep learning pour la detection de fake news ?
 
-Un prototype RoBERTa a ete explore (notebook 04) mais abandonne pour plusieurs raisons :
+Un prototype RoBERTa a ete explore mais abandonne pour plusieurs raisons :
 - **Temps d'entrainement** : plusieurs heures sur GPU vs 6 minutes pour le pipeline LogReg
 - **Interpretabilite** : LogReg permet d'expliquer quels mots et features influencent la decision
 - **Performance comparable** : le pipeline expert atteint F1=0.90, suffisant pour une premiere version
@@ -74,7 +83,7 @@ Un prototype RoBERTa a ete explore (notebook 04) mais abandonne pour plusieurs r
 
 ## 3. Phase 1 — Collecte et stockage des donnees
 
-### Notebooks concernes : 01, 03
+### Notebooks concernes : 03
 
 ### Fonctionnement du collecteur
 
@@ -113,8 +122,10 @@ Nous avons cree un nettoyage systematique qui :
 1. **Supprime les prefixes d'agences** : `CITY (Reuters) -`, `CITY (AP) -`, `CITY (AFP) -`
 2. **Supprime les attributions dans le corps** : `(Reuters)`, `(AP)`, `(AFP)`
 3. **Supprime les bylines** : `Reporting by...`, `Editing by...`, `Additional reporting...`
-4. **Nettoyage ML standard** : passage en minuscules, suppression des URLs et mentions, normalisation des hashtags, suppression de la ponctuation speciale
-5. **Filtre de longueur** : suppression des textes de moins de 20 mots apres nettoyage (pour les articles), 5 mots pour les textes sociaux
+4. **Suppression des mentions d'agences dans le corps** : les mots "reuters", "associated press", "agence france presse" sont supprimes meme lorsqu'ils apparaissent dans le texte (pas seulement en prefixe)
+5. **Suppression des annees artefacts** : les annees 2015-2020, correlees artificiellement aux labels dans les datasets d'entrainement, sont supprimees pour eviter que le modele apprenne des signaux temporels non generalisables
+6. **Nettoyage ML standard** : passage en minuscules, suppression des URLs et mentions, normalisation des hashtags, suppression de la ponctuation speciale
+7. **Filtre de longueur** : suppression des textes de moins de 20 mots apres nettoyage (pour les articles), 5 mots pour les textes sociaux
 
 ### Pourquoi ce choix ?
 
@@ -170,6 +181,11 @@ Le projet a initialement utilise TensorFlow/Keras, mais nous avons migre vers Py
 - Entrainement en quelques minutes vs heures pour un Transformer
 - Le modele sert de **feature extractor** (7 probabilites) pour le pipeline principal, pas de prediction autonome
 
+### Ameliorations apportees
+
+- **Class weights** : ponderation inversement proportionnelle a la frequence de chaque classe dans `CrossEntropyLoss`, pour compenser le desequilibre (joie=8066 vs degout=1400 dans le train set)
+- **Early stopping** : le modele est sauvegarde au meilleur epoch (val_loss minimale) avec une patience de 5 epochs, au lieu d'utiliser les poids du dernier epoch — cela evite l'overfitting observe initialement (train acc 93% vs val acc 71%)
+
 ---
 
 ## 6. Phase 4 — Pipeline expert V1.5
@@ -196,8 +212,8 @@ Texte brut
 | Parametre | Valeur | Pourquoi |
 |-----------|--------|----------|
 | `max_features=30000` | 30 000 mots | Vocabulaire bilingue FR+EN necessitant un espace plus grand |
-| `ngram_range=(1,3)` | Uni/bi/trigrammes | Capture "fake news", "breaking news", "nouvel ordre mondial" |
-| `min_df=3` | Min 3 documents | Elimine les mots trop rares (typos, noms propres uniques) |
+| `ngram_range=(1,2)` | Uni/bigrammes | Capture "fake news", "breaking news" tout en reduisant la dimensionnalite (optimise par GridSearch) |
+| `min_df=5` | Min 5 documents | Elimine les mots trop rares, seuil optimise par GridSearch (meilleur F1 que min_df=3) |
 | `max_df=0.95` | Max 95% des docs | Elimine les mots trop frequents (stop words implicites) |
 | `sublinear_tf=True` | TF logarithmique | `1 + log(TF)` au lieu de `TF` brut, evite la domination des mots tres frequents |
 | `strip_accents=None` | Conserver les accents | En francais, "ou"/"ou" et "a"/"a" ont des sens differents |
@@ -250,7 +266,7 @@ LogReg a ete choisi pour son **interpretabilite** (on peut expliquer pourquoi un
 
 ```python
 LogisticRegression(
-    C=1.0,           # Force de regularisation (1.0 = equilibre)
+    C=5.0,           # Force de regularisation optimisee par GridSearch (plus permissive)
     max_iter=5000,   # Iterations max de l'optimiseur (voir section 10)
     solver='lbfgs',  # Algorithme d'optimisation quasi-newtonien
     class_weight='balanced',  # Ponderation inversement proportionnelle a la frequence
@@ -298,7 +314,7 @@ Nous avons teste **36 combinaisons** de parametres :
 | `ngram_range` | (1,2), (1,3) |
 | `C` | 0.5, 1.0, 5.0 |
 
-**Resultat** : le meilleur combo (max_features=30000, min_df=5, C=5.0) atteignait F1=0.9907, une amelioration marginale (+0.5%) par rapport aux parametres par defaut. Les parametres actuels sont quasi-optimaux.
+**Resultat** : le meilleur combo (max_features=30000, min_df=5, C=5.0, ngram=(1,2)) atteignait F1=0.9907, une amelioration de +0.69% par rapport aux parametres initiaux. Ces hyperparametres optimises ont ete appliques au pipeline de production.
 
 ### Adaptation aux textes courts
 
@@ -551,7 +567,7 @@ Le pipeline est extremement econome grace au choix d'un modele leger (LogReg) pl
 | Holdout F1 (SUSPECT) | 0.90 |
 | Bluesky % fiable | 73.4% |
 | Empreinte CO2 totale | 0.55 g |
-| Notebooks | 9 (00 a 08) |
+| Notebooks | 7 (00, 02, 03, 05, 06, 07, 08) |
 | Commits Git | 33 |
 
 ### Historique des versions
@@ -585,3 +601,35 @@ Le pipeline est extremement econome grace au choix d'un modele leger (LogReg) pl
 3. **Detection multimodale** : integrer les images et liens partages dans les posts pour enrichir la detection.
 
 4. **API temps reel** : exposer le modele via une API REST (FastAPI) pour permettre une integration avec d'autres outils de veille.
+
+---
+
+## 15. Conclusion
+
+Ce projet a permis de concevoir et deployer un pipeline NLP complet de detection de fake news sur Bluesky, de la collecte des donnees a la visualisation des resultats. L'approche iterative — de la V1.0 biaisee par les marqueurs Reuters a la V2 calibree sur des textes courts — illustre les defis concrets du Machine Learning applique : le data leakage, le domain shift entre articles longs et posts sociaux, et la necessite de calibrer finement les seuils de decision.
+
+Le choix d'un modele interpretable (LogisticRegression + TF-IDF) plutot qu'un Transformer s'est revele pertinent pour un projet academique : il permet d'expliquer chaque prediction, d'analyser les features discriminantes, et de maintenir une empreinte carbone negligeable (0.55 g CO2). L'etude d'ablation en 7 conditions a demontre la contribution de chaque composant et valide le pipeline bilingue.
+
+Les principales contributions de ce travail sont : (1) la mise en evidence et la correction du biais Reuters dans le dataset ISOT, (2) l'integration de 3 datasets sociaux pour reduire le domain shift (de 23% a 73.4% de posts fiables sur Bluesky), et (3) une calibration du seuil de decision documentee et reproductible.
+
+Les limites identifiees — F1 de 0.80 sur les textes courts, biais thematiques residuels, absence de verification factuelle — tracent la voie pour une V3 basee sur des embeddings semantiques (sentence-transformers), qui permettrait de mieux capturer le sens des textes independamment de leur longueur.
+
+---
+
+## 16. References
+
+1. Ahmed, H., Traore, I., & Saad, S. (2017). *Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques*. ISOT Fake News Dataset. University of Victoria.
+
+2. Shu, K., Mahudeswaran, D., Wang, S., Lee, D., & Liu, H. (2020). *FakeNewsNet: A Data Repository with News Content, Social Context, and Spatiotemporal Information for Studying Fake News on Social Media*. Big Data, 8(3), 171-188.
+
+3. Patwa, P., Sharma, S., Pykl, S., et al. (2021). *Fighting an Infodemic: COVID-19 Fake News Dataset*. CONSTRAINT 2021, AAAI Workshop.
+
+4. Castelo, S., Desmarais, T., Carpentier, R., et al. (2019). *Credibility Corpus: A Dataset of Tweets Labeled for Credibility*. Zenodo.
+
+5. Pedregosa, F., Varoquaux, G., Gramfort, A., et al. (2011). *Scikit-learn: Machine Learning in Python*. Journal of Machine Learning Research, 12, 2825-2830.
+
+6. Paszke, A., Gross, S., Massa, F., et al. (2019). *PyTorch: An Imperative Style, High-Performance Deep Learning Library*. NeurIPS.
+
+7. Schmidt, V., Goyal, K., Joshi, A., et al. (2021). *CodeCarbon: Estimate and Track Carbon Emissions from Machine Learning Computing*. GitHub.
+
+8. AT Protocol (2024). *Authenticated Transfer Protocol — Bluesky*. https://atproto.com/

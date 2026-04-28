@@ -1,33 +1,39 @@
-# 🕵️ Thumalien : Social Media Intelligence & AI Monitor
+# Thumalien — Social Media Intelligence & AI Monitor
 
-![Python](https://img.shields.io/badge/Python-3.9-blue?style=for-the-badge&logo=python)
+![Python](https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb)
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=for-the-badge&logo=streamlit)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-Deep%20Learning-FF6F00?style=for-the-badge&logo=tensorflow)
+![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-EE4C2C?style=for-the-badge&logo=pytorch)
 
-## 📖 Description du Projet
+## Description du Projet
 
-**Thumalien** est une solution complète de surveillance et d'analyse des réseaux sociaux (Bluesky) en temps réel. Le projet intègre un pipeline Data Engineering complet et deux modèles d'Intelligence Artificielle pour qualifier l'information.
+**Thumalien** est une solution complete de surveillance et d'analyse des reseaux sociaux (Bluesky) en temps reel. Le projet integre un pipeline Data Engineering complet et deux modeles d'Intelligence Artificielle pour qualifier l'information.
 
-L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et d'analyser l'**ambiance émotionnelle** des discussions en ligne.
+L'objectif est de detecter les potentiels signaux faibles, les **Fake News** et d'analyser l'**ambiance emotionnelle** des discussions en ligne.
 
-### 🚀 Fonctionnalités Clés
-* **Collecte en temps réel :** Ingestion continue des posts Bluesky via Websocket.
-* **Détection de Fake News :** IA entraînée (Régression Logistique + TF-IDF) pour évaluer la crédibilité (Score 0 à 1).
-* **Analyse Émotionnelle (Deep Learning) :** Réseau de neurones (MLP/Keras) classifiant les textes selon 6 émotions (Joie, Tristesse, Colère, Peur, Amour, Surprise).
-* **Dashboard Interactif :** Visualisation des données et KPI en temps réel via Streamlit.
+### Fonctionnalites Cles
+* **Collecte en temps reel :** Ingestion continue des posts Bluesky via l'API AT Protocol.
+* **Detection de Fake News :** Pipeline NLP bilingue FR/EN (Regression Logistique + TF-IDF + 12 features linguistiques) pour evaluer la credibilite (Score 0 a 1).
+* **Analyse Emotionnelle (Deep Learning) :** Reseau de neurones MLP (PyTorch) classifiant les textes selon 7 emotions (Colere, Degout, Joie, Neutre, Peur, Surprise, Tristesse).
+* **Dashboard Interactif :** Visualisation des donnees et KPI en temps reel via Streamlit.
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon.
+
+### Metriques cles (V2)
+* **188 553 posts** collectes depuis decembre 2025
+* **145 703 textes** d'entrainement (6 datasets, FR+EN)
+* **F1-score** : 0.90 (holdout), seuil de decision : 0.44
+* **73.4%** des posts Bluesky classes fiables (vs 23% en V1.5)
 
 ---
 
-## 🏗️ Architecture Technique
+## Architecture Technique
 
-Le projet repose sur une architecture micro-services conteneurisée avec Docker.
+Le projet repose sur une architecture micro-services conteneurisee avec Docker.
 
 ```mermaid
 graph LR
-    A[📡 Bluesky Network] -->|Stream| B(Container: Collector)
+    A[Bluesky Network] -->|AT Protocol| B(Container: Collector)
     B -->|JSON| C[(Container: MongoDB)]
     D[Container: Jupyter/AI] -->|Training & Inference| C
     E[Container: Streamlit App] -->|Read & Visualize| C

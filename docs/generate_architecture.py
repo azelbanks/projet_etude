@@ -53,18 +53,20 @@ def section_label(x, y, text, color=C_GRAY):
 
 
 # ==== TITLE ====
-ax.text(8, 10.6, 'THUMALIEN — Architecture Pipeline V1.5',
+ax.text(8, 10.6, 'THUMALIEN — Architecture Pipeline V2',
         ha='center', va='center', fontsize=18, fontweight='bold', color=C_DARK,
         family='sans-serif')
-ax.text(8, 10.25, 'Detection de Fake News Bilingue FR/EN',
+ax.text(8, 10.25, 'Detection de Fake News Bilingue FR/EN — Seuil 0.44',
         ha='center', va='center', fontsize=11, color=C_GRAY)
 
 # ==== ROW 1: Data Sources ====
 section_label(3, 9.8, 'SOURCES')
-box(0.5, 9.0, 2.8, 0.7, 'Bluesky API', 'AT Protocol', color='#0066FF')
-box(4.2, 9.0, 2.8, 0.7, 'ISOT Fake News', '44 898 articles EN', color='#0066FF')
-box(7.9, 9.0, 2.8, 0.7, 'Kaggle FR', '9 494 articles FR', color='#0066FF')
-box(11.6, 9.0, 2.8, 0.7, 'Emotions Dataset', '25 800 textes FR+EN', color='#0066FF')
+box(0.3, 9.0, 2.2, 0.7, 'Bluesky API', 'AT Protocol', color='#0066FF')
+box(2.7, 9.0, 2.2, 0.7, 'ISOT Fake News', '44 898 articles EN', color='#0066FF')
+box(5.1, 9.0, 2.2, 0.7, 'Kaggle FR', '9 494 articles FR', color='#0066FF')
+box(7.5, 9.0, 2.2, 0.7, 'FakeNewsNet', '22 596 titres EN', color='#0066FF')
+box(9.9, 9.0, 2.2, 0.7, 'CONSTRAINT', '8 559 tweets EN', color='#0066FF')
+box(12.3, 9.0, 2.2, 0.7, 'Credibility', '9 841 tweets FR+EN', color='#0066FF')
 
 # ==== ROW 2: Storage ====
 arrow(1.9, 9.0, 4.5, 8.35)
@@ -117,7 +119,7 @@ box(8.5, 2.2, 5.0, 0.6, 'Dashboard Streamlit', 'Glassmorphism dark UI', color='#
 
 # ==== ROW 7: Details ====
 arrow(2.5, 6.3, 5.5, 2.85)  # langdetect -> prediction
-section_label(5.5, 1.75, 'FIABLE (score > 0.5) / SUSPECT (score < 0.5)')
+section_label(5.5, 1.75, 'FIABLE (score >= 0.44) / SUSPECT (score < 0.44)')
 section_label(11, 1.75, 'Vue Globale | Analyse temps reel | Metriques')
 
 # ==== Legend ====
