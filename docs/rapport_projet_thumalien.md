@@ -29,9 +29,10 @@ Ce rapport presente Thumalien, un systeme de detection de fake news sur le resea
 11. [Dashboard Streamlit](#11-dashboard-streamlit)
 12. [Bilan carbone (Green IT)](#12-bilan-carbone-green-it)
 13. [Etat actuel du projet](#13-etat-actuel-du-projet)
-14. [Limites et perspectives](#14-limites-et-perspectives)
-15. [Conclusion](#15-conclusion)
-16. [References](#16-references)
+14. [Evaluation sur Gold Test Set](#14-evaluation-sur-gold-test-set-200-posts-bluesky)
+15. [Limites et perspectives](#15-limites-et-perspectives)
+16. [Conclusion](#16-conclusion)
+17. [References](#17-references)
 
 ---
 
@@ -578,9 +579,51 @@ Le pipeline est extremement econome grace au choix d'un modele leger (LogReg) pl
 
 ---
 
-## 14. Limites et perspectives
+## 14. Evaluation sur Gold Test Set (200 posts Bluesky)
 
-### Limites actuelles
+### Protocole
+
+Pour evaluer la performance reelle du pipeline sur des donnees Bluesky, un gold test set de 200 posts a ete constitue :
+- **200 posts** selectionnes par stratification (langue, longueur, prediction du modele)
+- **2 annotateurs** independants avec consignes detaillees
+- **Resolution des desaccords** (4 cas sur 200)
+- **Accord inter-annotateur** : kappa de Cohen = 0.808 (substantiel)
+
+### Resultats
+
+| Metrique | Synthetique (holdout) | Gold (reel) |
+|----------|:---------------------:|:-----------:|
+| Accuracy | 0.93 | 0.685 |
+| F1 macro | 0.913 | 0.448 |
+| F1 fiable | ~0.95 | 0.810 |
+| F1 suspect | ~0.90 | 0.087 |
+| % fiable | 73.4% | 70.0% |
+
+### Matrice de confusion
+
+|  | Pred fiable | Pred suspect |
+|--|:-----------:|:------------:|
+| Gold fiable (191) | 134 | 57 |
+| Gold suspect (9) | 6 | 3 |
+
+### Interpretation
+
+Le modele classe **57 posts fiables comme suspects** (30% de faux positifs). L'analyse des erreurs revele que ces posts traitent de sujets sensibles (vaccins, climat, politique) mais sont factuels et sources. Le modele detecte le **sujet** (mots-cles correles a la desinformation dans les datasets d'entrainement) et non la **desinformation** elle-meme.
+
+La distribution des scores le confirme : le score moyen des posts fiables (0.615) est quasi identique a celui des posts suspects (0.583). Le modele ne discrimine pas les deux classes sur des donnees reelles.
+
+### Lecons apprises
+
+1. Les metriques sur donnees synthetiques (F1=0.913) sont **mecaniquement gonflees** par le biais thematique des datasets
+2. Un classifieur fonde sur le champ lexical (TF-IDF) apprend a detecter le sujet, pas la veracite
+3. Le gold test set est indispensable pour mesurer la performance reelle en production
+4. Les pistes d'amelioration passent par des features basees sur le registre enonciatif (presence de sources, marqueurs d'opinion) plutot que sur les mots-cles
+
+---
+
+## 15. Limites et perspectives
+
+### Limites actuelles (confirmees par le gold test set)
 
 1. **F1 sur textes courts (0.80)** : le modele TF-IDF perd beaucoup d'information sur les textes de < 30 mots. Les n-grammes deviennent rares et les features linguistiques sont peu discriminantes sur si peu de texte.
 
@@ -602,7 +645,7 @@ Le pipeline est extremement econome grace au choix d'un modele leger (LogReg) pl
 
 ---
 
-## 15. Conclusion
+## 16. Conclusion
 
 Ce projet a permis de concevoir et deployer un pipeline NLP complet de detection de fake news sur Bluesky, de la collecte des donnees a la visualisation des resultats. L'approche iterative — de la V1.0 biaisee par les marqueurs Reuters a la V2 calibree sur des textes courts — illustre les defis concrets du Machine Learning applique : le data leakage, le domain shift entre articles longs et posts sociaux, et la necessite de calibrer finement les seuils de decision.
 
@@ -614,7 +657,7 @@ Les limites identifiees — F1 de 0.80 sur les textes courts, biais thematiques 
 
 ---
 
-## 16. References
+## 17. References
 
 1. Ahmed, H., Traore, I., & Saad, S. (2017). *Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques*. ISOT Fake News Dataset. University of Victoria.
 

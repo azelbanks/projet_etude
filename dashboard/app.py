@@ -234,7 +234,7 @@ def _normalize_mongo_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=60)
-def _fetch_mongo_data() -> tuple[list[dict], int] | None:
+def _fetch_mongo_data():
     """Fetch recent posts and total count from MongoDB via mongo_aggregations.
 
     Returns (docs, total_count) or None if MongoDB is unavailable.
@@ -256,7 +256,7 @@ def _fetch_mongo_data() -> tuple[list[dict], int] | None:
     return docs, n_total
 
 
-def get_data() -> tuple[pd.DataFrame, bool]:
+def get_data():
     """Tente MongoDB via mongo_aggregations, sinon retourne les donnees demo."""
     result = _fetch_mongo_data()
     if result is not None:
