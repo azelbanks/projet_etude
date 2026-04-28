@@ -121,15 +121,28 @@ class DatasetCleaner:
             text = re.sub(pattern, '', text, flags=re.IGNORECASE)
         return text.strip()
 
-    @staticmethod
-    def clean_for_ml(text: str) -> str:
-        """Nettoyage ML : normalisation, URLs, mentions."""
+    # Termes d'agences/artefacts à supprimer du corps du texte (après lowercase)
+    BODY_AGENCY_TERMS = [
+        r'\breuters\b', r'\bassociated press\b', r'\bagence france presse\b',
+    ]
+
+    # Années d'artefact temporel (corrélées artificiellement aux labels)
+    ARTIFACT_YEAR_PATTERN = r'\b(201[5-9]|2020)\b'
+
+    @classmethod
+    def clean_for_ml(cls, text: str) -> str:
+        """Nettoyage ML : normalisation, URLs, mentions, biais résiduels."""
         if not isinstance(text, str):
             return ""
         text = text.lower()
         text = re.sub(r'http\S+|www\.\S+', ' ', text)
         text = re.sub(r'@\w+', ' ', text)
         text = re.sub(r'#(\w+)', r'\1', text)
+        # Suppression des mentions d'agences dans le corps du texte
+        for pattern in cls.BODY_AGENCY_TERMS:
+            text = re.sub(pattern, ' ', text)
+        # Suppression des années artefacts (2015-2020)
+        text = re.sub(cls.ARTIFACT_YEAR_PATTERN, ' ', text)
         text = re.sub(r'[^\w\sàâäéèêëïîôùûüÿçœæ]', ' ', text)
         text = re.sub(r'\s+', ' ', text).strip()
         return text
@@ -196,9 +209,6 @@ class DatasetCleaner:
         french_oversample: int = 3,
         social_oversample: int = 2,
         en_subsample: Optional[int] = None,
-        fr_short_augment: bool = False,
-        fr_short_oversample: int = 3,
-        fr_social_path: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Crée un dataset bilingue en combinant les données anglaises nettoyées,
@@ -218,9 +228,6 @@ class DatasetCleaner:
         french_oversample : Facteur d'oversampling pour les données FR (défaut: 3)
         social_oversample : Facteur d'oversampling pour les textes sociaux (défaut: 2)
         en_subsample : Si défini, sous-échantillonne les données EN
-        fr_short_augment : Si True, génère des textes courts FR à partir des articles (V4)
-        fr_short_oversample : Facteur d'oversampling pour les textes courts FR générés (défaut: 3)
-        fr_social_path : Chemin vers CSV de posts FR sociaux (text, label) — dataset synthétique
 
         Returns
         -------
@@ -320,49 +327,10 @@ class DatasetCleaner:
                 (df_social['language'] == 'fr').sum(),
             )
 
-        # 4b. Dataset FR social media synthétique (V5)
-        df_fr_social = None
-        if fr_social_path and os.path.exists(fr_social_path):
-            df_frs = pd.read_csv(fr_social_path)
-            df_frs = df_frs.rename(columns={'text': 'text_original'})
-            df_frs['text_debiased'] = df_frs['text_original']
-            df_frs['text_clean'] = df_frs['text_original'].apply(cls.clean_for_ml)
-            df_frs = df_frs[df_frs['text_clean'].str.split().str.len() >= social_remove_short]
-            df_frs['language'] = 'fr'
-            df_frs = df_frs[['text_original', 'text_debiased', 'text_clean', 'label', 'language']]
-            df_frs = df_frs.reset_index(drop=True)
-            df_fr_social = df_frs
-            logger.info(
-                "FR Social synthétique chargé : %d posts | Distribution : %s",
-                len(df_fr_social),
-                df_fr_social['label'].value_counts().to_dict(),
-            )
-
-        # 4c. Augmentation FR courte (V4) — génère des textes courts FR à partir
-        # des articles longs pour combler le manque de données FR type Bluesky
-        df_fr_short = None
-        if fr_short_augment and df_fr is not None:
-            # Utiliser le df_fr AVANT oversampling (prendre les données uniques)
-            n_orig = len(df_fr) // french_oversample if french_oversample > 1 else len(df_fr)
-            df_fr_unique = df_fr.head(n_orig)
-            df_fr_short = cls.generate_fr_short_augmentation(df_fr_unique)
-            if len(df_fr_short) > 0 and fr_short_oversample > 1:
-                df_fr_short = pd.concat(
-                    [df_fr_short] * fr_short_oversample, ignore_index=True
-                )
-                logger.info(
-                    "Augmentation FR courte oversamplée x%d : %d textes",
-                    fr_short_oversample, len(df_fr_short),
-                )
-
         # 5. Concat final + shuffle
         parts = [df_en, df_fr]
         if df_social is not None:
             parts.append(df_social)
-        if df_fr_short is not None and len(df_fr_short) > 0:
-            parts.append(df_fr_short)
-        if df_fr_social is not None and len(df_fr_social) > 0:
-            parts.append(df_fr_social)
         df = pd.concat(parts, ignore_index=True)
         df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
@@ -1195,13 +1163,13 @@ class ExpertFakeNewsDetector:
 
             # TF-IDF optimisé (paramètres adaptés en mode bilingue)
             max_features = 30000 if bilingual else 20000
-            min_df = 3 if bilingual else 3
+            min_df = 5 if bilingual else 3
             # En mode bilingue, conserver les accents FR (sémantiques : "ou"/"où", "a"/"à")
             strip = None if bilingual else 'unicode'
 
             self.vectorizer = TfidfVectorizer(
                 max_features=max_features,
-                ngram_range=(1, 3),
+                ngram_range=(1, 2),
                 min_df=min_df,
                 max_df=0.95,
                 sublinear_tf=True,
@@ -1317,7 +1285,7 @@ class ExpertFakeNewsDetector:
     def _get_model(model_type: str):
         if model_type == 'logreg':
             return LogisticRegression(
-                C=1.0,
+                C=5.0,
                 max_iter=10000,
                 solver='lbfgs',
                 class_weight='balanced',
@@ -1339,7 +1307,7 @@ class ExpertFakeNewsDetector:
                     (
                         'lr',
                         LogisticRegression(
-                            C=1.0,
+                            C=5.0,
                             max_iter=2000,
                             solver='lbfgs',
                             class_weight='balanced',
