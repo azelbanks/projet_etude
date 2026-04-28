@@ -2,17 +2,21 @@
 Thumalien — Intelligence Command Center
 ========================================
 Dashboard Streamlit de detection de fake news bilingue FR/EN.
-Pipeline V5 : TF-IDF(30K) + 15 linguistiques + 7 emotions MLP PyTorch -> LogReg calibre.
-Ameliorations V5 : +10K posts FR sociaux synthetiques, 198K textes, FR ultra-court F1=0.90.
+Pipeline V7 : Ensemble hybride V5 (TF-IDF) + V6 (Style) + SHAP explicabilite.
+V5 : TF-IDF(30K) + 15 linguistiques + 7 emotions MLP PyTorch -> LogReg calibre.
+V6 : 28 features stylistiques + 7 emotions -> GradientBoosting (topic-agnostic).
+V7 : Meta-learner combinant scores V5 + V6 + signal de desaccord.
 """
 
 import os
 import sys
 import logging
+import re
 import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
+import joblib
 
 # ---------------------------------------------------------------------------
 #  MongoDB aggregation helpers (graceful fallback if unavailable)
@@ -29,6 +33,12 @@ try:
     _HAS_MONGO_AGG = True
 except ImportError:
     _HAS_MONGO_AGG = False
+
+try:
+    import shap
+    _HAS_SHAP = True
+except ImportError:
+    _HAS_SHAP = False
 
 # ---------------------------------------------------------------------------
 #  CSS glassmorphism + dark theme overrides
@@ -154,6 +164,296 @@ def load_pipeline():
     emo = EmotionFeatureExtractor(model_dir=model_dir)
     emo.load()
     return detector, emo, suffix
+
+
+# ---------------------------------------------------------------------------
+#  V6 Style Feature Extractor (topic-agnostic, 28 features)
+# ---------------------------------------------------------------------------
+
+class StyleFeatureExtractorV6:
+    """Extracteur de features stylistiques — topic-agnostic (28 features)."""
+
+    from pipeline.expert_detector import LinguisticFeatureExtractor as _LFE
+    SENSATIONALIST_EN = _LFE.SENSATIONALIST_EN
+    SENSATIONALIST_FR = _LFE.SENSATIONALIST_FR
+
+    CALL_TO_ACTION_FR = [
+        r'\b(partagez|diffusez|faites tourner|rt svp|a partager)\b',
+        r'\b(likez|abonnez|suivez|inscrivez)\b',
+        r'\b(signez la petition|mobilisons|reagissez)\b',
+        r'\b(avant (la )?censure|avant suppression|avant qu.?ils? suppriment)\b',
+    ]
+    CALL_TO_ACTION_EN = [
+        r'\b(share|retweet|spread the word|pass it on)\b',
+        r'\b(subscribe|follow|like|sign the petition)\b',
+        r'\b(before (they|it gets?) deleted?|before censored)\b',
+        r'\b(act now|do something|fight back|resist)\b',
+    ]
+    HEDGING_FR = [
+        r'\b(selon|d.?apr[e\u00e8]s|il para[i\u00ee]t que|il semblerait)\b',
+        r'\b(certains disent|on dit que|des sources)\b',
+        r'\b(apparemment|soi-?disant|pr[e\u00e9]tendument)\b',
+    ]
+    HEDGING_EN = [
+        r'\b(allegedly|reportedly|according to|sources say)\b',
+        r'\b(it is said|some say|rumor has it|unconfirmed)\b',
+        r'\b(supposedly|purportedly|claimed)\b',
+    ]
+    AUTHORITY_CLAIM_FR = [
+        r'\b(un (m[e\u00e9]decin|scientifique|expert|chercheur|professeur) (affirme|confirme|r[e\u00e9]v[e\u00e8]le))\b',
+        r'\b(etude (prouve|montre|confirme))\b',
+        r'\b(c.?est prouv[e\u00e9]|la science dit|les chiffres parlent)\b',
+    ]
+    AUTHORITY_CLAIM_EN = [
+        r'\b(doctor|scientist|expert|professor|researcher) (says|confirms|reveals)\b',
+        r'\b(study (proves|shows|confirms))\b',
+        r'\b(science says|the data shows|proven)\b',
+    ]
+    SOURCE_CITATION_PATTERNS = [
+        r'\b(reuters|afp|ap news|associated press)\b',
+        r'\b(selon (le |la |l.?)?[A-Z])',
+        r'\b(source[s]?\s*:)',
+        r'\b(d.?apr[e\u00e8]s (le |la |l.?)?[A-Z])',
+        r'\b(published in|peer.?reviewed|journal)\b',
+        r'\b(lib[e\u00e9]ration|le monde|figaro|bbc|cnn|nyt|washington post)\b',
+    ]
+
+    FEATURE_NAMES = [
+        'word_count', 'sentence_count', 'avg_sentence_length',
+        'avg_word_length', 'is_short_text', 'paragraph_count',
+        'exclamation_count', 'question_count', 'punct_density',
+        'ellipsis_count', 'repeated_punct_ratio', 'emoji_count',
+        'caps_ratio', 'all_caps_words_ratio', 'caps_lock_words_count',
+        'sensationalism_score', 'interpellation_score',
+        'call_to_action_score', 'hedging_score', 'authority_claim_score',
+        'has_url', 'has_source_citation', 'numeric_density',
+        'quote_count', 'named_entity_density',
+        'lexical_diversity', 'repeated_char_ratio', 'spelling_anomaly_score',
+    ]
+
+    FEATURE_LABELS_FR = {
+        'word_count': 'Nombre de mots',
+        'sentence_count': 'Nombre de phrases',
+        'avg_sentence_length': 'Longueur moy. phrases',
+        'avg_word_length': 'Longueur moy. mots',
+        'is_short_text': 'Texte court (<20 mots)',
+        'paragraph_count': 'Nombre de paragraphes',
+        'exclamation_count': 'Points d\'exclamation',
+        'question_count': 'Points d\'interrogation',
+        'punct_density': 'Densite ponctuation',
+        'ellipsis_count': 'Points de suspension',
+        'repeated_punct_ratio': 'Ponctuation repetee',
+        'emoji_count': 'Emojis',
+        'caps_ratio': 'Ratio majuscules',
+        'all_caps_words_ratio': 'Mots tout en MAJUSCULES',
+        'caps_lock_words_count': 'Nb mots CAPS LOCK',
+        'sensationalism_score': 'Sensationnalisme',
+        'interpellation_score': 'Interpellation',
+        'call_to_action_score': 'Appel a l\'action',
+        'hedging_score': 'Langage evasif',
+        'authority_claim_score': 'Appel a l\'autorite',
+        'has_url': 'Presence URL',
+        'has_source_citation': 'Citation de source',
+        'numeric_density': 'Densite numerique',
+        'quote_count': 'Citations/guillemets',
+        'named_entity_density': 'Densite entites nommees',
+        'lexical_diversity': 'Diversite lexicale (TTR)',
+        'repeated_char_ratio': 'Caracteres repetes',
+        'spelling_anomaly_score': 'Anomalies orthographiques',
+        'emo_anger': 'Emotion : Colere',
+        'emo_disgust': 'Emotion : Degout',
+        'emo_joy': 'Emotion : Joie',
+        'emo_neutral': 'Emotion : Neutre',
+        'emo_fear': 'Emotion : Peur',
+        'emo_surprise': 'Emotion : Surprise',
+        'emo_sadness': 'Emotion : Tristesse',
+    }
+
+    @classmethod
+    def extract(cls, texts) -> np.ndarray:
+        """Extraire 28 features stylistiques (sans emotions)."""
+        n = len(texts)
+        results = np.zeros((n, len(cls.FEATURE_NAMES)), dtype=np.float64)
+        for i, text in enumerate(texts):
+            text = str(text)
+            text_lower = text.lower()
+            words = text.split()
+            n_words = len(words) if words else 1
+            n_chars = len(text) if text else 1
+            alpha_chars = sum(c.isalpha() for c in text)
+
+            results[i, 0] = n_words
+            sentences = re.split(r'[.!?]+', text)
+            sentences = [s for s in sentences if s.strip()]
+            n_sentences = len(sentences) if sentences else 1
+            results[i, 1] = n_sentences
+            results[i, 2] = n_words / n_sentences
+            results[i, 3] = np.mean([len(w) for w in words]) if words else 0
+            results[i, 4] = 1.0 if n_words < 20 else 0.0
+            paragraphs = [p for p in text.split('\n') if p.strip()]
+            results[i, 5] = len(paragraphs)
+            results[i, 6] = text.count('!')
+            results[i, 7] = text.count('?')
+            results[i, 8] = sum(c in '!?.,;:\u2026' for c in text) / n_chars
+            results[i, 9] = text.count('...') + text.count('\u2026')
+            repeated = len(re.findall(r'([!?.])\1{1,}', text))
+            results[i, 10] = repeated / n_chars if n_chars > 0 else 0
+            emoji_count = len(re.findall(
+                r'[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF'
+                r'\U0001F680-\U0001F6FF\U0001F1E0-\U0001F1FF'
+                r'\U00002702-\U000027B0\U0001F900-\U0001F9FF'
+                r'\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF'
+                r'\U00002600-\U000026FF]', text))
+            results[i, 11] = emoji_count
+            results[i, 12] = sum(c.isupper() for c in text) / alpha_chars if alpha_chars > 0 else 0
+            caps_words = sum(1 for w in words if w.isupper() and len(w) > 1)
+            results[i, 13] = caps_words / n_words if n_words > 0 else 0
+            results[i, 14] = caps_words
+            sens_score = 0
+            for w in cls.SENSATIONALIST_EN | cls.SENSATIONALIST_FR:
+                if re.search(r'(?:^|\b|\s)' + re.escape(w) + r'(?:\b|\s|$)', text_lower):
+                    sens_score += 1
+            results[i, 15] = sens_score
+            interp_score = 0
+            for pat in (cls._LFE.INTERPELLATION_PATTERNS_FR + cls._LFE.INTERPELLATION_PATTERNS_EN):
+                if re.search(pat, text_lower):
+                    interp_score += 1
+            results[i, 16] = interp_score
+            cta_score = 0
+            for pat in cls.CALL_TO_ACTION_FR + cls.CALL_TO_ACTION_EN:
+                if re.search(pat, text_lower):
+                    cta_score += 1
+            results[i, 17] = cta_score
+            hedge_score = 0
+            for pat in cls.HEDGING_FR + cls.HEDGING_EN:
+                if re.search(pat, text_lower):
+                    hedge_score += 1
+            results[i, 18] = hedge_score
+            auth_score = 0
+            for pat in cls.AUTHORITY_CLAIM_FR + cls.AUTHORITY_CLAIM_EN:
+                if re.search(pat, text_lower):
+                    auth_score += 1
+            results[i, 19] = auth_score
+            results[i, 20] = 1.0 if re.search(r'http|www\.', text) else 0.0
+            source_score = 0
+            for pat in cls.SOURCE_CITATION_PATTERNS:
+                if re.search(pat, text_lower):
+                    source_score += 1
+            results[i, 21] = source_score
+            results[i, 22] = sum(c.isdigit() for c in text) / n_chars
+            results[i, 23] = text.count('"') + text.count('\u201c') + text.count('\u00ab')
+            if len(words) > 1:
+                ne_count = sum(1 for j, w in enumerate(words[1:], 1) if w[0].isupper() and w.isalpha())
+                results[i, 24] = ne_count / n_words
+            else:
+                results[i, 24] = 0
+            words_lower = [w.lower() for w in words]
+            results[i, 25] = len(set(words_lower)) / n_words if n_words > 0 else 0
+            repeated_chars = len(re.findall(r'(.)\1{2,}', text_lower))
+            results[i, 26] = repeated_chars / n_words if n_words > 0 else 0
+            common_short = {'je', 'tu', 'il', 'on', 'le', 'la', 'de', 'a', 'i', '\u00e0',
+                            'y', 'or', 'et', 'en', 'du', 'un', 'au', 'ne', 'se', 'me',
+                            'te', 'ce', 'ma', 'sa', 'ta', 'is', 'am', 'an', 'as', 'at',
+                            'be', 'by', 'do', 'go', 'he', 'if', 'in', 'it', 'me', 'my',
+                            'no', 'of', 'on', 'or', 'so', 'to', 'up', 'us', 'we'}
+            anomalous = sum(1 for w in words_lower if 1 <= len(w) <= 2 and w not in common_short)
+            results[i, 27] = anomalous / n_words if n_words > 0 else 0
+        return results
+
+
+# ---------------------------------------------------------------------------
+#  V6/V7 model loading
+# ---------------------------------------------------------------------------
+
+@st.cache_resource
+def load_v6_v7():
+    """Charge les modeles V6 (style) et V7 (meta-learner) si disponibles."""
+    model_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
+    v6_data, v7_data = None, None
+
+    v6_path = os.path.join(model_dir, 'model_style_v6.joblib')
+    if os.path.exists(v6_path):
+        v6_data = joblib.load(v6_path)
+
+    v7_path = os.path.join(model_dir, 'model_hybrid_v7.joblib')
+    if os.path.exists(v7_path):
+        v7_data = joblib.load(v7_path)
+
+    return v6_data, v7_data
+
+
+def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data):
+    """Calcule le score hybride V7 pour un texte unique.
+
+    Returns dict with score_v5, score_v6, score_v7, label_v7, shap_values, feature_names.
+    """
+    texts = pd.Series([text_input])
+
+    # V5 score
+    v5_result = detector.predict(texts)
+    score_v5 = float(v5_result['ai_score_credibility'].iloc[0])  # P(fiable)
+
+    # V6 score
+    v6_model = v6_data['model']
+    v6_scaler = v6_data['scaler']
+    v6_model_name = v6_data['model_name']
+
+    X_style = StyleFeatureExtractorV6.extract(texts)
+    try:
+        X_emo = emo.get_emotion_features([text_input])
+        X_all = np.hstack([X_style, X_emo])
+    except Exception:
+        X_all = X_style
+
+    if v6_model_name == 'LogReg':
+        X_input = v6_scaler.transform(X_all)
+    else:
+        X_input = X_all
+
+    score_v6 = float(v6_model.predict_proba(X_input)[:, 1][0])  # P(suspect)
+
+    # V7 meta-learner
+    disagreement = abs(score_v5 - (1 - score_v6))
+    interaction = score_v5 * score_v6
+
+    result = {
+        'score_v5': score_v5,
+        'score_v6': score_v6,
+        'disagreement': disagreement,
+        'X_input': X_input,
+        'shap_values': None,
+        'feature_names': None,
+    }
+
+    if v7_data is not None:
+        meta_model = v7_data['meta_model']
+        X_meta = np.array([[score_v5, score_v6, disagreement, interaction]])
+        score_v7 = float(meta_model.predict_proba(X_meta)[:, 1][0])
+        label_v7 = 'SUSPECT' if score_v7 >= 0.5 else 'FIABLE'
+        result['score_v7'] = score_v7
+        result['label_v7'] = label_v7
+    else:
+        optimal_th = 0.42
+        combined = score_v5 * (1 - score_v6)
+        result['score_v7'] = 1 - combined
+        result['label_v7'] = 'SUSPECT' if combined < optimal_th else 'FIABLE'
+
+    # SHAP explanation on V6
+    if _HAS_SHAP and v6_model_name in ('GradientBoosting', 'RandomForest'):
+        try:
+            explainer = shap.TreeExplainer(v6_model)
+            sv = explainer.shap_values(X_input)
+            all_names = StyleFeatureExtractorV6.FEATURE_NAMES + [
+                'emo_anger', 'emo_disgust', 'emo_joy', 'emo_neutral',
+                'emo_fear', 'emo_surprise', 'emo_sadness',
+            ]
+            result['shap_values'] = sv[0]  # single row
+            result['feature_names'] = all_names[:X_input.shape[1]]
+            result['feature_values'] = X_input[0]
+        except Exception:
+            pass
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -425,7 +725,7 @@ def footer():
     st.divider()
     st.markdown(
         '<div class="footer-text">'
-        'Thumalien v5.0 &bull; Pipeline bilingue FR/EN &bull; Seuil 0.44 &bull; '
+        'Thumalien v7.0 &bull; Ensemble hybride V5+V6+SHAP &bull; Seuil 0.44 &bull; '
         'WCAG 2.1 AA &bull; Descriptions textuelles sur toutes les visualisations'
         '</div>',
         unsafe_allow_html=True,
@@ -596,7 +896,7 @@ def page_overview(df, detector, emo):
 #  PAGE 2 : Analyse en temps reel
 # ===================================================================
 
-def page_realtime(detector, emo):
+def page_realtime(detector, emo, v6_data=None, v7_data=None):
     hero('Analyse en temps reel',
          'Soumettez un texte pour obtenir son profil de credibilite et son empreinte emotionnelle')
 
@@ -622,6 +922,11 @@ def page_realtime(detector, emo):
 
             # Explainability per-instance
             explanation = detector.explain_prediction(text_input)
+
+            # V7 hybrid analysis
+            v7_result = None
+            if v6_data is not None:
+                v7_result = predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data)
 
         st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
 
@@ -799,6 +1104,121 @@ def page_realtime(detector, emo):
                     "Contribution = coefficient du modele x valeur de la feature. "
                     "Positif pousse vers SUSPECT, negatif vers FIABLE."
                 )
+
+        # --- V7 Hybrid Score + SHAP Explanation ---
+        if v7_result is not None:
+            st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
+            st.subheader('Analyse hybride V7 (TF-IDF + Style)')
+
+            hc1, hc2, hc3, hc4 = st.columns(4)
+            hc1.markdown(
+                metric_card('📝', 'V5 (TF-IDF)', f'{v7_result["score_v5"]:.2f}', '#00D4FF'),
+                unsafe_allow_html=True,
+            )
+            hc2.markdown(
+                metric_card('🎨', 'V6 (Style)', f'{v7_result["score_v6"]:.2f}', '#FFD600'),
+                unsafe_allow_html=True,
+            )
+            v7_color = '#FF1744' if v7_result['label_v7'] == 'SUSPECT' else '#00E676'
+            hc3.markdown(
+                metric_card('🔗', 'V7 Hybride', f'{v7_result["score_v7"]:.2f}', v7_color),
+                unsafe_allow_html=True,
+            )
+            hc4.markdown(
+                metric_card('⚡', 'Desaccord V5/V6', f'{v7_result["disagreement"]:.2f}',
+                            '#FF9100' if v7_result['disagreement'] > 0.3 else '#00E676'),
+                unsafe_allow_html=True,
+            )
+
+            st.caption(
+                "V5 = score TF-IDF P(fiable). V6 = score style P(suspect). "
+                "V7 = meta-learner combinant V5+V6+desaccord. "
+                "Un desaccord eleve indique un conflit entre signal lexical et signal stylistique."
+            )
+
+            # SHAP waterfall chart
+            if v7_result.get('shap_values') is not None:
+                st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
+                st.subheader('Explication SHAP — Pourquoi ce score de style ?')
+
+                shap_vals = v7_result['shap_values']
+                feat_names = v7_result['feature_names']
+                feat_values = v7_result['feature_values']
+
+                # Top 12 features by |SHAP|
+                top_idx = np.argsort(np.abs(shap_vals))[::-1][:12]
+
+                bar_names = []
+                bar_shap = []
+                bar_colors = []
+                bar_hover = []
+                for idx in reversed(top_idx):
+                    fname = feat_names[idx]
+                    label_fr = StyleFeatureExtractorV6.FEATURE_LABELS_FR.get(fname, fname)
+                    bar_names.append(label_fr)
+                    bar_shap.append(shap_vals[idx])
+                    bar_colors.append('#FF1744' if shap_vals[idx] > 0 else '#00E676')
+                    bar_hover.append(f'{label_fr}<br>Valeur={feat_values[idx]:.3f}<br>SHAP={shap_vals[idx]:+.4f}')
+
+                fig_shap = go.Figure(go.Bar(
+                    y=bar_names,
+                    x=bar_shap,
+                    orientation='h',
+                    marker_color=bar_colors,
+                    hovertext=bar_hover,
+                    hoverinfo='text',
+                ))
+                fig_shap.update_layout(
+                    title=dict(
+                        text='Impact des features de style sur le score V6',
+                        x=0.5,
+                        font=dict(color='#E0E0E0', size=16),
+                    ),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#E0E0E0'),
+                    xaxis=dict(
+                        title='SHAP value (+ = suspect, - = fiable)',
+                        gridcolor='rgba(255,255,255,0.08)',
+                        zeroline=True,
+                        zerolinecolor='rgba(255,255,255,0.3)',
+                    ),
+                    yaxis=dict(gridcolor='rgba(255,255,255,0.08)'),
+                    margin=dict(t=60, b=40, l=180, r=20),
+                    height=max(350, len(top_idx) * 32),
+                )
+                st.plotly_chart(fig_shap, use_container_width=True)
+                st.caption(
+                    "SHAP (SHapley Additive exPlanations) mesure la contribution de chaque "
+                    "feature de style au score V6. Les barres rouges poussent vers SUSPECT, "
+                    "les vertes vers FIABLE. Contrairement au TF-IDF, ces features sont "
+                    "independantes du sujet : seul le STYLE d'ecriture est analyse."
+                )
+
+                with st.expander('Detail des features de style'):
+                    detail_rows = []
+                    sorted_all = np.argsort(np.abs(shap_vals))[::-1]
+                    for idx in sorted_all:
+                        if idx < len(feat_names):
+                            fname = feat_names[idx]
+                            detail_rows.append({
+                                'Feature': StyleFeatureExtractorV6.FEATURE_LABELS_FR.get(fname, fname),
+                                'Valeur': f'{feat_values[idx]:.3f}',
+                                'SHAP': f'{shap_vals[idx]:+.4f}',
+                                'Direction': 'SUSPECT' if shap_vals[idx] > 0 else 'FIABLE',
+                            })
+                    detail_df = pd.DataFrame(detail_rows)
+
+                    def color_dir(val):
+                        if val == 'SUSPECT':
+                            return 'color: #FF1744; font-weight: 600'
+                        return 'color: #00E676; font-weight: 600'
+
+                    st.dataframe(
+                        detail_df.style.map(color_dir, subset=['Direction']),
+                        hide_index=True,
+                        use_container_width=True,
+                    )
 
     elif clicked:
         st.warning('Veuillez saisir un texte a analyser.')
@@ -1034,7 +1454,7 @@ def page_metrics():
             '- **FR court F1 : 0.65 -> 0.86 (+32%)** | FR global F1 : 0.935\n'
             '- Health check : PASS (5/5)'
         )
-    with st.expander('🔵 V5 — Integration FR social + 10K posts synthetiques (actuelle)'):
+    with st.expander('✅ V5 — Integration FR social + 10K posts synthetiques (completee)'):
         st.markdown(
             '- 197 782 textes d\'entrainement | FR=86K (43.5%) vs EN=112K (56.5%)\n'
             '- +10K posts FR sociaux synthetiques (5K suspect + 5K fiable)\n'
@@ -1042,13 +1462,21 @@ def page_metrics():
             '- Test bilingue : 12/12 (vs 9/10 en V4)\n'
             '- Health check : PASS (5/5) | Temps entrainement : 30 min'
         )
-    with st.expander('🟡 V6 — Pipeline hybride + RoBERTa EN (prevu)'):
+    with st.expander('✅ V6 — Modele Style-Only (topic-agnostic) (completee)'):
         st.markdown(
-            '- Pipeline hybride stacking TF-IDF V5 + CamemBERT (P1)\n'
-            '- Re-fine-tuning CamemBERT avec donnees FR sociales (P2)\n'
-            '- Seuil adaptatif par langue FR/EN (P3)\n'
-            '- RoBERTa fine-tune pour l\'anglais court (P4)\n'
-            '- Objectif : F1 FR court > 0.92 | F1 EN court > 0.85'
+            '- 28 features stylistiques (structure, ponctuation, majuscules, lexique de manipulation, credibilite, diversite) + 7 emotions\n'
+            '- Suppression totale du TF-IDF pour eliminer le biais thematique\n'
+            '- GradientBoosting selectionne comme meilleur classifieur (CV F1=0.830)\n'
+            '- **Gold test set : F1 suspect = 0.103 (+18% vs V5)**\n'
+            '- Topic-agnostic par construction : ne peut apprendre que le STYLE'
+        )
+    with st.expander('🔵 V7 — Ensemble Hybride V5+V6 + SHAP (actuelle)'):
+        st.markdown(
+            '- Meta-learner LogReg combinant scores V5 (TF-IDF) + V6 (Style) + signal de desaccord\n'
+            '- Explicabilite SHAP (TreeExplainer) sur les features de style V6\n'
+            '- **V7 Combo : accuracy 0.840, FP=25 (vs 57 V5, 83 V6)** — meilleur compromis\n'
+            '- V7 Meta LOO : F1 suspect = 0.127 (+46% vs V5 seul)\n'
+            '- SHAP top features : paragraph_count, word_count, sensationalism_score'
         )
 
     st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
@@ -1110,11 +1538,15 @@ def main():
     )
 
     st.sidebar.divider()
-    st.sidebar.caption('v5.0 — Pipeline bilingue FR/EN + 10K FR social (seuil 0.44)')
+    st.sidebar.caption('v7.0 — Ensemble hybride V5+V6 + SHAP (seuil 0.44)')
 
     # Load resources
     detector, emo, model_suffix = load_pipeline()
+    v6_data, v7_data = load_v6_v7()
     df, is_demo = get_data()
+
+    if v6_data is not None:
+        st.sidebar.success('V6 Style + V7 Hybride charges')
 
     if is_demo:
         st.sidebar.info('📋 Mode demo — donnees simulees (MongoDB non connecte)')
@@ -1126,7 +1558,7 @@ def main():
     if page == '🔍 Vue Globale':
         page_overview(df, detector, emo)
     elif page == '⚡ Analyse en temps reel':
-        page_realtime(detector, emo)
+        page_realtime(detector, emo, v6_data, v7_data)
     else:
         page_metrics()
 
