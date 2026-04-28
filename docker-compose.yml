@@ -25,6 +25,7 @@ services:
       - mongodb
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
       - MONGO_HOST=mongodb
       - MONGO_USER=${MONGO_USER}
       - MONGO_PASSWORD=${MONGO_PASSWORD}
@@ -58,7 +59,7 @@ services:
     build: .
     container_name: thumalien_dashboard
     # On lance Streamlit et on lui dit d'écouter sur toutes les interfaces (0.0.0.0)
-    command: streamlit run src/app/main.py --server.port=8501 --server.address=0.0.0.0
+    command: streamlit run dashboard/app.py --server.port=8501 --server.address=0.0.0.0
     volumes:
       - .:/app  # Permet de modifier le code en direct sans redémarrer Docker
     ports:
@@ -68,6 +69,7 @@ services:
     networks:
       - thumalien_network
     environment:
+      - PYTHONPATH=/app
       - MONGO_HOST=mongodb
       - MONGO_USER=${MONGO_USER}
       - MONGO_PASSWORD=${MONGO_PASSWORD}

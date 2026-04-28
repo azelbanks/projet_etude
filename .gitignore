@@ -15,6 +15,10 @@ data/
 *.xlsx
 *.pkl
 
+# Exception : garder les modeles ML (< 100MB)
+!models/*.pkl
+!models/*.joblib
+
 # Large model files (> 100MB, GitHub limit)
 models/camembert_best.pt
 models/camembert_fr.pt
