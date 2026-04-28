@@ -94,7 +94,8 @@ projet_etude/
 | 18 | `18_FineTune_RoBERTa_EN.py` | RoBERTa EN V1 (F1 0.838) |
 | 19 | `19_FineTune_RoBERTa_EN_V2.py` | RoBERTa EN V2 +10K synthétique (F1 0.874) |
 | 20 | `20_Tests_Significativite_Bootstrap.py` | Tests de significativité bootstrap |
-| 21 | `21_Gold_Test_Set_Evaluation.py` | Évaluation sur gold test set |
+| 21 | `21_Gold_Test_Set_Evaluation.py` | Évaluation sur gold test set (ancien) |
+| 22 | `22_Gold_Test_Set_Evaluation.py` | Évaluation pipeline V5 sur 200 posts annotés (F1 suspect=0.087) |
 
 ---
 
