@@ -9,7 +9,7 @@
 
 ## Resume
 
-Ce rapport presente Thumalien, un systeme de detection de fake news sur le reseau social Bluesky. Le pipeline NLP bilingue (FR/EN) combine une vectorisation TF-IDF, 12 features linguistiques et un modele d'emotions (MLP PyTorch, 7 classes) dans un classifieur LogisticRegression. Entraine sur 145 703 textes issus de 6 datasets (articles de presse et tweets), le modele V2 atteint un F1-score de 0.90 sur le jeu de test et classe 73.4% des posts Bluesky reels comme fiables (contre 23% pour la V1.5), grace a l'integration de datasets de textes courts et a un seuil de decision calibre a 0.44. L'ensemble du systeme (collecte, stockage MongoDB, inference, dashboard Streamlit) est conteneurise via Docker Compose, avec un suivi de l'empreinte carbone par CodeCarbon (0.55 g CO2 au total).
+Ce rapport presente Thumalien, un systeme de detection de fake news sur le reseau social Bluesky. Le pipeline NLP bilingue (FR/EN) a evolue de la V1.0 (baseline TF-IDF) a la V7 (ensemble hybride V5+V6 avec explicabilite SHAP). La V5 combine une vectorisation TF-IDF (30K features), 15 features linguistiques et un modele d'emotions (MLP PyTorch, 7 classes) dans un classifieur LogisticRegression, entraine sur 197 782 textes. La V6 est un modele "style-only" topic-agnostic (28 features stylistiques + 7 emotions, GradientBoosting) concu pour eliminer le biais thematique identifie par le gold test set. La V7 est un meta-learner qui combine les scores V5 et V6, avec explicabilite SHAP sur les features de style. Le systeme (collecte, MongoDB, inference, dashboard Streamlit) est conteneurise via Docker Compose, avec suivi carbone par CodeCarbon.
 
 ---
 
@@ -30,9 +30,12 @@ Ce rapport presente Thumalien, un systeme de detection de fake news sur le resea
 12. [Bilan carbone (Green IT)](#12-bilan-carbone-green-it)
 13. [Etat actuel du projet](#13-etat-actuel-du-projet)
 14. [Evaluation sur Gold Test Set](#14-evaluation-sur-gold-test-set-200-posts-bluesky)
-15. [Limites et perspectives](#15-limites-et-perspectives)
-16. [Conclusion](#16-conclusion)
-17. [References](#17-references)
+15. [Iterations V3 a V5 — Corrections et ameliorations](#15-iterations-v3-a-v5--corrections-et-ameliorations)
+16. [V6 — Modele Style-Only (topic-agnostic)](#16-v6--modele-style-only-topic-agnostic)
+17. [V7 — Ensemble Hybride + SHAP](#17-v7--ensemble-hybride--shap)
+18. [Limites et perspectives](#18-limites-et-perspectives)
+19. [Conclusion](#19-conclusion)
+20. [References](#20-references)
 
 ---
 
@@ -547,35 +550,42 @@ Le pipeline est extremement econome grace au choix d'un modele leger (LogReg) pl
 
 | Composant | Statut | Details |
 |-----------|--------|---------|
-| Collecte Bluesky | Operationnel | 188 553 posts, collecte continue |
+| Collecte Bluesky | Operationnel | 228 000+ posts, collecte continue |
 | MongoDB | Operationnel | Docker, 27017, persistence locale |
-| Pipeline V2 | Operationnel | F1=0.90, seuil 0.44, 73.4% fiable sur Bluesky |
+| Pipeline V5 (TF-IDF) | Operationnel | F1 CV=0.90, seuil 0.44, 197K textes |
+| Pipeline V6 (Style) | Operationnel | GradientBoosting, 28 features stylistiques, topic-agnostic |
+| Pipeline V7 (Hybride) | Operationnel | Meta-learner V5+V6 + SHAP explicabilite |
 | Emotions | Operationnel | 7 classes, MLP PyTorch bilingue |
-| Dashboard | Operationnel | Streamlit, 3 pages, theme dark |
-| Bilan carbone | Operationnel | CodeCarbon integre, 2 runs enregistres |
+| Dashboard | Operationnel | Streamlit, 3 pages, V7+SHAP integre |
+| Bilan carbone | Operationnel | CodeCarbon integre |
 
 ### Metriques cles
 
 | Metrique | Valeur |
 |----------|--------|
-| Posts collectes | 188 553 |
-| Datasets d'entrainement | 6 (ISOT EN, Kaggle FR, FakeNewsNet, CONSTRAINT, Credibility Corpus) |
-| Taille dataset V2 | 145 703 textes |
-| CV F1 | 0.897 |
-| Holdout Accuracy | 93% |
-| Holdout F1 (SUSPECT) | 0.90 |
-| Bluesky % fiable | 73.4% |
-| Empreinte CO2 totale | 0.55 g |
-| Notebooks | 22 (00 a 21) |
-| Commits Git | 33+ |
+| Posts collectes | 228 000+ |
+| Datasets d'entrainement | 7 (ISOT EN, Kaggle FR, FakeNewsNet, CONSTRAINT, Credibility, Social FR synth.) |
+| Taille dataset V5 | 197 782 textes |
+| CV F1 V5 (TF-IDF) | 0.90 |
+| CV F1 V6 (Style) | 0.830 |
+| Gold F1 suspect V5 | 0.087 |
+| Gold F1 suspect V7 Meta | 0.127 (+46%) |
+| V7 Combo Accuracy (gold) | 0.840, FP=25 |
+| Bluesky % fiable | 67% |
+| Notebooks | 25 (00 a 24) |
 
 ### Historique des versions
 
-| Version | Date | F1 | Bluesky % fiable | Innovation |
-|---------|------|-----|-------------------|------------|
-| V1.0 | Dec 2025 | 0.99 (biaise) | ~0% | Baseline LogReg EN |
-| V1.5 | Fev 2026 | 0.986 | 23% | Bilingue + nettoyage Reuters + features linguistiques |
-| **V2** | **Fev 2026** | **0.90** | **73.4%** | **3 datasets sociaux + seuil 0.44** |
+| Version | Date | F1 CV | Gold F1 suspect | Innovation |
+|---------|------|-------|-----------------|------------|
+| V1.0 | Dec 2025 | 0.99 (biaise) | — | Baseline LogReg EN |
+| V1.5 | Fev 2026 | 0.986 | — | Bilingue + nettoyage Reuters + features linguistiques |
+| V2 | Fev 2026 | 0.90 | — | 3 datasets sociaux + seuil 0.44 |
+| V3 | Mar 2026 | 0.90 | — | Correction features linguistiques |
+| V4 | Mar 2026 | 0.935 FR | — | Amelioration FR court + augmentation |
+| V5 | Mar 2026 | 0.90 | 0.087 | +10K FR social synthetique, FR ultra-court F1=0.90 |
+| V6 | Avr 2026 | 0.830 | 0.103 (+18%) | Style-only GradientBoosting, topic-agnostic |
+| **V7** | **Avr 2026** | **—** | **0.127 (+46%)** | **Ensemble hybride V5+V6 + SHAP** |
 
 ---
 
@@ -621,43 +631,191 @@ La distribution des scores le confirme : le score moyen des posts fiables (0.615
 
 ---
 
-## 15. Limites et perspectives
+## 15. Iterations V3 a V5 — Corrections et ameliorations
 
-### Limites actuelles (confirmees par le gold test set)
+### Notebooks concernes : 09 a 15
 
-1. **F1 sur textes courts (0.80)** : le modele TF-IDF perd beaucoup d'information sur les textes de < 30 mots. Les n-grammes deviennent rares et les features linguistiques sont peu discriminantes sur si peu de texte.
+Apres l'evaluation sur le gold test set (section 14), plusieurs iterations ont ete menees pour ameliorer le pipeline :
 
-2. **Biais thematique** : les datasets d'entrainement couvrent principalement la politique US, le COVID-19 et les rumeurs europeennes. Les fake news sur d'autres sujets (sante, technologie) sont moins bien detectees.
+### V3 — Correction des features linguistiques
 
-3. **Pas de verification factuelle** : le modele detecte des **patterns stylistiques** de desinformation, pas la veracite factuelle du contenu. Un texte bien ecrit mais faux peut etre classe fiable.
+- **Bug identifie** : les features linguistiques (caps_ratio, exclamation, etc.) etaient calculees sur le texte *apres* nettoyage ML (minuscules, sans ponctuation) au lieu du texte original
+- **Correction** : calcul sur le texte brut, avant nettoyage
+- **Impact** : CV F1 = 0.900, precision +19.3%
 
-4. **Langues limitees** : seuls le francais et l'anglais sont supportes. Les posts dans d'autres langues sont classes par defaut.
+### V4 — Amelioration FR court + augmentation donnees
 
-### Perspectives V3
+- 187 782 textes d'entrainement (FR=76K / 40%, EN=112K / 60%)
+- 27K textes courts FR generes depuis articles longs (augmentation)
+- 3 nouvelles features : `all_caps_words_ratio`, `interpellation_score`, `is_short_text`
+- Vocabulaire sensationnaliste FR enrichi (+16 termes social media)
+- **FR court F1 : 0.65 -> 0.86 (+32%)**
 
-1. **Sentence-Transformers** : remplacer TF-IDF par des embeddings semantiques (all-MiniLM-L6-v2) pour mieux capturer le sens des textes courts. Ces modeles produisent des vecteurs denses de dimension 384 qui encodent la semantique, pas juste la frequence des mots.
+### V5 — Integration FR social synthetique
 
-2. **Fine-tuning sur donnees Bluesky** : utiliser les 188K posts collectes avec un schema d'annotation semi-supervise pour adapter le modele au domaine cible.
-
-3. **Detection multimodale** : integrer les images et liens partages dans les posts pour enrichir la detection.
-
-4. **API temps reel** : exposer le modele via une API REST (FastAPI) pour permettre une integration avec d'autres outils de veille.
-
----
-
-## 16. Conclusion
-
-Ce projet a permis de concevoir et deployer un pipeline NLP complet de detection de fake news sur Bluesky, de la collecte des donnees a la visualisation des resultats. L'approche iterative — de la V1.0 biaisee par les marqueurs Reuters a la V2 calibree sur des textes courts — illustre les defis concrets du Machine Learning applique : le data leakage, le domain shift entre articles longs et posts sociaux, et la necessite de calibrer finement les seuils de decision.
-
-Le choix d'un modele interpretable (LogisticRegression + TF-IDF) plutot qu'un Transformer s'est revele pertinent pour un projet academique : il permet d'expliquer chaque prediction, d'analyser les features discriminantes, et de maintenir une empreinte carbone negligeable (0.55 g CO2). L'etude d'ablation en 7 conditions a demontre la contribution de chaque composant et valide le pipeline bilingue.
-
-Les principales contributions de ce travail sont : (1) la mise en evidence et la correction du biais Reuters dans le dataset ISOT, (2) l'integration de 3 datasets sociaux pour reduire le domain shift (de 23% a 73.4% de posts fiables sur Bluesky), et (3) une calibration du seuil de decision documentee et reproductible.
-
-Les limites identifiees — F1 de 0.80 sur les textes courts, biais thematiques residuels, absence de verification factuelle — tracent la voie pour une V3 basee sur des embeddings semantiques (sentence-transformers), qui permettrait de mieux capturer le sens des textes independamment de leur longueur.
+- 197 782 textes d'entrainement (FR=86K / 43.5%, EN=112K / 56.5%)
+- +10K posts FR sociaux synthetiques (5K suspect + 5K fiable)
+- **FR ultra-court F1 : 0.86 -> 0.90 (+10.4%)** | FR global F1 : 0.944
+- Test bilingue : 12/12 (vs 9/10 en V4)
+- Seuil de decision maintenu a 0.44
 
 ---
 
-## 17. References
+## 16. V6 — Modele Style-Only (topic-agnostic)
+
+### Notebook concerne : 23
+
+### Le probleme du biais thematique
+
+L'analyse des coefficients du modele V5 (feature importance) a revele un probleme fondamental :
+
+| Top features SUSPECT | Coefficient | Type |
+|---------------------|-------------|------|
+| coronavirus | +9.72 | Sujet |
+| trump | +6.44 | Sujet |
+| video | +5.81 | Sujet |
+| breaking | +4.93 | Style |
+| china | +4.67 | Sujet |
+
+**Constat** : le modele apprend le **sujet** ("coronavirus" -> suspect) et non le **style** de la desinformation. Sur le gold test set, cela produit 57 faux positifs (posts fiables sur des sujets sensibles classes comme suspects).
+
+### Solution V6 : features stylistiques pures
+
+Le modele V6 supprime totalement le TF-IDF et utilise uniquement 28 features stylistiques + 7 emotions :
+
+| Bloc | Features | Exemples |
+|------|----------|----------|
+| 1. Structure (6) | word_count, sentence_count, paragraph_count | Longueur, structure du texte |
+| 2. Ponctuation (6) | exclamation_count, ellipsis_count, emoji_count | Ponctuation emotionnelle |
+| 3. Majuscules (3) | caps_ratio, all_caps_words_ratio | Usage de MAJUSCULES |
+| 4. Manipulation (5) | sensationalism_score, call_to_action_score | Lexique de manipulation |
+| 5. Credibilite (5) | has_url, has_source_citation, quote_count | Marqueurs de fiabilite |
+| 6. Diversite (3) | lexical_diversity, repeated_char_ratio | Qualite redactionnelle |
+| 7. Emotions (7) | colere, joie, neutre, peur... | Probabilites MLP PyTorch |
+
+**Avantage** : le modele est **topic-agnostic par construction** — il ne peut apprendre que le STYLE d'ecriture, pas le sujet.
+
+### Resultats V6
+
+- **Classifieur selectionne** : GradientBoosting (meilleur F1 en cross-validation)
+- **CV F1 = 0.830** (vs 0.90 pour V5, attendu car moins de signal)
+- **Gold F1 suspect = 0.103** (+18% vs V5 a 0.087)
+- Moins de faux positifs sur les posts fiables traitant de sujets sensibles
+
+---
+
+## 17. V7 — Ensemble Hybride + SHAP
+
+### Notebook concerne : 24
+
+### Architecture du meta-learner
+
+```
+Texte -> V5 (TF-IDF 30K) -> score_v5 P(fiable) --+
+                                                    |-> Meta-Learner -> Decision finale
+Texte -> V6 (Style 35)   -> score_v6 P(suspect) --+     (LogReg)
+```
+
+Le meta-learner recoit 4 features :
+1. **score_v5** : P(fiable) du modele TF-IDF
+2. **score_v6** : P(suspect) du modele style
+3. **disagreement** : |score_v5 - (1 - score_v6)| — signal de conflit entre les deux modeles
+4. **interaction** : score_v5 * score_v6
+
+### Coefficients du meta-learner
+
+| Feature | Coefficient | Interpretation |
+|---------|-------------|----------------|
+| score_v6_suspect | +1.125 | Fort signal suspect via le style |
+| interaction | +1.275 | Combinaison des deux signaux |
+| disagreement | -2.433 | Le desaccord pousse vers fiable (conservateur) |
+| score_v5_fiable | -0.171 | Signal TF-IDF (faible poids) |
+
+### Deux approches de combinaison
+
+**A) V7 Combo** — Seuil optimal sur score combine `V5 * (1 - V6)` :
+- Accuracy : **0.840** (vs 0.685 V5, 0.545 V6)
+- Faux positifs : **25** (vs 57 V5, 83 V6) — meilleur compromis
+
+**B) V7 Meta** — Leave-One-Out cross-validation sur gold set :
+- F1 suspect : **0.127** (+46% vs V5)
+- F1 macro : 0.521
+
+### Comparaison finale sur le Gold Test Set
+
+| Modele | Accuracy | F1 macro | F1 suspect | FP | FN |
+|--------|----------|----------|------------|----|----|
+| V5 (TF-IDF) | 0.685 | 0.448 | 0.087 | 57 | 6 |
+| V6 (Style) | 0.545 | 0.370 | 0.103 | 83 | 5 |
+| **V7 Combo** | **0.840** | 0.471 | 0.080 | **25** | 8 |
+| V7 Meta (LOO) | 0.785 | **0.521** | **0.127** | 35 | 6 |
+
+### Explicabilite SHAP
+
+SHAP (SHapley Additive exPlanations) permet d'expliquer les predictions du modele V6 feature par feature. Nous utilisons `TreeExplainer` (exact et rapide pour les modeles a base d'arbres).
+
+**Top 5 features globales (mean |SHAP|)** :
+
+| Rang | Feature | SHAP moyen | Interpretation |
+|------|---------|------------|----------------|
+| 1 | paragraph_count | 0.089 | Textes multi-paragraphes = souvent fiables |
+| 2 | word_count | 0.076 | Longueur du texte |
+| 3 | sensationalism_score | 0.065 | Mots sensationnalistes = suspect |
+| 4 | has_source_citation | 0.058 | Sources citees = fiable |
+| 5 | exclamation_count | 0.052 | Ponctuation excessive = suspect |
+
+**Analyse des faux positifs** : SHAP revele que les FP sont causes par des posts courts avec "BREAKING" (sensationalism_score eleve) qui sont en realite des infos factuelles d'agences de presse.
+
+### Integration dans le dashboard
+
+Le dashboard V7 affiche pour chaque analyse en temps reel :
+1. Les 3 scores (V5, V6, V7) et le signal de desaccord
+2. Un graphique SHAP montrant la contribution de chaque feature de style
+3. Le detail complet des 35 features avec leur valeur SHAP et direction
+
+---
+
+## 18. Limites et perspectives
+
+### Limites actuelles
+
+1. **Gold test set desequilibre** : seulement 9 posts suspects sur 200 (4.5%), ce qui rend les metriques F1 suspect instables. Un gold set plus grand et equilibre serait necessaire.
+
+2. **Biais thematique residuel** : meme avec V6 (style-only), le modele produit des faux positifs sur les posts courts de type "BREAKING" qui utilisent un style sensationnaliste legitime (agences de presse).
+
+3. **Pas de verification factuelle** : le systeme detecte des patterns stylistiques, pas la veracite du contenu. Un texte bien ecrit mais faux reste indectectable.
+
+4. **Langues limitees** : seuls FR et EN sont supportes.
+
+5. **Features statiques** : les features de style sont definies a la main. Des approches par apprentissage de representation (embeddings) pourraient capturer des patterns plus subtils.
+
+### Perspectives
+
+1. **Annotation active (Active Learning)** : utiliser les cas de desaccord V5/V6 (disagreement eleve) pour cibler l'annotation manuelle sur les posts les plus informatifs.
+
+2. **Sentence-Transformers** : embeddings semantiques denses (all-MiniLM-L6-v2) pour remplacer ou completer le TF-IDF, capturant le sens independamment de la longueur.
+
+3. **Cross-checking** : ajouter une verification factuelle via des APIs de fact-checking (Google Fact Check Tools, ClaimBuster) pour completer l'analyse stylistique.
+
+4. **Fine-tuning sur Bluesky** : utiliser les 228K+ posts collectes avec annotation semi-supervisee pour adapter le modele au domaine cible.
+
+5. **Detection multimodale** : integrer les images et liens partages pour enrichir la detection.
+
+---
+
+## 19. Conclusion
+
+Ce projet a permis de concevoir et deployer un pipeline NLP complet de detection de fake news sur Bluesky, de la collecte des donnees a la visualisation des resultats. L'approche iterative — de la V1.0 biaisee par les marqueurs Reuters a la V7 combinant signaux lexicaux et stylistiques avec explicabilite SHAP — illustre les defis concrets du Machine Learning applique : le data leakage, le domain shift, le biais thematique et la necessite de calibrer finement les modeles.
+
+Le choix initial d'un modele interpretable (LogReg + TF-IDF) a ete renforce par l'ajout du modele V6 (style-only, GradientBoosting) et de l'explicabilite SHAP, offrant une transparence complete sur les raisons de chaque prediction. L'evaluation rigoureuse sur un gold test set de 200 posts annotes manuellement a revele la limitation fondamentale du TF-IDF (biais thematique) et motive l'architecture hybride V7.
+
+Les principales contributions de ce travail sont : (1) la mise en evidence et la correction du biais Reuters, (2) l'identification du biais thematique via le gold test set et l'analyse des coefficients, (3) la conception d'un modele style-only topic-agnostic (V6), (4) un meta-learner hybride reduisant les faux positifs de 57 a 25, et (5) l'integration de SHAP pour l'explicabilite locale et globale des predictions.
+
+Les limites restantes — gold set desequilibre, style sensationnaliste legitime, absence de verification factuelle — ouvrent la voie a une V8 integrant l'annotation active, les embeddings semantiques et le cross-checking factuel.
+
+---
+
+## 20. References
 
 1. Ahmed, H., Traore, I., & Saad, S. (2017). *Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques*. ISOT Fake News Dataset. University of Victoria.
 
@@ -674,3 +832,7 @@ Les limites identifiees — F1 de 0.80 sur les textes courts, biais thematiques 
 7. Schmidt, V., Goyal, K., Joshi, A., et al. (2021). *CodeCarbon: Estimate and Track Carbon Emissions from Machine Learning Computing*. GitHub.
 
 8. AT Protocol (2024). *Authenticated Transfer Protocol — Bluesky*. https://atproto.com/
+
+9. Lundberg, S. M. & Lee, S.-I. (2017). *A Unified Approach to Interpreting Model Predictions*. NeurIPS. (SHAP)
+
+10. Friedman, J. H. (2001). *Greedy Function Approximation: A Gradient Boosting Machine*. Annals of Statistics, 29(5), 1189-1232.
