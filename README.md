@@ -96,6 +96,7 @@ projet_etude/
 | 20 | `20_Tests_Significativite_Bootstrap.py` | Tests de significativité bootstrap |
 | 21 | `21_Gold_Test_Set_Evaluation.py` | Évaluation sur gold test set (ancien) |
 | 22 | `22_Gold_Test_Set_Evaluation.py` | Évaluation pipeline V5 sur 200 posts annotés (F1 suspect=0.087) |
+| 23 | `23_Style_Only_V6.py` | Modèle style-only V6 (GradientBoosting, 35 features, F1 suspect=0.103) |
 
 ---
 
@@ -139,6 +140,7 @@ Tous les documents sont disponibles dans [`docs/pdf/`](docs/pdf/) :
 | Hybride P1 | Avril 2026 | 0.916 | 0.909 | 0.773 | Stacking V5 + CamemBERT V2, F1 FR +0.52% |
 | RoBERTa EN V1 | Avril 2026 | 0.940 (EN) | N/A | 0.838 | Transformer EN fine-tuné, test 6/10 |
 | RoBERTa EN V2 | Avril 2026 | 0.944 (EN) | N/A | 0.874 | +10K EN social, test 16/18 (+4.3% ultra-court) |
+| V6 Style-Only | Avril 2026 | 0.830 | N/A | N/A | GradientBoosting 35 features style, topic-agnostic, F1 suspect gold +18% |
 
 ---
 
