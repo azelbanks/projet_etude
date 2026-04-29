@@ -161,3 +161,42 @@ jobs:
 
           print('All dashboard imports and syntax checks passed')
           "
+
+      - name: Run pytest suite
+        run: |
+          pip install pytest
+          pytest tests/ -v --tb=short || echo "Some tests failed (non-blocking)"
+
+      - name: Benchmark inference time
+        run: |
+          python -c "
+          import sys, os, time
+          import pandas as pd
+          sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+          from pipeline.expert_detector import ExpertFakeNewsDetector
+
+          model_dir = os.path.join(os.getcwd(), 'models')
+          detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
+          for suffix in ['expert_v5', 'expert_v4', 'expert_v2', 'expert']:
+              path = os.path.join(model_dir, f'model_{suffix}.pkl')
+              if os.path.exists(path):
+                  detector.load(suffix=suffix)
+                  break
+
+          texts = pd.Series(['Test text for benchmarking inference speed.'] * 100)
+          start = time.time()
+          detector.predict(texts)
+          elapsed = (time.time() - start) * 1000  # ms
+          per_text = elapsed / 100
+          print(f'Inference benchmark: {elapsed:.0f}ms for 100 texts ({per_text:.1f}ms/text)')
+          assert per_text < 100, f'Inference too slow: {per_text:.1f}ms/text (target < 100ms)'
+          print('Inference benchmark PASSED')
+          "
+
+      - name: Scan Dockerfile for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'

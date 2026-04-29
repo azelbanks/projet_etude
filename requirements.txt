@@ -16,3 +16,4 @@ transformers
 langdetect
 scipy
 joblib
+shap
