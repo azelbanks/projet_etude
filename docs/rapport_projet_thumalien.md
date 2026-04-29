@@ -74,6 +74,92 @@ Le projet Thumalien est compose de 4 briques :
 | Conteneurisation | Docker Compose | 4 services isoles (MongoDB, Collector, Jupyter, Dashboard) |
 | Monitoring CO2 | CodeCarbon | Suivi de l'empreinte carbone des entrainements |
 
+### Diagramme de composants
+
+```mermaid
+graph TD
+    subgraph Docker Compose
+        A[Bluesky API] -->|AT Protocol| B[Collector<br>collect_bluesky.py]
+        B -->|Insert| C[(MongoDB<br>thumalien_db)]
+        C -->|Read| D[Dashboard<br>Streamlit :8501]
+        C -->|Read| E[Jupyter Lab<br>:8888]
+    end
+
+    subgraph Pipeline NLP
+        F[Texte brut] --> G[TF-IDF 30K]
+        F --> H[15 Features Ling.]
+        F --> I[7 Emotions MLP]
+        G & H & I --> J[V5 LogReg]
+        F --> K[28 Features Style]
+        F --> L[7 Emotions]
+        K & L --> M[V6 GradientBoosting]
+        J -->|score_v5| N[V7 Meta-Learner]
+        M -->|score_v6| N
+        N -->|SHAP| O[Prediction + Explication]
+    end
+
+    D --> F
+```
+
+### Diagramme de sequence — Analyse temps reel
+
+```mermaid
+sequenceDiagram
+    actor U as Utilisateur
+    participant D as Dashboard Streamlit
+    participant V5 as Pipeline V5 (TF-IDF)
+    participant V6 as Pipeline V6 (Style)
+    participant V7 as Meta-Learner V7
+    participant S as SHAP Explainer
+
+    U->>D: Saisit un texte
+    D->>V5: predict(texte)
+    V5-->>D: score_v5, label, emotions
+    D->>V6: extract_features(texte)
+    V6-->>D: 35 features style
+    D->>V7: predict_meta(score_v5, score_v6)
+    V7-->>D: score_v7, label_final
+    D->>S: explain(features_v6)
+    S-->>D: SHAP values (35 features)
+    D-->>U: Verdict + Scores + Graphique SHAP
+```
+
+### Diagramme de classes simplifie
+
+```mermaid
+classDiagram
+    class ExpertFakeNewsDetector {
+        -tfidf_vectorizer
+        -model: LogisticRegression
+        -threshold: float
+        +fit(texts, labels)
+        +predict(texts): DataFrame
+        +explain_prediction(text): dict
+        +load(suffix)
+        +save(suffix)
+    }
+
+    class LinguisticFeatureExtractor {
+        +extract(texts): ndarray[n, 15]
+    }
+
+    class EmotionFeatureExtractor {
+        -model: MLP PyTorch
+        -vocab: dict
+        +get_emotion_features(texts): ndarray[n, 7]
+        +load(): bool
+    }
+
+    class StyleFeatureExtractorV6 {
+        +FEATURE_NAMES: list[28]
+        +extract(text): list[float]
+    }
+
+    ExpertFakeNewsDetector --> LinguisticFeatureExtractor
+    ExpertFakeNewsDetector --> EmotionFeatureExtractor
+    StyleFeatureExtractorV6 ..> ExpertFakeNewsDetector : V7 combine
+```
+
 ### Pourquoi pas de deep learning pour la detection de fake news ?
 
 Un prototype RoBERTa a ete explore (notebook 04) mais abandonne pour plusieurs raisons :

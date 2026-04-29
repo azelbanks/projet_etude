@@ -7,7 +7,7 @@
 
 Thumalien est un systeme d'analyse automatisee de contenus textuels pour la detection de fake news. Il traite les posts publies sur le reseau social Bluesky en francais et en anglais, et fournit pour chaque texte un score de credibilite, une emotion dominante et une classification fiable/suspect.
 
-Le systeme repose sur un pipeline NLP bilingue (V1.5) combinant des features TF-IDF, linguistiques et emotionnelles pour atteindre un F1-score superieur a 0.98 dans les deux langues.
+Le systeme repose sur un pipeline NLP bilingue V7 combinant TF-IDF V5 + Style V6 + Meta-learner V7 avec explainabilite SHAP. Plus de 228 000 posts ont ete collectes. Le pipeline atteint un F1-score superieur a 0.98 dans les deux langues.
 
 ---
 
@@ -57,6 +57,8 @@ projet_etude/
 |   |-- model_expert.pkl        # Modele LogReg bilingue
 |   |-- tfidf_expert.pkl        # Vectoriseur TF-IDF (30K features)
 |   |-- metrics_expert.pkl      # Metriques d'entrainement
+|   |-- model_style_v6.joblib   # Modele style-only V6
+|   |-- model_hybrid_v7.joblib  # Meta-learner hybride V7
 |   |-- emotion_bilingual.pt    # MLP PyTorch (7 emotions)
 |   |-- emotion_vocab_bilingual.pickle
 |   |-- emotion_label_encoder_bilingual.pickle
@@ -68,6 +70,7 @@ projet_etude/
 |   |-- 04_Modele_Avance_RoBERTa.ipynb
 |   |-- 05_Detection_Expert_Bilingue.ipynb
 |   |-- 06_Documentation_Technique.ipynb
+|   |-- 09-24                              # Scripts d'entrainement V3-V7
 |-- src/
 |   |-- pipeline/
 |   |   |-- expert_detector.py  # Pipeline complet (classes principales)
@@ -122,6 +125,11 @@ Cette page permet d'analyser un texte en temps reel :
    - Un **radar chart** detaille des 7 probabilites emotionnelles.
    - La **langue detectee** automatiquement (FR ou EN).
 
+4. La section **V7 Hybride** affiche :
+   - 4 metriques : score V5 (TF-IDF), score V6 (Style), score V7 (Hybride), desaccord V5/V6.
+   - Un graphique SHAP montrant la contribution de chaque feature stylistique.
+   - Le detail des 35 features avec leur valeur SHAP.
+
 **Interpretation du score** :
 - Score > 0.7 : le texte presente des caracteristiques de contenu fiable.
 - Score entre 0.4 et 0.7 : zone d'incertitude, verification manuelle recommandee.
@@ -164,6 +172,16 @@ textes = pd.Series([
 
 resultats = detector.predict(textes)
 print(resultats[['text', 'language', 'prediction_label', 'ai_score_credibility']])
+```
+
+#### Charger les modeles V6 et V7
+
+```python
+import joblib
+
+# Charger les modeles V6 et V7
+v6_data = joblib.load('models/model_style_v6.joblib')
+v7_data = joblib.load('models/model_hybrid_v7.joblib')
 ```
 
 **Colonnes retournees par `predict()`** :
@@ -210,6 +228,7 @@ Les notebooks documentent chaque etape du projet et sont executes sequentielleme
 | 04 | Prototype RoBERTa avance | Exploration fine-tuning (non deploye) |
 | 05 | Pipeline expert bilingue + ablation study (7 conditions) | `model_expert.pkl` + `tfidf_expert.pkl` + metriques |
 | 06 | Documentation technique complete | Limites, roadmap, PRA/PCA, Green IT, conformite |
+| 09-24 | Scripts d'entrainement V3-V7 | Modeles V3 a V7, features stylistiques, meta-learner, SHAP |
 
 **Pour re-executer un notebook** :
 ```bash
@@ -277,7 +296,10 @@ R : Executez le notebook 05 (`05_Detection_Expert_Bilingue.ipynb`). Il recharge 
 R : Le modele est entraine sur des articles de presse et peut mal generaliser sur des textes courts ou atypiques (posts de 10 mots, memes, satire). Le score doit etre interprete comme un indicateur, pas comme un verdict. Consultez la section "Limites" du notebook 06.
 
 **Q : Puis-je ajouter d'autres langues ?**
-R : La V1.5 supporte uniquement le francais et l'anglais. Les textes dans d'autres langues sont routes vers le pipeline anglais par defaut. La V2 (sentence-transformers multilingue) etendra le support a 50+ langues.
+R : La V7 supporte uniquement le francais et l'anglais. Les textes dans d'autres langues sont routes vers le pipeline anglais par defaut.
+
+**Q : Qu'est-ce que le score SHAP affiche dans le dashboard ?**
+R : SHAP (SHapley Additive exPlanations) decompose la prediction du modele V6 en montrant la contribution de chaque feature stylistique. Une barre positive pousse vers "suspect", negative vers "fiable".
 
 **Q : Quel est le cout carbone d'une prediction ?**
 R : Une prediction sur un batch de 1 000 textes emet moins de 0.001 g de CO2. L'entrainement complet emet environ 0.01 g de CO2 (moins qu'un email).
@@ -292,4 +314,4 @@ R : Une prediction sur un batch de 1 000 textes emet moins de 0.001 g de CO2. L'
 
 ---
 
-*Thumalien v1.5 — Pipeline bilingue FR/EN — Mastere Big Data, Sup de Vinci*
+*Thumalien v7.0 — Pipeline bilingue FR/EN — Mastere Big Data, Sup de Vinci — Avril 2026*

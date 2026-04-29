@@ -14,8 +14,10 @@ J'ai assure le role de **lead technique** sur le projet Thumalien, couvrant l'en
 ### Responsabilites principales
 - Architecture technique et infrastructure Docker
 - Developpement du collecteur Bluesky (AT Protocol)
-- Pipeline NLP complet (V1.0 a V5.0)
+- Pipeline NLP complet (V1.0 a V7)
 - Fine-tuning des modeles Transformer (CamemBERT, RoBERTa)
+- Explicabilite SHAP
+- Gold Test Set annotation
 - Dashboard Streamlit interactif
 - Documentation technique
 - Conformite RGPD et AI Act
@@ -38,7 +40,9 @@ J'ai assure le role de **lead technique** sur le projet Thumalien, couvrant l'en
 - V3.0 : correction du bug preprocessing (5/12 features nulles)
 - V4.0 : augmentation FR court (+32% F1)
 - V5.0 : +10K posts synthetiques, F1 global = 0.913
-- **22 commits** sur le depot Git
+- V6.0 : modele style-only topic-agnostic (28 features stylistiques + 7 emotions, GradientBoosting, CV F1=0.830)
+- V7.0 : ensemble hybride meta-learner V5+V6 avec explicabilite SHAP, FP reduits de 57 a 25 sur gold set
+- **30+ commits** sur le depot Git
 
 ### 2.3 Modeles Transformer (Avril 2026)
 - Fine-tuning CamemBERT V1/V2 pour le francais (F1 ultra-court = 0.957)
@@ -54,6 +58,23 @@ J'ai assure le role de **lead technique** sur le projet Thumalien, couvrant l'en
 - MLP PyTorch bilingue, 7 classes d'emotions
 - Early stopping + class weights pour gerer le desequilibre
 - Integration comme features dans le pipeline NLP
+
+### 2.6 Gold Test Set (Avril 2026)
+- Creation et annotation manuelle de 200 posts Bluesky
+- Double annotation avec calcul du kappa de Cohen (0.808)
+- Evaluation systematique de tous les modeles V5-V7
+- Identification du biais thematique (mot "coronavirus" coefficient +9.72)
+
+### 2.7 Modele Style-Only V6 (Avril 2026)
+- Conception de 28 features stylistiques en 6 blocs (structure, ponctuation, majuscules, lexique manipulation, credibilite, diversite)
+- GradientBoosting topic-agnostic
+- Gold F1 suspect = 0.103 (+18% vs V5)
+
+### 2.8 Ensemble Hybride V7 + SHAP (Avril 2026)
+- Meta-learner LogReg combinant scores V5 et V6
+- Integration de SHAP TreeExplainer pour l'explicabilite
+- V7 Combo accuracy = 0.840 (vs 0.685 V5), FP = 25 (vs 57 V5)
+- Integration complete dans le dashboard Streamlit
 
 ---
 
@@ -71,6 +92,9 @@ J'ai assure le role de **lead technique** sur le projet Thumalien, couvrant l'en
 | MongoDB | Debutant | Intermediaire | Schema, index, aggregations |
 | Streamlit | Debutant | Intermediaire | Dashboard interactif 3 pages |
 | Git / GitHub | Intermediaire | Avance | Versioning, merge, collaboration |
+| Explicabilite IA (SHAP) | Debutant | Intermediaire | TreeExplainer, feature importance, integration dashboard |
+| Feature Engineering avance | Intermediaire | Avance | 28 features stylistiques, meta-features, stacking |
+| Ensemble Learning | Debutant | Intermediaire | Meta-learner, stacking, GradientBoosting |
 
 ### 3.2 Competences transversales
 
@@ -93,6 +117,7 @@ J'ai assure le role de **lead technique** sur le projet Thumalien, couvrant l'en
 | Features nulles (5/12) | Bug de preprocessing dans le pipeline V2 | Debug, correction, retraining V3 | Les tests unitaires sont essentiels |
 | F1 FR court = 0.65 | Les textes courts de type reseau social mal classifies | Augmentation + vocabulaire enrichi + CamemBERT | Les modeles generalistes ne suffisent pas pour les textes courts |
 | Merge Git avec conflits | Depot recree par un collegue | `--allow-unrelated-histories` + resolution manuelle | Toujours communiquer avant de restructurer un depot |
+| Biais thematique (V5 detecte le sujet, pas la desinformation) | Gold test set revelait 57 FP sur posts "coronavirus" fiables | V6 style-only + V7 meta-learner reduisant FP de 57 a 25 | L'evaluation sur donnees reelles est indispensable |
 
 ---
 
@@ -103,6 +128,9 @@ J'ai assure le role de **lead technique** sur le projet Thumalien, couvrant l'en
 - La documentation au fil de l'eau (notebooks) facilite la tracabilite
 - Le choix de Docker garantit la reproductibilite
 - L'ajout de CamemBERT et RoBERTa a resolu le probleme des textes courts
+- Le gold test set a revele des faiblesses invisibles en cross-validation
+- L'approche V6 style-only a prouve qu'on peut detecter des patterns de desinformation sans analyser le contenu
+- SHAP apporte une transparence complete sur les raisons de chaque prediction
 
 ### Ce que j'aurais fait differemment
 - Commencer par des tests unitaires des le debut (le bug des features nulles aurait ete detecte plus tot)

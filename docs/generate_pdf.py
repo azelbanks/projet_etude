@@ -159,25 +159,29 @@ class ThumalienPDF(FPDF):
         # Rows
         self.set_font("Helvetica", "", 7.5)
         for row_idx, row in enumerate(rows):
-            if row_idx % 2 == 1:
-                self.set_fill_color(*TABLE_ALT_BG)
-            else:
-                self.set_fill_color(*WHITE)
-            self.set_text_color(*BLACK)
-
-            # Calculate max height needed
+            # Pre-calculate row height to check pagination BEFORE rendering
             max_lines = 1
             cell_texts = []
             for i, cell in enumerate(row):
                 w = col_widths[i] if i < len(col_widths) else col_widths[-1]
                 text = self._strip_markdown_inline(cell.strip())
-                # Estimate lines needed
                 char_per_line = max(int(w / 1.8), 10)
                 n_lines = max(1, (len(text) + char_per_line - 1) // char_per_line)
                 max_lines = max(max_lines, n_lines)
                 cell_texts.append(text)
 
             cell_h = row_height * min(max_lines, 4)
+
+            # Page break check BEFORE rendering the row
+            if self.get_y() + cell_h > self.h - 20:
+                self.add_page()
+                self.set_font("Helvetica", "", 7.5)
+
+            if row_idx % 2 == 1:
+                self.set_fill_color(*TABLE_ALT_BG)
+            else:
+                self.set_fill_color(*WHITE)
+            self.set_text_color(*BLACK)
 
             for i, text in enumerate(cell_texts):
                 w = col_widths[i] if i < len(col_widths) else col_widths[-1]
@@ -189,10 +193,6 @@ class ThumalienPDF(FPDF):
                 self.set_xy(x + w, y)
 
             self.ln(cell_h)
-
-            # Page break check
-            if self.get_y() > 265:
-                self.add_page()
 
         self.ln(3)
 
@@ -236,6 +236,29 @@ class ThumalienPDF(FPDF):
         text = text.replace("\u2190", "<-")  # arrow left
         text = text.replace("\u2265", ">=")  # >=
         text = text.replace("\u2264", "<=")  # <=
+        # Box-drawing characters -> ASCII equivalents
+        text = text.replace("\u250c", "+")   # ┌
+        text = text.replace("\u2510", "+")   # ┐
+        text = text.replace("\u2514", "+")   # └
+        text = text.replace("\u2518", "+")   # ┘
+        text = text.replace("\u251c", "+")   # ├
+        text = text.replace("\u2524", "+")   # ┤
+        text = text.replace("\u252c", "+")   # ┬
+        text = text.replace("\u2534", "+")   # ┴
+        text = text.replace("\u253c", "+")   # ┼
+        text = text.replace("\u2500", "-")   # ─
+        text = text.replace("\u2502", "|")   # │
+        text = text.replace("\u2550", "=")   # ═
+        text = text.replace("\u2551", "|")   # ║
+        text = text.replace("\u2560", "+")   # ╠
+        text = text.replace("\u2563", "+")   # ╣
+        text = text.replace("\u2566", "+")   # ╦
+        text = text.replace("\u2569", "+")   # ╩
+        text = text.replace("\u256c", "+")   # ╬
+        text = text.replace("\u2554", "+")   # ╔
+        text = text.replace("\u2557", "+")   # ╗
+        text = text.replace("\u255a", "+")   # ╚
+        text = text.replace("\u255d", "+")   # ╝
         # Remove emojis and other non-latin1 chars
         text = text.encode("latin-1", errors="replace").decode("latin-1")
         return text

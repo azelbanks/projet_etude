@@ -2,7 +2,7 @@
 ## Projet Thumalien - Suivi des evolutions technologiques et reglementaires
 
 **Reference** : VEILLE-THUM-2026-001
-**Version** : 1.0
+**Version** : 1.1
 **Date** : Avril 2026
 
 ---
@@ -71,11 +71,26 @@ La veille technologique permet de maintenir le projet Thumalien a l'etat de l'ar
 
 | Technologie | Interet pour Thumalien | Horizon | Priorite |
 |------------|------------------------|:-------:|:--------:|
-| Mistral / LLaMA 3 | Detection zero-shot, pas de donnees annotees | T3 2026 | Haute |
-| RAG (Retrieval-Augmented Generation) | Enrichir la detection avec du contexte factuel | T4 2026 | Moyenne |
-| ONNX Runtime | Optimisation inference, -50% latence estimee | T3 2026 | Moyenne |
-| Grafana + Prometheus | Monitoring avance des performances systeme | T2 2026 | Basse |
-| MLflow | Tracking des experiences ML (remplacer les notebooks) | T3 2026 | Moyenne |
+| RAG (Retrieval-Augmented Generation) | Cross-checker les claims avec une base factuelle (Wikipedia, Google Fact Check Tools API) | T3 2026 | **Haute** |
+| LLM-as-Judge (GPT-4o, Claude) | Scoring zero-shot de la credibilite, benchmark contre V7 | T3 2026 | **Haute** |
+| Active Learning (modAL) | Cibler l'annotation sur les posts a fort disagreement V5/V6 | T2 2026 | **Haute** |
+| Conformal Prediction | Intervalles de confiance calibres au lieu de scores bruts | T3 2026 | Moyenne |
+| ONNX Runtime | Export CamemBERT/RoBERTa en ONNX, -50% latence inference | T3 2026 | Moyenne |
+| MLflow / Weights & Biases | Tracking systematique des experiences ML | T2 2026 | Moyenne |
+| Guardrails AI / NeMo Guardrails | Framework de safety pour systemes IA de moderation | T4 2026 | Moyenne |
+| DPO/RLHF pour fake news | Fine-tuner un small LLM (Mistral 7B) avec paires vrai/faux | T4 2026 | Basse |
+| Detection multimodale (CLIP) | Analyser les images associees aux posts pour detecter la manipulation visuelle | T4 2026 | Basse |
+| Grafana + Prometheus | Monitoring avance des performances systeme et drift detection | T2 2026 | Basse |
+
+### 3.4 Tendances 2026 en detection de desinformation
+
+| Tendance | Description | Impact pour Thumalien |
+|----------|-------------|----------------------|
+| LLM Fact-Checking | Les LLMs (GPT-4o, Claude, Gemini) sont utilises pour verifier les claims en les comparant a des sources fiables | Possibilite d'ajouter une couche de verification factuelle au-dessus de la detection stylistique |
+| Multimodal Misinformation | La desinformation s'appuie de plus en plus sur des images generees par IA (deepfakes, infographies truquees) | Extension future vers l'analyse d'images avec CLIP ou BLIP-2 |
+| Explicabilite reglementaire | L'AI Act impose la transparence des systemes IA a risque — SHAP devient un standard industriel | Notre integration SHAP anticipe cette obligation |
+| Federated Learning | Entrainer des modeles sans centraliser les donnees (privacy-preserving) | Pertinent si Thumalien est deploye chez plusieurs clients |
+| Synthetic Data Augmentation | Generation de donnees synthetiques pour equilibrer les datasets (deja utilise en V4/V5) | Approfondir avec des LLMs pour generer des faux plus realistes |
 
 ---
 
@@ -114,6 +129,8 @@ La veille technologique permet de maintenir le projet Thumalien a l'etat de l'ar
 | Mars 2026 | CamemBERT fine-tune sur donnees courtes (blog HF) | Fine-tuning sur nos donnees FR | F1 0.957 sur ultra-courts |
 | Avril 2026 | RoBERTa performant sur tweets EN (papier ACL) | Fine-tuning sur donnees EN | F1 0.874 sur ultra-courts |
 | Avril 2026 | Technique de stacking pour NLP hybride | Pipeline hybride V5+CamemBERT | F1 FR +0.52% |
+| Avril 2026 | SHAP TreeExplainer pour GradientBoosting (papier Lundberg 2017) | Integration dans dashboard V7 | Explicabilite locale et globale des predictions |
+| Avril 2026 | Meta-learner stacking pour combiner modeles heterogenes (technique Kaggle) | Architecture V7 hybride V5+V6 | Reduction FP de 57 a 25 sur gold set |
 
 ---
 
@@ -141,4 +158,4 @@ La veille technologique permet de maintenir le projet Thumalien a l'etat de l'ar
 ---
 
 *Document valide par l'equipe projet - Avril 2026*
-*Reference : VEILLE-THUM-2026-001 - Version 1.0*
+*Reference : VEILLE-THUM-2026-001 - Version 1.1*
