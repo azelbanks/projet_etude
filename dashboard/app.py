@@ -12,6 +12,7 @@ import os
 import sys
 import logging
 import re
+import html
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -39,6 +40,12 @@ try:
     _HAS_SHAP = True
 except ImportError:
     _HAS_SHAP = False
+
+# ---------------------------------------------------------------------------
+#  Seuils de decision
+# ---------------------------------------------------------------------------
+DEFAULT_THRESHOLD_V5 = 0.44
+FALLBACK_THRESHOLD_V7 = 0.42
 
 # ---------------------------------------------------------------------------
 #  CSS glassmorphism + dark theme overrides
@@ -139,7 +146,7 @@ def load_pipeline():
     from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
 
     model_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
-    detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
+    detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=DEFAULT_THRESHOLD_V5)
     # V5 = +10K FR social synthetique, FR ultra-court F1=0.90
     # V4 = FR court ameliore + 15 features linguistiques + augmentation FR
     # V3 = features linguistiques corrigees
@@ -402,7 +409,8 @@ def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data):
     try:
         X_emo = emo.get_emotion_features([text_input])
         X_all = np.hstack([X_style, X_emo])
-    except Exception:
+    except Exception as e:
+        logging.warning(f"Erreur extraction: {e}")
         X_all = X_style
 
     if v6_model_name == 'LogReg':
@@ -433,7 +441,7 @@ def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data):
         result['score_v7'] = score_v7
         result['label_v7'] = label_v7
     else:
-        optimal_th = 0.42
+        optimal_th = FALLBACK_THRESHOLD_V7
         combined = score_v5 * (1 - score_v6)
         result['score_v7'] = 1 - combined
         result['label_v7'] = 'SUSPECT' if combined < optimal_th else 'FIABLE'
@@ -450,8 +458,8 @@ def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data):
             result['shap_values'] = sv[0]  # single row
             result['feature_names'] = all_names[:X_input.shape[1]]
             result['feature_values'] = X_input[0]
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"Erreur extraction: {e}")
 
     return result
 
@@ -702,10 +710,10 @@ def hero(title, subtitle):
                 border: 1px solid rgba(0, 212, 255, 0.1);">
         <div style="font-size: 3rem; font-weight: 300; letter-spacing: 8px;
                     color: #00D4FF; text-shadow: 0 0 30px rgba(0, 212, 255, 0.4);">
-            {title}
+            {html.escape(title)}
         </div>
         <div style="font-size: 1.1rem; color: #E0E0E0; margin-top: 8px; opacity: 0.85;">
-            {subtitle}
+            {html.escape(subtitle)}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -715,8 +723,8 @@ def metric_card(icon, label, value, color):
     return f"""
     <div class="glass-card" style="text-align:center; min-height:140px;">
         <div class="metric-icon">{icon}</div>
-        <div class="metric-value" style="color:{color};">{value}</div>
-        <div class="metric-label">{label}</div>
+        <div class="metric-value" style="color:{color};">{html.escape(str(value))}</div>
+        <div class="metric-label">{html.escape(str(label))}</div>
     </div>
     """
 

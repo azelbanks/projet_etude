@@ -1,22 +1,22 @@
 # Guide Utilisateur — Thumalien
-## Systeme de Detection de Fake News Bilingue FR/EN
+## Système de Détection de Fake News Bilingue FR/EN
 
 ---
 
-### 1. Presentation
+### 1. Présentation
 
-Thumalien est un systeme d'analyse automatisee de contenus textuels pour la detection de fake news. Il traite les posts publies sur le reseau social Bluesky en francais et en anglais, et fournit pour chaque texte un score de credibilite, une emotion dominante et une classification fiable/suspect.
+Thumalien est un système d'analyse automatisée de contenus textuels pour la détection de fake news. Il traite les posts publiés sur le réseau social Bluesky en français et en anglais, et fournit pour chaque texte un score de crédibilité, une émotion dominante et une classification fiable/suspect.
 
-Le systeme repose sur un pipeline NLP bilingue V7 combinant TF-IDF V5 + Style V6 + Meta-learner V7 avec explainabilite SHAP. Plus de 228 000 posts ont ete collectes. Le pipeline atteint un F1-score superieur a 0.98 dans les deux langues.
+Le système repose sur un pipeline NLP bilingue V7 combinant TF-IDF V5 + Style V6 + Meta-learner V7 avec explicabilité SHAP. Plus de 188 000+ posts ont été collectés. Le pipeline atteint un F1-score de 0.913 en cross-validation (V5) dans les deux langues.
 
 ---
 
-### 2. Prerequis
+### 2. Prérequis
 
-- Python 3.13+
+- Python 3.9+
 - pip (gestionnaire de paquets)
-- MongoDB (optionnel — le dashboard fonctionne en mode demo sans base de donnees)
-- Environ 2 Go d'espace disque (modeles + donnees)
+- MongoDB (optionnel — le dashboard fonctionne en mode démo sans base de données)
+- Environ 2 Go d'espace disque (modèles + données)
 
 ---
 
@@ -43,23 +43,25 @@ projet_etude/
 |-- dashboard/
 |   |-- app.py                  # Dashboard Streamlit (interface principale)
 |-- data/
-|   |-- training/               # Datasets d'entrainement (non versiones)
+|   |-- training/               # Datasets d'entraînement (non versionnés)
 |   |   |-- Fake.csv            # ISOT Fake News (anglais)
 |   |   |-- True.csv            # ISOT True News (anglais)
 |   |   |-- kaggle_fr/          # Kaggle FrenchFakeNewsDetector
-|   |   |-- train.csv           # Emotions EN (entrainement)
-|   |   |-- training.csv        # Emotions FR (entrainement)
+|   |   |-- train.csv           # Émotions EN (entraînement)
+|   |   |-- training.csv        # Émotions FR (entraînement)
 |-- docs/
 |   |-- guide_utilisateur.md    # Ce fichier
-|   |-- architecture.png        # Schema d'architecture du pipeline
-|   |-- gantt_planning.png      # Diagramme de Gantt retrospectif
+|   |-- architecture.png        # Schéma d'architecture du pipeline
+|   |-- gantt_planning.png      # Diagramme de Gantt rétrospectif
 |-- models/
-|   |-- model_expert.pkl        # Modele LogReg bilingue
-|   |-- tfidf_expert.pkl        # Vectoriseur TF-IDF (30K features)
-|   |-- metrics_expert.pkl      # Metriques d'entrainement
-|   |-- model_style_v6.joblib   # Modele style-only V6
-|   |-- model_hybrid_v7.joblib  # Meta-learner hybride V7
-|   |-- emotion_bilingual.pt    # MLP PyTorch (7 emotions)
+|   |-- model_expert.pkl        # Modèle LogReg bilingue (V1.5)
+|   |-- tfidf_expert.pkl        # Vectoriseur TF-IDF (V1.5)
+|   |-- model_expert_v5.pkl     # Modèle LogReg bilingue V5
+|   |-- tfidf_expert_v5.pkl     # Vectoriseur TF-IDF V5 (30K features)
+|   |-- metrics_expert.pkl      # Métriques d'entraînement
+|   |-- model_style_v6.joblib   # Modèle style-only V6
+|   |-- model_hybrid_v7.joblib  # Méta-learner hybride V7
+|   |-- emotion_bilingual.pt    # MLP PyTorch (7 émotions)
 |   |-- emotion_vocab_bilingual.pickle
 |   |-- emotion_label_encoder_bilingual.pickle
 |-- notebooks/
@@ -70,16 +72,16 @@ projet_etude/
 |   |-- 04_Modele_Avance_RoBERTa.ipynb
 |   |-- 05_Detection_Expert_Bilingue.ipynb
 |   |-- 06_Documentation_Technique.ipynb
-|   |-- 09-24                              # Scripts d'entrainement V3-V7
+|   |-- 09-24                              # Scripts d'entraînement V3-V7
 |-- src/
 |   |-- pipeline/
 |   |   |-- expert_detector.py  # Pipeline complet (classes principales)
 |   |-- collection/
 |   |   |-- collect_bluesky.py  # Collecte AT Protocol
 |   |-- app/
-|       |-- main.py             # Point d'entree applicatif
+|       |-- main.py             # Point d'entrée applicatif
 |-- .streamlit/
-|   |-- config.toml             # Theme dark + config serveur
+|   |-- config.toml             # Thème dark + config serveur
 |-- docker-compose.yml
 |-- dockerfile
 |-- requirements.txt
@@ -95,9 +97,9 @@ projet_etude/
 streamlit run dashboard/app.py
 ```
 
-Le dashboard s'ouvre automatiquement dans le navigateur a l'adresse `http://localhost:8501`.
+Le dashboard s'ouvre automatiquement dans le navigateur à l'adresse `http://localhost:8501`.
 
-**Mode demo** : si MongoDB n'est pas connecte, le dashboard affiche des donnees d'exemple (15 posts FR/EN) avec un bandeau informatif.
+**Mode démo** : si MongoDB n'est pas connecté, le dashboard affiche des données d'exemple (15 posts FR/EN) avec un bandeau informatif.
 
 ---
 
@@ -105,52 +107,52 @@ Le dashboard s'ouvre automatiquement dans le navigateur a l'adresse `http://loca
 
 #### 6.1. Vue Globale
 
-La page d'accueil presente une vision synthetique de l'ensemble des posts analyses :
+La page d'accueil présente une vision synthétique de l'ensemble des posts analysés :
 
-- **Metriques cles** : nombre total de posts, pourcentage de posts fiables, score de credibilite moyen, repartition FR/EN.
-- **Profil emotionnel** : radar chart des 7 emotions moyennes sur l'ensemble du corpus (colere, degout, joie, neutre, peur, surprise, tristesse).
-- **Fiabilite par langue** : diagramme en barres horizontales comparant les posts fiables et suspects pour le francais et l'anglais.
-- **Tableau des posts** : liste des derniers posts analyses avec leur texte (tronque), langue, label et score de credibilite.
+- **Métriques clés** : nombre total de posts, pourcentage de posts fiables, score de crédibilité moyen, répartition FR/EN.
+- **Profil émotionnel** : radar chart des 7 émotions moyennes sur l'ensemble du corpus (colère, dégoût, joie, neutre, peur, surprise, tristesse).
+- **Fiabilité par langue** : diagramme en barres horizontales comparant les posts fiables et suspects pour le français et l'anglais.
+- **Tableau des posts** : liste des derniers posts analysés avec leur texte (tronqué), langue, label et score de crédibilité.
 
-#### 6.2. Analyse en temps reel
+#### 6.2. Analyse en temps réel
 
-Cette page permet d'analyser un texte en temps reel :
+Cette page permet d'analyser un texte en temps réel :
 
 1. Collez un texte (article, post Bluesky, tweet, ou tout texte FR/EN) dans la zone de saisie.
 2. Cliquez sur le bouton **Analyser**.
-3. Le systeme retourne :
-   - Un **score de credibilite** (jauge 0 a 1) : 0 = probablement faux, 1 = probablement fiable.
+3. Le système retourne :
+   - Un **score de crédibilité** (jauge 0 à 1) : 0 = probablement faux, 1 = probablement fiable.
    - Un **verdict** : FIABLE (vert) ou SUSPECT (rouge).
-   - L'**emotion dominante** detectee avec sa probabilite.
-   - Un **radar chart** detaille des 7 probabilites emotionnelles.
-   - La **langue detectee** automatiquement (FR ou EN).
+   - L'**émotion dominante** détectée avec sa probabilité.
+   - Un **radar chart** détaillé des 7 probabilités émotionnelles.
+   - La **langue détectée** automatiquement (FR ou EN).
 
 4. La section **V7 Hybride** affiche :
-   - 4 metriques : score V5 (TF-IDF), score V6 (Style), score V7 (Hybride), desaccord V5/V6.
+   - 4 métriques : score V5 (TF-IDF), score V6 (Style), score V7 (Hybride), désaccord V5/V6.
    - Un graphique SHAP montrant la contribution de chaque feature stylistique.
-   - Le detail des 35 features avec leur valeur SHAP.
+   - Le détail des 35 features avec leur valeur SHAP.
 
-**Interpretation du score** :
-- Score > 0.7 : le texte presente des caracteristiques de contenu fiable.
-- Score entre 0.4 et 0.7 : zone d'incertitude, verification manuelle recommandee.
-- Score < 0.4 : le texte presente des marqueurs de desinformation.
+**Interprétation du score** :
+- Score > 0.7 : le texte présente des caractéristiques de contenu fiable.
+- Score entre 0.4 et 0.7 : zone d'incertitude, vérification manuelle recommandée.
+- Score < 0.4 : le texte présente des marqueurs de désinformation.
 
-> **Avertissement** : le score est un indicateur probabiliste base sur des patterns statistiques. Il ne constitue pas une verification factuelle et ne doit pas etre utilise comme seul critere de decision.
+> **Avertissement** : le score est un indicateur probabiliste basé sur des patterns statistiques. Il ne constitue pas une vérification factuelle et ne doit pas être utilisé comme seul critère de décision.
 
-#### 6.3. Metriques & Transparence
+#### 6.3. Métriques & Transparence
 
-Cette page fournit les indicateurs de performance et de conformite :
+Cette page fournit les indicateurs de performance et de conformité :
 
-- **Ablation study** : tableau et graphique des F1-scores pour les 7 conditions experimentales testees (EN seul, FR seul, bilingue, bilingue + emotions, etc.).
-- **Bilan carbone** : emissions CO2 totales du projet mesurees par CodeCarbon.
-- **Roadmap** : les 4 versions planifiees du pipeline (V1 a V3) avec leurs objectifs.
-- **Conformite** : fiches RGPD et IA Act resumant les mesures de conformite.
+- **Ablation study** : tableau et graphique des F1-scores pour les 7 conditions expérimentales testées (EN seul, FR seul, bilingue, bilingue + émotions, etc.).
+- **Bilan carbone** : émissions CO2 totales du projet mesurées par CodeCarbon.
+- **Roadmap** : les versions planifiées du pipeline (V1 à V7) avec leurs objectifs.
+- **Conformité** : fiches RGPD et IA Act résumant les mesures de conformité.
 
 ---
 
 ### 7. Utiliser le pipeline en Python
 
-Le pipeline peut etre utilise directement en Python sans le dashboard :
+Le pipeline peut être utilisé directement en Python sans le dashboard :
 
 ```python
 import sys
@@ -161,7 +163,7 @@ import pandas as pd
 
 # Charger le modele
 detector = ExpertFakeNewsDetector(model_dir='models', use_emotions=True)
-detector.load(suffix='expert')
+detector.load(suffix='expert_v5')
 
 # Analyser des textes
 textes = pd.Series([
@@ -174,7 +176,7 @@ resultats = detector.predict(textes)
 print(resultats[['text', 'language', 'prediction_label', 'ai_score_credibility']])
 ```
 
-#### Charger les modeles V6 et V7
+#### Charger les modèles V6 et V7
 
 ```python
 import joblib
@@ -184,18 +186,18 @@ v6_data = joblib.load('models/model_style_v6.joblib')
 v7_data = joblib.load('models/model_hybrid_v7.joblib')
 ```
 
-**Colonnes retournees par `predict()`** :
+**Colonnes retournées par `predict()`** :
 | Colonne | Description |
 |---------|-------------|
 | `text` | Texte original |
-| `language` | Langue detectee (`fr`, `en`, `other`) |
+| `language` | Langue détectée (`fr`, `en`, `other`) |
 | `prediction_label` | 0 = Fiable, 1 = Suspect |
-| `ai_score_credibility` | Probabilite de fiabilite (0 a 1) |
-| `ai_analysis_log` | Log d'analyse lisible (ex: "[FR] Fiable (credibilite: 89%)") |
+| `ai_score_credibility` | Probabilité de fiabilité (0 à 1) |
+| `ai_analysis_log` | Log d'analyse lisible (ex: "[FR] Fiable (crédibilité: 89%)") |
 
 ---
 
-### 8. Utiliser l'analyse d'emotions
+### 8. Utiliser l'analyse d'émotions
 
 ```python
 from pipeline.expert_detector import EmotionFeatureExtractor
@@ -217,20 +219,20 @@ print(probas)
 
 ### 9. Notebooks
 
-Les notebooks documentent chaque etape du projet et sont executes sequentiellement :
+Les notebooks documentent chaque étape du projet et sont exécutés séquentiellement :
 
 | Notebook | Description | Sortie |
 |----------|-------------|--------|
-| 00 | Audit qualite des donnees d'entrainement | Statistiques, doublons, distributions |
-| 01 | Exploration des posts Bluesky collectes | Visualisations, wordclouds, distributions temporelles |
-| 02 | Entrainement du MLP emotions bilingue (PyTorch) | `emotion_bilingual.pt` + vocabulaire + label encoder |
-| 03 | Pipeline de mise a jour quotidienne | Collecte + inference sur posts recents |
-| 04 | Prototype RoBERTa avance | Exploration fine-tuning (non deploye) |
-| 05 | Pipeline expert bilingue + ablation study (7 conditions) | `model_expert.pkl` + `tfidf_expert.pkl` + metriques |
-| 06 | Documentation technique complete | Limites, roadmap, PRA/PCA, Green IT, conformite |
-| 09-24 | Scripts d'entrainement V3-V7 | Modeles V3 a V7, features stylistiques, meta-learner, SHAP |
+| 00 | Audit qualité des données d'entraînement | Statistiques, doublons, distributions |
+| 01 | Exploration des posts Bluesky collectés | Visualisations, wordclouds, distributions temporelles |
+| 02 | Entraînement du MLP émotions bilingue (PyTorch) | `emotion_bilingual.pt` + vocabulaire + label encoder |
+| 03 | Pipeline de mise à jour quotidienne | Collecte + inférence sur posts récents |
+| 04 | Prototype RoBERTa avancé | Exploration fine-tuning (non déployé) |
+| 05 | Pipeline expert bilingue + ablation study (7 conditions) | `model_expert.pkl` + `tfidf_expert.pkl` + métriques |
+| 06 | Documentation technique complète | Limites, roadmap, PRA/PCA, Green IT, conformité |
+| 09-24 | Scripts d'entraînement V3-V7 | Modèles V3 à V7, features stylistiques, méta-learner, SHAP |
 
-**Pour re-executer un notebook** :
+**Pour ré-exécuter un notebook** :
 ```bash
 jupyter nbconvert --to notebook --execute notebooks/05_Detection_Expert_Bilingue.ipynb \
     --output 05_Detection_Expert_Bilingue.ipynb --ExecutePreprocessor.timeout=600
@@ -238,9 +240,9 @@ jupyter nbconvert --to notebook --execute notebooks/05_Detection_Expert_Bilingue
 
 ---
 
-### 10. Deploiement Docker
+### 10. Déploiement Docker
 
-Le projet inclut un `docker-compose.yml` pour le deploiement complet :
+Le projet inclut un `docker-compose.yml` pour le déploiement complet :
 
 ```bash
 # Lancer l'ensemble de la stack
@@ -254,9 +256,10 @@ docker-compose logs -f
 ```
 
 **Services** :
-- **MongoDB** : stockage des posts collectes et des resultats d'analyse.
-- **Collecteur Bluesky** : script de collecte automatisee via le protocole AT.
+- **MongoDB** : stockage des posts collectés et des résultats d'analyse.
+- **Collecteur Bluesky** : script de collecte automatisée via le protocole AT.
 - **Dashboard Streamlit** : interface web de visualisation (port 8501).
+- **Jupyter Notebook** : serveur Jupyter pour l'exécution des notebooks d'analyse.
 
 ---
 
@@ -270,9 +273,9 @@ BLUESKY_APP_PASSWORD=votre_app_password
 MONGODB_URI=mongodb://mongodb:27017/
 ```
 
-#### Theme du dashboard (`.streamlit/config.toml`)
+#### Thème du dashboard (`.streamlit/config.toml`)
 
-Le theme dark est configure par defaut. Pour modifier les couleurs, editez `.streamlit/config.toml` :
+Le thème dark est configuré par défaut. Pour modifier les couleurs, éditez `.streamlit/config.toml` :
 
 ```toml
 [theme]
@@ -286,23 +289,23 @@ textColor = "#E0E0E0"
 
 ### 12. FAQ
 
-**Q : Le dashboard affiche "Mode demo". Comment connecter MongoDB ?**
-R : Lancez MongoDB (via Docker ou en local sur le port 27017) et assurez-vous que la base `thumalien_db` contient une collection `raw_posts`. Le dashboard se connecte automatiquement au demarrage.
+**Q : Le dashboard affiche "Mode démo". Comment connecter MongoDB ?**
+R : Lancez MongoDB (via Docker ou en local sur le port 27017) et assurez-vous que la base `thumalien_db` contient une collection `raw_posts`. Le dashboard se connecte automatiquement au démarrage.
 
-**Q : Comment re-entrainer le modele avec de nouvelles donnees ?**
-R : Executez le notebook 05 (`05_Detection_Expert_Bilingue.ipynb`). Il recharge les CSV depuis `data/training/`, re-entraine le modele et sauvegarde les fichiers `.pkl` dans `models/`.
+**Q : Comment ré-entraîner le modèle avec de nouvelles données ?**
+R : Exécutez le notebook 05 (`05_Detection_Expert_Bilingue.ipynb`). Il recharge les CSV depuis `data/training/`, ré-entraîne le modèle et sauvegarde les fichiers `.pkl` dans `models/`.
 
-**Q : Le modele classe mal un texte. Que faire ?**
-R : Le modele est entraine sur des articles de presse et peut mal generaliser sur des textes courts ou atypiques (posts de 10 mots, memes, satire). Le score doit etre interprete comme un indicateur, pas comme un verdict. Consultez la section "Limites" du notebook 06.
+**Q : Le modèle classe mal un texte. Que faire ?**
+R : Le modèle est entraîné sur des articles de presse et peut mal généraliser sur des textes courts ou atypiques (posts de 10 mots, mèmes, satire). Le score doit être interprété comme un indicateur, pas comme un verdict. Consultez la section "Limites" du notebook 06.
 
 **Q : Puis-je ajouter d'autres langues ?**
-R : La V7 supporte uniquement le francais et l'anglais. Les textes dans d'autres langues sont routes vers le pipeline anglais par defaut.
+R : La V7 supporte uniquement le français et l'anglais. Les textes dans d'autres langues sont routés vers le pipeline anglais par défaut.
 
 **Q : Qu'est-ce que le score SHAP affiche dans le dashboard ?**
-R : SHAP (SHapley Additive exPlanations) decompose la prediction du modele V6 en montrant la contribution de chaque feature stylistique. Une barre positive pousse vers "suspect", negative vers "fiable".
+R : SHAP (SHapley Additive exPlanations) décompose la prédiction du modèle V6 en montrant la contribution de chaque feature stylistique. Une barre positive pousse vers "suspect", négative vers "fiable".
 
-**Q : Quel est le cout carbone d'une prediction ?**
-R : Une prediction sur un batch de 1 000 textes emet moins de 0.001 g de CO2. L'entrainement complet emet environ 0.01 g de CO2 (moins qu'un email).
+**Q : Quel est le coût carbone d'une prédiction ?**
+R : Une prédiction sur un batch de 1 000 textes émet moins de 0.001 g de CO2. L'entraînement complet émet environ 0.01 g de CO2 (moins qu'un email).
 
 ---
 
@@ -310,8 +313,8 @@ R : Une prediction sur un batch de 1 000 textes emet moins de 0.001 g de CO2. L'
 
 - **Code source** : [github.com/azelbanks/projet_etude](https://github.com/azelbanks/projet_etude)
 - **Documentation technique** : notebook 06
-- **Bugs et suggestions** : ouvrir une issue sur le depot GitHub
+- **Bugs et suggestions** : ouvrir une issue sur le dépôt GitHub
 
 ---
 
-*Thumalien v7.0 — Pipeline bilingue FR/EN — Mastere Big Data, Sup de Vinci — Avril 2026*
+*Thumalien v7.0 — Pipeline bilingue FR/EN — Mastère Big Data, Sup de Vinci — Avril 2026*

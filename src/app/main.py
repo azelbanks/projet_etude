@@ -34,7 +34,7 @@ try:
     collection = db['raw_posts']
     collection.find_one()
 except Exception as e:
-    st.error(f"Erreur de connexion à MongoDB : {e}")
+    st.error("Impossible de se connecter à la base de données. Vérifiez que MongoDB est démarré.")
     st.stop()
 
 # --- SIDEBAR ---
@@ -45,17 +45,18 @@ page = st.sidebar.radio(
 )
 st.sidebar.divider()
 if st.sidebar.button("Rafraîchir les données"):
-    st.cache_data.clear()
+    load_data.clear()
     st.rerun()
 
 # --- CHARGEMENT DES DONNÉES ---
 @st.cache_data(ttl=30)
 def load_data():
-    cursor = collection.find({}, {"_id": 0})
+    cursor = collection.find({}, {"_id": 0}).limit(10000)
     df = pd.DataFrame(list(cursor))
     return df
 
 df = load_data()
+df = df.copy()
 
 if df.empty:
     st.warning("Aucune donnée dans la base. Vérifiez que le collecteur tourne.")

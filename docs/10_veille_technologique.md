@@ -1,7 +1,7 @@
 # Politique de Veille Technologique
-## Projet Thumalien - Suivi des evolutions technologiques et reglementaires
+## Projet Thumalien - Suivi des évolutions technologiques et réglementaires
 
-**Reference** : VEILLE-THUM-2026-001
+**Référence** : VEILLE-THUM-2026-001
 **Version** : 1.1
 **Date** : Avril 2026
 
@@ -9,7 +9,7 @@
 
 ## 1. Objectif
 
-La veille technologique permet de maintenir le projet Thumalien a l'etat de l'art en matiere de NLP, detection de desinformation et conformite reglementaire. Elle alimente les decisions d'evolution du pipeline et anticipe les ruptures technologiques.
+La veille technologique permet de maintenir le projet Thumalien à l'état de l'art en matière de NLP, détection de désinformation et conformité réglementaire. Elle alimente les décisions d'évolution du pipeline et anticipe les ruptures technologiques.
 
 ---
 
@@ -19,78 +19,78 @@ La veille technologique permet de maintenir le projet Thumalien a l'etat de l'ar
 
 | Sujet | Sources | Frequence | Responsable |
 |-------|---------|-----------|-------------|
-| Modeles de langue (LLM, BERT, etc.) | Hugging Face blog, arXiv (cs.CL) | Hebdomadaire | Azelie |
-| Detection de fake news (SOTA) | Papers With Code, ACL Anthology | Mensuelle | Azelie |
-| Librairies Python (scikit-learn, PyTorch, transformers) | GitHub releases, changelogs | Mensuelle | Azelie |
-| Techniques d'augmentation de donnees | arXiv, blogs ML | Mensuelle | Sebastien |
-| Evaluation et metriques NLP | Conferences (ACL, EMNLP, NeurIPS) | Trimestrielle | Azelie |
+| Modèles de langue (LLM, BERT, etc.) | Hugging Face blog, arXiv (cs.CL) | Hebdomadaire | Azélie |
+| Détection de fake news (SOTA) | Papers With Code, ACL Anthology | Mensuelle | Azélie |
+| Librairies Python (scikit-learn, PyTorch, transformers) | GitHub releases, changelogs | Mensuelle | Azélie |
+| Techniques d'augmentation de données | arXiv, blogs ML | Mensuelle | Sébastien |
+| Évaluation et métriques NLP | Conférences (ACL, EMNLP, NeurIPS) | Trimestrielle | Azélie |
 
-### 2.2 Veille reglementaire
+### 2.2 Veille réglementaire
 
-| Sujet | Sources | Frequence | Responsable |
+| Sujet | Sources | Fréquence | Responsable |
 |-------|---------|-----------|-------------|
-| RGPD (evolutions, jurisprudence) | CNIL, EUR-Lex | Trimestrielle | Azelie |
-| AI Act (mise en application) | Commission Europeenne, CNIL | Trimestrielle | Azelie |
-| Ethique de l'IA | IEEE, ACM, rapports OCDE | Semestrielle | Sebastien |
+| RGPD (évolutions, jurisprudence) | CNIL, EUR-Lex | Trimestrielle | Azélie |
+| AI Act (mise en application) | Commission Européenne, CNIL | Trimestrielle | Azélie |
+| Éthique de l'IA | IEEE, ACM, rapports OCDE | Semestrielle | Sébastien |
 
-### 2.3 Veille ecosysteme
+### 2.3 Veille écosystème
 
-| Sujet | Sources | Frequence | Responsable |
+| Sujet | Sources | Fréquence | Responsable |
 |-------|---------|-----------|-------------|
-| API AT Protocol (Bluesky) | GitHub bluesky-social, docs AT Proto | Hebdomadaire | Azelie |
-| Concurrents (fact-checking, outils similaires) | ProductHunt, TechCrunch | Mensuelle | Sebastien |
-| Frameworks dashboard (Streamlit, Gradio) | GitHub releases | Mensuelle | Azelie |
-| Docker / MongoDB (mises a jour securite) | Docker Hub, MongoDB blog | Mensuelle | Azelie |
+| API AT Protocol (Bluesky) | GitHub bluesky-social, docs AT Proto | Hebdomadaire | Azélie |
+| Concurrents (fact-checking, outils similaires) | ProductHunt, TechCrunch | Mensuelle | Sébastien |
+| Frameworks dashboard (Streamlit, Gradio) | GitHub releases | Mensuelle | Azélie |
+| Docker / MongoDB (mises à jour sécurité) | Docker Hub, MongoDB blog | Mensuelle | Azélie |
 
 ---
 
-## 3. Technologies identifiees et evaluees
+## 3. Technologies identifiées et évaluées
 
-### 3.1 Technologies adoptees (integrees au projet)
+### 3.1 Technologies adoptées (intégrées au projet)
 
-| Technologie | Date evaluation | Decision | Justification |
+| Technologie | Date évaluation | Décision | Justification |
 |------------|:--------------:|:--------:|---------------|
-| CamemBERT (FR) | Avril 2026 | Adopte | F1 0.957 sur textes courts FR, superieur au TF-IDF |
-| RoBERTa (EN) | Avril 2026 | Adopte | F1 0.874 sur textes courts EN, complementaire au pipeline |
-| Pipeline hybride (stacking) | Avril 2026 | Adopte | Combine les forces TF-IDF (robustesse) et Transformer (precision courts) |
-| CodeCarbon | Jan 2026 | Adopte | Monitoring CO2 transparent, zero impact performance |
-| fpdf2 | Avril 2026 | Adopte | Generation PDF depuis Python, pas de dependance externe |
-| Plotly | Mars 2026 | Adopte | Graphiques interactifs pour le dashboard, meilleur que matplotlib |
+| CamemBERT (FR) | Avril 2026 | Adopté | F1 0.957 sur textes courts FR, supérieur au TF-IDF |
+| RoBERTa (EN) | Avril 2026 | Adopté | F1 0.874 sur textes courts EN, complémentaire au pipeline |
+| Pipeline hybride (stacking) | Avril 2026 | Adopté | Combine les forces TF-IDF (robustesse) et Transformer (précision courts) |
+| CodeCarbon | Jan 2026 | Adopté | Monitoring CO2 transparent, zéro impact performance |
+| fpdf2 | Avril 2026 | Adopté | Génération PDF depuis Python, pas de dépendance externe |
+| Plotly | Mars 2026 | Adopté | Graphiques interactifs pour le dashboard, meilleur que matplotlib |
 
-### 3.2 Technologies evaluees et non retenues
+### 3.2 Technologies évaluées et non retenues
 
-| Technologie | Date evaluation | Decision | Justification |
+| Technologie | Date évaluation | Décision | Justification |
 |------------|:--------------:|:--------:|---------------|
-| TensorFlow (emotions) | Jan 2026 | Rejete | Incompatible Apple Silicon M4, remplace par PyTorch |
-| GPT-4 pour detection | Fev 2026 | Non retenu | Cout prohibitif en inference, latence trop elevee, dependance API |
-| Sentence-Transformers | Mars 2026 | Reporte | Prometteur mais V5 + Transformers couvrent le besoin actuel |
-| FastAPI (serving) | Mars 2026 | Reporte | Pas encore necessaire, inference batch suffisante |
-| Elasticsearch | Dec 2025 | Non retenu | MongoDB suffisant pour nos volumes, complexite inutile |
+| TensorFlow (émotions) | Jan 2026 | Rejeté | Incompatible Apple Silicon M4, remplacé par PyTorch |
+| GPT-4 pour détection | Fév 2026 | Non retenu | Coût prohibitif en inférence, latence trop élevée, dépendance API |
+| Sentence-Transformers | Mars 2026 | Reporté | Prometteur mais V5 + Transformers couvrent le besoin actuel |
+| FastAPI (serving) | Mars 2026 | Reporté | Pas encore nécessaire, inférence batch suffisante |
+| Elasticsearch | Déc 2025 | Non retenu | MongoDB suffisant pour nos volumes, complexité inutile |
 
-### 3.3 Technologies a surveiller (roadmap)
+### 3.3 Technologies à surveiller (roadmap)
 
-| Technologie | Interet pour Thumalien | Horizon | Priorite |
+| Technologie | Intérêt pour Thumalien | Horizon | Priorité |
 |------------|------------------------|:-------:|:--------:|
 | RAG (Retrieval-Augmented Generation) | Cross-checker les claims avec une base factuelle (Wikipedia, Google Fact Check Tools API) | T3 2026 | **Haute** |
-| LLM-as-Judge (GPT-4o, Claude) | Scoring zero-shot de la credibilite, benchmark contre V7 | T3 2026 | **Haute** |
-| Active Learning (modAL) | Cibler l'annotation sur les posts a fort disagreement V5/V6 | T2 2026 | **Haute** |
-| Conformal Prediction | Intervalles de confiance calibres au lieu de scores bruts | T3 2026 | Moyenne |
-| ONNX Runtime | Export CamemBERT/RoBERTa en ONNX, -50% latence inference | T3 2026 | Moyenne |
-| MLflow / Weights & Biases | Tracking systematique des experiences ML | T2 2026 | Moyenne |
-| Guardrails AI / NeMo Guardrails | Framework de safety pour systemes IA de moderation | T4 2026 | Moyenne |
+| LLM-as-Judge (GPT-4o, Claude) | Scoring zero-shot de la crédibilité, benchmark contre V7 | T3 2026 | **Haute** |
+| Active Learning (modAL) | Cibler l'annotation sur les posts à fort disagreement V5/V6 | T2 2026 | **Haute** |
+| Conformal Prediction | Intervalles de confiance calibrés au lieu de scores bruts | T3 2026 | Moyenne |
+| ONNX Runtime | Export CamemBERT/RoBERTa en ONNX, -50% latence inférence | T3 2026 | Moyenne |
+| MLflow / Weights & Biases | Tracking systématique des expériences ML | T2 2026 | Moyenne |
+| Guardrails AI / NeMo Guardrails | Framework de safety pour systèmes IA de modération | T4 2026 | Moyenne |
 | DPO/RLHF pour fake news | Fine-tuner un small LLM (Mistral 7B) avec paires vrai/faux | T4 2026 | Basse |
-| Detection multimodale (CLIP) | Analyser les images associees aux posts pour detecter la manipulation visuelle | T4 2026 | Basse |
-| Grafana + Prometheus | Monitoring avance des performances systeme et drift detection | T2 2026 | Basse |
+| Détection multimodale (CLIP) | Analyser les images associées aux posts pour détecter la manipulation visuelle | T4 2026 | Basse |
+| Grafana + Prometheus | Monitoring avancé des performances système et drift detection | T2 2026 | Basse |
 
-### 3.4 Tendances 2026 en detection de desinformation
+### 3.4 Tendances 2026 en détection de désinformation
 
 | Tendance | Description | Impact pour Thumalien |
 |----------|-------------|----------------------|
-| LLM Fact-Checking | Les LLMs (GPT-4o, Claude, Gemini) sont utilises pour verifier les claims en les comparant a des sources fiables | Possibilite d'ajouter une couche de verification factuelle au-dessus de la detection stylistique |
-| Multimodal Misinformation | La desinformation s'appuie de plus en plus sur des images generees par IA (deepfakes, infographies truquees) | Extension future vers l'analyse d'images avec CLIP ou BLIP-2 |
-| Explicabilite reglementaire | L'AI Act impose la transparence des systemes IA a risque — SHAP devient un standard industriel | Notre integration SHAP anticipe cette obligation |
-| Federated Learning | Entrainer des modeles sans centraliser les donnees (privacy-preserving) | Pertinent si Thumalien est deploye chez plusieurs clients |
-| Synthetic Data Augmentation | Generation de donnees synthetiques pour equilibrer les datasets (deja utilise en V4/V5) | Approfondir avec des LLMs pour generer des faux plus realistes |
+| LLM Fact-Checking | Les LLMs (GPT-4o, Claude, Gemini) sont utilisés pour vérifier les claims en les comparant à des sources fiables | Possibilité d'ajouter une couche de vérification factuelle au-dessus de la détection stylistique |
+| Multimodal Misinformation | La désinformation s'appuie de plus en plus sur des images générées par IA (deepfakes, infographies truquées) | Extension future vers l'analyse d'images avec CLIP ou BLIP-2 |
+| Explicabilité réglementaire | L'AI Act impose la transparence des systèmes IA à risque — SHAP devient un standard industriel | Notre intégration SHAP anticipe cette obligation |
+| Federated Learning | Entraîner des modèles sans centraliser les données (privacy-preserving) | Pertinent si Thumalien est déployé chez plusieurs clients |
+| Synthetic Data Augmentation | Génération de données synthétiques pour équilibrer les datasets (déjà utilisé en V4/V5) | Approfondir avec des LLMs pour générer des faux plus réalistes |
 
 ---
 
@@ -120,17 +120,17 @@ La veille technologique permet de maintenir le projet Thumalien a l'etat de l'ar
    Documentation mise a jour
 ```
 
-### 4.2 Exemples concrets de veille appliquee
+### 4.2 Exemples concrets de veille appliquée
 
-| Date | Decouverte | Action | Resultat |
+| Date | Découverte | Action | Résultat |
 |------|-----------|--------|----------|
-| Jan 2026 | PyTorch supporte Apple Silicon nativement | Migration TensorFlow -> PyTorch | Modele emotions fonctionnel |
-| Fev 2026 | Publication sur le debiaisage des datasets de presse | Implementation BODY_AGENCY_TERMS | Reduction du biais Reuters |
-| Mars 2026 | CamemBERT fine-tune sur donnees courtes (blog HF) | Fine-tuning sur nos donnees FR | F1 0.957 sur ultra-courts |
-| Avril 2026 | RoBERTa performant sur tweets EN (papier ACL) | Fine-tuning sur donnees EN | F1 0.874 sur ultra-courts |
+| Jan 2026 | PyTorch supporte Apple Silicon nativement | Migration TensorFlow -> PyTorch | Modèle émotions fonctionnel |
+| Fév 2026 | Publication sur le débiaisage des datasets de presse | Implémentation BODY_AGENCY_TERMS | Réduction du biais Reuters |
+| Mars 2026 | CamemBERT fine-tuné sur données courtes (blog HF) | Fine-tuning sur nos données FR | F1 0.957 sur ultra-courts |
+| Avril 2026 | RoBERTa performant sur tweets EN (papier ACL) | Fine-tuning sur données EN | F1 0.874 sur ultra-courts |
 | Avril 2026 | Technique de stacking pour NLP hybride | Pipeline hybride V5+CamemBERT | F1 FR +0.52% |
-| Avril 2026 | SHAP TreeExplainer pour GradientBoosting (papier Lundberg 2017) | Integration dans dashboard V7 | Explicabilite locale et globale des predictions |
-| Avril 2026 | Meta-learner stacking pour combiner modeles heterogenes (technique Kaggle) | Architecture V7 hybride V5+V6 | Reduction FP de 57 a 25 sur gold set |
+| Avril 2026 | SHAP TreeExplainer pour GradientBoosting (papier Lundberg 2017) | Intégration dans dashboard V7 | Explicabilité locale et globale des prédictions |
+| Avril 2026 | Meta-learner stacking pour combiner modèles hétérogènes (technique Kaggle) | Architecture V7 hybride V5+V6 | Réduction FP de 57 à 25 sur gold set |
 
 ---
 
@@ -138,24 +138,24 @@ La veille technologique permet de maintenir le projet Thumalien a l'etat de l'ar
 
 ### 5.1 Sources principales
 
-- **arXiv** (cs.CL, cs.AI) : publications academiques pre-print
-- **Hugging Face Blog** : nouveaux modeles, techniques, datasets
-- **Papers With Code** : benchmarks et SOTA detection fake news
-- **CNIL** : actualites RGPD, guides pratiques IA
-- **GitHub Trending** : librairies emergentes Python/ML
+- **arXiv** (cs.CL, cs.AI) : publications académiques pre-print
+- **Hugging Face Blog** : nouveaux modèles, techniques, datasets
+- **Papers With Code** : benchmarks et SOTA détection fake news
+- **CNIL** : actualités RGPD, guides pratiques IA
+- **GitHub Trending** : librairies émergentes Python/ML
 - **Google Scholar Alerts** : "fake news detection", "misinformation NLP"
 
-### 5.2 Conferences et evenements suivis
+### 5.2 Conférences et événements suivis
 
-| Conference | Domaine | Periode |
+| Conférence | Domaine | Période |
 |-----------|---------|---------|
 | ACL (Association for Computational Linguistics) | NLP | Juillet |
 | EMNLP (Empirical Methods in NLP) | NLP | Octobre |
-| NeurIPS | Machine Learning | Decembre |
-| CNIL Open Data Day | Reglementation | Variable |
+| NeurIPS | Machine Learning | Décembre |
+| CNIL Open Data Day | Réglementation | Variable |
 | PyData | Python Data Science | Variable |
 
 ---
 
-*Document valide par l'equipe projet - Avril 2026*
-*Reference : VEILLE-THUM-2026-001 - Version 1.1*
+*Document validé par l'équipe projet - Avril 2026*
+*Référence : VEILLE-THUM-2026-001 - Version 1.1*
