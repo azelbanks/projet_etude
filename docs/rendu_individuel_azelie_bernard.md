@@ -14,7 +14,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 ### Responsabilités principales
 - Architecture technique et infrastructure Docker
 - Développement du collecteur Bluesky (AT Protocol)
-- Pipeline NLP complet (V1.0 à V7)
+- Pipeline NLP complet (V1.0 à V9)
 - Fine-tuning des modèles Transformer (CamemBERT, RoBERTa)
 - Explicabilité SHAP
 - Gold Test Set annotation
@@ -42,7 +42,11 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - V5.0 : +10K posts synthétiques, F1 global = 0.913
 - V6.0 : modèle style-only topic-agnostic (28 features stylistiques + 7 émotions, GradientBoosting, CV F1=0.830)
 - V7.0 : ensemble hybride meta-learner V5+V6 avec explicabilité SHAP, FP réduits de 57 à 25 sur gold set
-- **30+ commits** sur le dépôt Git
+- V8.0 : intégration CamemBERT comme 3e signal sémantique, F1 suspect +28%
+- Self-training Bluesky : tentative de domain adaptation par pseudo-labeling, échec documenté (circularité)
+- Annotation humaine : 500 posts annotés par 2 annotateurs, kappa inter-annotateurs = 0.498
+- V9.0 : pipeline 2 étapes fait/opinion, réduction FP de 186 à 62 (-67%), validation statistique (Fisher p=0.0005)
+- **40+ commits** sur le dépôt Git
 
 ### 2.3 Modèles Transformer (Avril 2026)
 - Fine-tuning CamemBERT V1/V2 pour le français (F1 ultra-court = 0.957)
@@ -59,11 +63,13 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - Early stopping + class weights pour gérer le déséquilibre
 - Intégration comme features dans le pipeline NLP
 
-### 2.6 Gold Test Set (Avril 2026)
-- Création et annotation manuelle de 200 posts Bluesky
-- Double annotation avec calcul du kappa de Cohen (0.808)
-- Évaluation systématique de tous les modèles V5-V7
+### 2.6 Gold Test Set et annotation humaine (Avril-Mai 2026)
+- Création et annotation manuelle de 200 posts Bluesky (gold set V1, kappa = 0.808)
+- Annotation de 500 posts Bluesky par 2 annotateurs indépendants (gold set V2, kappa = 0.498)
+- Échantillonnage stratifié : 250 FR + 250 EN, 50 par tranche de score
+- Évaluation systématique de tous les modèles V5-V9
 - Identification du biais thématique (mot "coronavirus" coefficient +9.72)
+- Découverte de la distinction fait/opinion comme facteur discriminant (odds ratio 4.67, p=0.0005)
 
 ### 2.7 Modèle Style-Only V6 (Avril 2026)
 - Conception de 28 features stylistiques en 6 blocs (structure, ponctuation, majuscules, lexique manipulation, crédibilité, diversité)
@@ -84,7 +90,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 
 | Compétence | Niveau avant | Niveau après | Contexte d'application |
 |-----------|:------------:|:------------:|----------------------|
-| Python avancé | Intermédiaire | Avancé | Pipeline complet, 25 notebooks |
+| Python avancé | Intermédiaire | Avancé | Pipeline complet, 28 notebooks (00-27) |
 | NLP / Text Mining | Débutant | Avancé | TF-IDF, features linguistiques, tokenization |
 | Deep Learning (PyTorch) | Débutant | Intermédiaire | MLP émotions, fine-tuning Transformers |
 | Transformers (Hugging Face) | Débutant | Intermédiaire | CamemBERT, RoBERTa, stacking |
@@ -102,7 +108,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 |-----------|-----------------|
 | Gestion de projet | Planification itérative, priorisation des tâches, respect des délais |
 | Résolution de problèmes | Debugging du biais Reuters, correction preprocessing V3, migration TF->PyTorch |
-| Communication technique | Rédaction de 10+ documents, 25 notebooks commentés |
+| Communication technique | Rédaction de 10+ documents, 28 notebooks commentés |
 | Esprit critique | Analyse des erreurs, tests de significativité, identification des biais |
 | Autonomie | Apprentissage de PyTorch, CamemBERT, AT Protocol en autodidacte |
 
@@ -124,7 +130,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 ## 5. Analyse critique et recul
 
 ### Ce qui a bien fonctionné
-- L'approche itérative (V1 -> V5) a permis d'améliorer continuellement les performances
+- L'approche itérative (V1 → V9) a permis d'améliorer continuellement les performances
 - La documentation au fil de l'eau (notebooks) facilite la traçabilité
 - Le choix de Docker garantit la reproductibilité
 - L'ajout de CamemBERT et RoBERTa a résolu le problème des textes courts
@@ -140,7 +146,8 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 
 ### Limites identifiées
 - Le modèle reste dépendant des datasets d'entraînement (pas de fact-checking réel)
-- L'absence de données annotées spécifiquement pour Bluesky est une faiblesse
+- Le gold set consensus (473 posts, 15 suspects) reste déséquilibré
+- La distinction fait/opinion repose sur des heuristiques, pas sur des labels humains dédiés
 - Le monitoring en production est minimal (pas de Grafana/Prometheus)
 
 ---
@@ -153,4 +160,4 @@ La dimension éthique (biais, conformité RGPD, AI Act) a été particulièremen
 
 ---
 
-*Rendu individuel - Azélie Bernard - Avril 2026*
+*Rendu individuel - Azélie Bernard - Mai 2026*

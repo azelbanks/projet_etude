@@ -374,24 +374,50 @@ class StyleFeatureExtractorV6:
 
 @st.cache_resource
 def load_v6_v7():
-    """Charge les modeles V6 (style) et V7 (meta-learner) si disponibles."""
+    """Charge les modèles V6 (style), V7/V8 (meta-learner) et CamemBERT si disponibles."""
     model_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
-    v6_data, v7_data = None, None
+    v6_data, v7_data, cam_classifier = None, None, None
 
     v6_path = os.path.join(model_dir, 'model_style_v6.joblib')
     if os.path.exists(v6_path):
         v6_data = joblib.load(v6_path)
 
+    # Préférer V8 (avec CamemBERT) si disponible, sinon V7
+    v8_path = os.path.join(model_dir, 'model_hybrid_v8.joblib')
     v7_path = os.path.join(model_dir, 'model_hybrid_v7.joblib')
-    if os.path.exists(v7_path):
+    if os.path.exists(v8_path):
+        v7_data = joblib.load(v8_path)
+    elif os.path.exists(v7_path):
         v7_data = joblib.load(v7_path)
 
-    return v6_data, v7_data
+    # Charger CamemBERT si V8 l'utilise
+    if v7_data is not None and v7_data.get('uses_camembert', False):
+        try:
+            from pipeline.camembert_classifier import CamemBERTClassifier
+            cam_classifier = CamemBERTClassifier(model_dir=model_dir)
+            cam_suffix = v7_data.get('camembert_suffix', 'camembert_fr')
+            if not cam_classifier.load(suffix=cam_suffix):
+                cam_classifier = None
+        except Exception as e:
+            logging.warning(f"CamemBERT non disponible: {e}")
+            cam_classifier = None
+
+    # Charger Stage 1 fait/opinion (V9)
+    stage1_data = None
+    stage1_path = os.path.join(model_dir, 'stage1_fact_opinion.joblib')
+    if os.path.exists(stage1_path):
+        try:
+            stage1_data = joblib.load(stage1_path)
+        except Exception as e:
+            logging.warning(f"Stage 1 fait/opinion non disponible: {e}")
+
+    return v6_data, v7_data, cam_classifier, stage1_data
 
 
-def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data):
-    """Calcule le score hybride V7 pour un texte unique.
+def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data, cam_classifier=None):
+    """Calcule le score hybride V7/V8 pour un texte unique.
 
+    V8 intègre CamemBERT comme 3e signal si disponible.
     Returns dict with score_v5, score_v6, score_v7, label_v7, shap_values, feature_names.
     """
     texts = pd.Series([text_input])
@@ -399,6 +425,7 @@ def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data):
     # V5 score
     v5_result = detector.predict(texts)
     score_v5 = float(v5_result['ai_score_credibility'].iloc[0])  # P(fiable)
+    lang = v5_result['language'].iloc[0] if 'language' in v5_result.columns else 'en'
 
     # V6 score
     v6_model = v6_data['model']
@@ -420,14 +447,23 @@ def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data):
 
     score_v6 = float(v6_model.predict_proba(X_input)[:, 1][0])  # P(suspect)
 
-    # V7 meta-learner
-    disagreement = abs(score_v5 - (1 - score_v6))
-    interaction = score_v5 * score_v6
+    # CamemBERT score (FR seulement, neutre pour EN)
+    score_cam = 0.5  # neutre par défaut
+    if cam_classifier is not None and lang == 'fr':
+        try:
+            score_cam = float(cam_classifier.predict_credibility_scores([text_input])[0])
+        except Exception as e:
+            logging.warning(f"CamemBERT prediction error: {e}")
+
+    # Meta-learner features
+    disagreement_v5_v6 = abs(score_v5 - (1 - score_v6))
+    interaction_v5_v6 = score_v5 * score_v6
 
     result = {
         'score_v5': score_v5,
         'score_v6': score_v6,
-        'disagreement': disagreement,
+        'score_cam': score_cam,
+        'disagreement': disagreement_v5_v6,
         'X_input': X_input,
         'shap_values': None,
         'feature_names': None,
@@ -435,16 +471,31 @@ def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data):
 
     if v7_data is not None:
         meta_model = v7_data['meta_model']
-        X_meta = np.array([[score_v5, score_v6, disagreement, interaction]])
+        meta_features = v7_data.get('meta_feature_names', [])
+
+        # V8 étendu (7 features) ou V7 classique (4 features)
+        if v7_data.get('uses_camembert', False):
+            disagreement_v5_cam = abs(score_v5 - score_cam)
+            min_fiable = min(score_v5, score_cam)
+            X_meta = np.array([[
+                score_v5, score_v6, score_cam,
+                disagreement_v5_v6, disagreement_v5_cam,
+                interaction_v5_v6, min_fiable,
+            ]])
+        else:
+            X_meta = np.array([[score_v5, score_v6, disagreement_v5_v6, interaction_v5_v6]])
+
         score_v7 = float(meta_model.predict_proba(X_meta)[:, 1][0])
         label_v7 = 'SUSPECT' if score_v7 >= 0.5 else 'FIABLE'
         result['score_v7'] = score_v7
         result['label_v7'] = label_v7
+        result['version'] = v7_data.get('version', 'v7_hybrid')
     else:
         optimal_th = FALLBACK_THRESHOLD_V7
         combined = score_v5 * (1 - score_v6)
         result['score_v7'] = 1 - combined
         result['label_v7'] = 'SUSPECT' if combined < optimal_th else 'FIABLE'
+        result['version'] = 'v7_fallback'
 
     # SHAP explanation on V6
     if _HAS_SHAP and v6_model_name in ('GradientBoosting', 'RandomForest'):
@@ -931,10 +982,27 @@ def page_realtime(detector, emo, v6_data=None, v7_data=None):
             # Explainability per-instance
             explanation = detector.explain_prediction(text_input)
 
-            # V7 hybrid analysis
+            # Stage 1: filtre fait/opinion (V9)
+            post_type = None
+            post_type_proba = None
+            if stage1_data is not None:
+                try:
+                    s1_pipe = stage1_data['pipeline']
+                    s1_th = stage1_data.get('threshold', 0.40)
+                    s1_proba = s1_pipe.predict_proba([text_input])[0]
+                    p_factuel = float(s1_proba[1])
+                    post_type_proba = p_factuel
+                    post_type = 'factuel' if p_factuel >= s1_th else 'opinion'
+                except Exception as e:
+                    logging.warning(f"Stage 1 prediction error: {e}")
+
+            # V7/V8 hybrid analysis
             v7_result = None
             if v6_data is not None:
-                v7_result = predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data)
+                v7_result = predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data, cam_classifier)
+                if v7_result is not None:
+                    v7_result['post_type'] = post_type
+                    v7_result['post_type_proba'] = post_type_proba
 
         st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
 
@@ -1116,7 +1184,24 @@ def page_realtime(detector, emo, v6_data=None, v7_data=None):
         # --- V7 Hybrid Score + SHAP Explanation ---
         if v7_result is not None:
             st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
-            st.subheader('Analyse hybride V7 (TF-IDF + Style)')
+            st.subheader('Analyse hybride V9 (fait/opinion + TF-IDF + Style + CamemBERT)')
+
+            # Stage 1: type de post
+            pt = v7_result.get('post_type')
+            if pt is not None:
+                pt_proba = v7_result.get('post_type_proba', 0)
+                pt_color = '#FFD600' if pt == 'factuel' else '#00D4FF'
+                pt_label = 'Factuel' if pt == 'factuel' else 'Opinion'
+                pt_icon = '📰' if pt == 'factuel' else '💬'
+                st.markdown(
+                    f'<div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 16px;'
+                    f'border-left:4px solid {pt_color};margin-bottom:16px;">'
+                    f'{pt_icon} <b>Type de post :</b> <span style="color:{pt_color}">{html.escape(pt_label)}</span>'
+                    f' (P(factuel) = {pt_proba:.2f})'
+                    f'{"" if pt == "factuel" else " — les opinions ne sont pas evaluees comme desinformation"}'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
 
             hc1, hc2, hc3, hc4 = st.columns(4)
             hc1.markdown(
@@ -1129,7 +1214,7 @@ def page_realtime(detector, emo, v6_data=None, v7_data=None):
             )
             v7_color = '#FF1744' if v7_result['label_v7'] == 'SUSPECT' else '#00E676'
             hc3.markdown(
-                metric_card('🔗', 'V7 Hybride', f'{v7_result["score_v7"]:.2f}', v7_color),
+                metric_card('🔗', 'V8 Hybride', f'{v7_result["score_v7"]:.2f}', v7_color),
                 unsafe_allow_html=True,
             )
             hc4.markdown(
@@ -1140,8 +1225,8 @@ def page_realtime(detector, emo, v6_data=None, v7_data=None):
 
             st.caption(
                 "V5 = score TF-IDF P(fiable). V6 = score style P(suspect). "
-                "V7 = meta-learner combinant V5+V6+desaccord. "
-                "Un desaccord eleve indique un conflit entre signal lexical et signal stylistique."
+                "V8 = meta-learner combinant V5+V6+CamemBERT+desaccord. "
+                "Le filtre fait/opinion (V9) identifie si le post contient une assertion factuelle verifiable."
             )
 
             # SHAP waterfall chart
@@ -1546,15 +1631,17 @@ def main():
     )
 
     st.sidebar.divider()
-    st.sidebar.caption('v7.0 — Ensemble hybride V5+V6 + SHAP (seuil 0.44)')
+    st.sidebar.caption('v9.0 — Pipeline fait/opinion + V5+V6+CamemBERT + SHAP')
 
     # Load resources
     detector, emo, model_suffix = load_pipeline()
-    v6_data, v7_data = load_v6_v7()
+    v6_data, v7_data, cam_classifier, stage1_data = load_v6_v7()
     df, is_demo = get_data()
 
     if v6_data is not None:
-        st.sidebar.success('V6 Style + V7 Hybride charges')
+        version_label = v7_data.get('version', 'v7') if v7_data else 'v7'
+        cam_label = ' + CamemBERT' if cam_classifier is not None else ''
+        st.sidebar.success(f'V6 Style + {version_label.upper()}{cam_label} chargés')
 
     if is_demo:
         st.sidebar.info('📋 Mode demo — donnees simulees (MongoDB non connecte)')
