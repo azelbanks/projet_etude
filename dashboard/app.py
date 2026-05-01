@@ -955,7 +955,7 @@ def page_overview(df, detector, emo):
 #  PAGE 2 : Analyse en temps reel
 # ===================================================================
 
-def page_realtime(detector, emo, v6_data=None, v7_data=None):
+def page_realtime(detector, emo, v6_data=None, v7_data=None, cam_classifier=None, stage1_data=None):
     hero('Analyse en temps reel',
          'Soumettez un texte pour obtenir son profil de credibilite et son empreinte emotionnelle')
 
@@ -1653,7 +1653,7 @@ def main():
     if page == '🔍 Vue Globale':
         page_overview(df, detector, emo)
     elif page == '⚡ Analyse en temps reel':
-        page_realtime(detector, emo, v6_data, v7_data)
+        page_realtime(detector, emo, v6_data, v7_data, cam_classifier, stage1_data)
     else:
         page_metrics()
 
