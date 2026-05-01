@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import time
 import datetime
@@ -272,6 +273,11 @@ def _load_inference_models():
 
     import pickle as _pickle
     import torch
+
+    # S'assurer que src/ est dans le path pour importer pipeline.*
+    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    if src_dir not in sys.path:
+        sys.path.insert(0, src_dir)
 
     model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
     model_dir = os.path.abspath(model_dir)
