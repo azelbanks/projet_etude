@@ -1,80 +1,100 @@
-version: '3.8'
-
 services:
-  # Service 1 : Base de données
+  # -----------------------------------------------------------------
+  #  Service 1 : MongoDB — Base de donnees
+  # -----------------------------------------------------------------
   mongodb:
     image: mongo:8
     container_name: thumalien_mongo
     restart: always
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     volumes:
       - ./data/db:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "-u", "${MONGO_USER}", "-p", "${MONGO_PASSWORD}",
+             "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - thumalien_network
 
-  # Service 2 : Collecteur Python (DOIT être aligné avec mongodb)
+  # -----------------------------------------------------------------
+  #  Service 2 : Collecteur Bluesky + inference IA automatique
+  # -----------------------------------------------------------------
   collector:
     build: .
     container_name: thumalien_collector
     restart: always
     depends_on:
-      - mongodb
-    links:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/app
-      - MONGO_HOST=mongodb
-      - MONGO_USER=${MONGO_USER}
-      - MONGO_PASSWORD=${MONGO_PASSWORD}
-      - BLUESKY_HANDLE=${BLUESKY_HANDLE}
-      - BLUESKY_PASSWORD=${BLUESKY_PASSWORD}
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: /app/src:/app
+      MONGO_HOST: mongodb
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      BLUESKY_HANDLE: ${BLUESKY_HANDLE}
+      BLUESKY_PASSWORD: ${BLUESKY_PASSWORD}
     volumes:
       - .:/app
     networks:
       - thumalien_network
-  # Service 3 : Environnement ML (Étudiant 2)
+
+  # -----------------------------------------------------------------
+  #  Service 3 : Jupyter Lab — Environnement ML
+  # -----------------------------------------------------------------
   notebook:
     build: .
     container_name: thumalien_notebook
+    restart: unless-stopped
     command: jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.token='${JUPYTER_TOKEN}'
-    volumes:
-      - .:/app          # Accès au code
-    ports:
-      - "8888:8888"     # Port pour accéder à Jupyter depuis le navigateur
     depends_on:
-      - mongodb
-    links:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     environment:
-      - MONGO_HOST=mongodb
-      - MONGO_USER=${MONGO_USER}
-      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      PYTHONPATH: /app/src:/app
+      MONGO_HOST: mongodb
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - .:/app
+    ports:
+      - "8888:8888"
     networks:
       - thumalien_network
 
+  # -----------------------------------------------------------------
+  #  Service 4 : Dashboard Streamlit
+  # -----------------------------------------------------------------
   dashboard:
     build: .
     container_name: thumalien_dashboard
-    # On lance Streamlit et on lui dit d'écouter sur toutes les interfaces (0.0.0.0)
+    restart: unless-stopped
     command: streamlit run dashboard/app.py --server.port=8501 --server.address=0.0.0.0
-    volumes:
-      - .:/app  # Permet de modifier le code en direct sans redémarrer Docker
-    ports:
-      - "8501:8501"  # Le port standard de Streamlit
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
+    environment:
+      PYTHONPATH: /app/src:/app
+      MONGO_HOST: mongodb
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - .:/app
+    ports:
+      - "8501:8501"
     networks:
       - thumalien_network
-    environment:
-      - PYTHONPATH=/app
-      - MONGO_HOST=mongodb
-      - MONGO_USER=${MONGO_USER}
-      - MONGO_PASSWORD=${MONGO_PASSWORD}
 
-# Définition du réseau explicite
+# -----------------------------------------------------------------
+#  Reseau interne
+# -----------------------------------------------------------------
 networks:
   thumalien_network:
     driver: bridge
