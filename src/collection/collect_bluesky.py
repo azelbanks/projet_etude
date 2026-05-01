@@ -21,12 +21,25 @@ PASSWORD = os.getenv('BLUESKY_PASSWORD')
 # On structure les recherches par langue pour respecter le Cahier des Charges (FR/EN)
 SEARCH_CONFIG = {
     "en": [
-        "climate change", "vaccine", "conspiracy", "breaking news", "leaked", 
-        "censored", "urgent", "happy", "weekend", "art", "technology", "trump"
+        # Thématiques à risque de désinformation
+        "climate change", "vaccine", "conspiracy", "breaking news", "leaked",
+        "censored", "urgent", "trump", "election",
+        # Termes sensationnalistes / désinformation
+        "exposed", "they lied", "cover up", "wake up",
+        # Termes neutres (baseline contraste)
+        "weekend", "art", "technology", "community",
     ],
     "fr": [
-        "changement climatique", "vaccin", "complot", "alerte info", "scandale", 
-        "censuré", "urgent", "macron", "joie", "weekend", "art", "technologie", "démission"
+        # Thématiques à risque de désinformation
+        "changement climatique", "vaccin", "complot", "alerte info", "scandale",
+        "censuré", "urgent", "macron", "élection", "démission",
+        # Termes sensationnalistes / désinformation
+        "on nous cache", "révélation", "ils mentent", "manipulation",
+        # Actualité / société (rééquilibrage volume FR)
+        "politique", "santé", "éducation", "immigration", "retraite",
+        "sécurité", "économie", "justice", "grève", "assemblée nationale",
+        # Termes neutres (baseline contraste)
+        "weekend", "art", "technologie", "communauté",
     ]
 }
 
@@ -236,8 +249,153 @@ def run_collection_cycle(collection, client, monitor=None):
     if monitor:
         monitor.end_cycle()
 
+
+# ---------------------------------------------------------------------------
+#  Inference IA automatique (emotions + V5) apres chaque cycle de collecte
+# ---------------------------------------------------------------------------
+
+_emotion_model = None
+_emotion_vocab = None
+_emotion_le = None
+_emotion_max_len = 100
+_detector = None
+_emo_extractor = None
+
+
+def _load_inference_models():
+    """Charge les modeles d'inference (emotions + V5) une seule fois."""
+    global _emotion_model, _emotion_vocab, _emotion_le, _emotion_max_len
+    global _detector, _emo_extractor
+
+    if _emotion_model is not None:
+        return True
+
+    import pickle as _pickle
+    import torch
+
+    model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
+    model_dir = os.path.abspath(model_dir)
+
+    try:
+        # Emotions
+        with open(os.path.join(model_dir, 'emotion_vocab_bilingual.pickle'), 'rb') as f:
+            _emotion_vocab = _pickle.load(f)
+        with open(os.path.join(model_dir, 'emotion_label_encoder_bilingual.pickle'), 'rb') as f:
+            _emotion_le = _pickle.load(f)
+
+        cp = torch.load(os.path.join(model_dir, 'emotion_bilingual.pt'),
+                        map_location='cpu', weights_only=False)
+        if isinstance(cp, dict) and 'model_state_dict' in cp:
+            sd = cp['model_state_dict']
+            _emotion_max_len = cp.get('max_len', 100)
+        else:
+            sd = cp
+            _emotion_max_len = 100
+
+        vs = sd['embedding.weight'].shape[0]
+        ed = sd['embedding.weight'].shape[1]
+        nc = sd['fc3.weight'].shape[0]
+
+        from pipeline.expert_detector import _EmotionMLP as EmotionMLP
+        _emotion_model = EmotionMLP(vs, ed, nc)
+        _emotion_model.load_state_dict(sd)
+        _emotion_model.eval()
+
+        # V5 detector
+        from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
+        _detector = ExpertFakeNewsDetector(model_dir=model_dir, use_emotions=True)
+        _detector.load(suffix='expert_v5')
+        _emo_extractor = EmotionFeatureExtractor(model_dir=model_dir)
+        _emo_extractor.load()
+
+        print("  Modeles d'inference charges (emotions + V5)")
+        return True
+    except Exception as e:
+        print(f"  Modeles d'inference non disponibles: {e}")
+        return False
+
+
+def run_inference_cycle(collection):
+    """Applique l'inference IA sur les posts non encore traites."""
+    import numpy as np
+    import torch
+
+    if not _load_inference_models():
+        return
+
+    query = {
+        'text': {'$exists': True, '$ne': ''},
+        '$or': [
+            {'ai_emotion': {'$exists': False}},
+            {'ai_emotion': None},
+        ]
+    }
+    to_process = collection.count_documents(query)
+    if to_process == 0:
+        return
+
+    print(f"  Inference sur {to_process} posts non analyses...")
+    batch_size = 500
+    processed = 0
+
+    while processed < to_process:
+        docs = list(collection.find(query, {'_id': 1, 'text': 1}).limit(batch_size))
+        if not docs:
+            break
+
+        texts = [d.get('text', '') for d in docs]
+        ids = [d['_id'] for d in docs]
+
+        # Emotions
+        pad_idx = _emotion_vocab.get('<PAD>', 0)
+        seqs = []
+        for text in texts:
+            tokens = str(text).lower().split()
+            tok_ids = [_emotion_vocab.get(t, _emotion_vocab.get('<UNK>', 1))
+                       for t in tokens[:_emotion_max_len]]
+            if len(tok_ids) < _emotion_max_len:
+                tok_ids += [pad_idx] * (_emotion_max_len - len(tok_ids))
+            seqs.append(tok_ids)
+
+        X = torch.tensor(seqs, dtype=torch.long)
+        with torch.no_grad():
+            logits = _emotion_model(X)
+            probs = torch.softmax(logits, dim=1).numpy()
+        preds = np.argmax(probs, axis=1)
+        emo_labels = _emotion_le.inverse_transform(preds)
+
+        # V5 fake news
+        import pandas as pd
+        v5_result = _detector.predict(pd.Series(texts))
+
+        ops = []
+        for i, _id in enumerate(ids):
+            ops.append(UpdateOne(
+                {'_id': _id},
+                {'$set': {
+                    'ai_emotion': str(emo_labels[i]),
+                    'ai_score_credibility': float(v5_result['ai_score_credibility'].iloc[i]),
+                    'prediction_label': int(v5_result['prediction_label'].iloc[i]),
+                    'ai_language': str(v5_result['language'].iloc[i]),
+                    'ai_analysis_log': str(v5_result['ai_analysis_log'].iloc[i]),
+                    'ai_model_version': 'expert_v5',
+                    'ai_model_name': 'ExpertFakeNewsDetector_v5',
+                    'ai_processed_at': datetime.datetime.now(),
+                    'ai_processed': True,
+                }}
+            ))
+
+        if ops:
+            collection.bulk_write(ops)
+
+        processed += len(docs)
+        print(f"    {processed}/{to_process} traites")
+
+    print(f"  Inference terminee : {processed} posts")
+
+
 if __name__ == "__main__":
-    print("🚀 Démarrage du Collecteur Bluesky Intelligent (V2)")
+    print("🚀 Démarrage du Collecteur Bluesky Intelligent (V3 — avec inference auto)")
 
     db_collection = connect_db()
     bsky_client = get_bluesky_client()
@@ -246,6 +404,12 @@ if __name__ == "__main__":
     if bsky_client:
         while True:
             run_collection_cycle(db_collection, bsky_client, monitor=monitor)
+
+            # Inference IA automatique sur les nouveaux posts
+            try:
+                run_inference_cycle(db_collection)
+            except Exception as e:
+                print(f"⚠️ Erreur inference: {e}")
 
             # Gestion du temps d'attente
             print(f"💤 Mise en veille pour {SLEEP_TIME} secondes...")
