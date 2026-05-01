@@ -3,13 +3,13 @@
 
 **Auteur** : Azélie Bernard
 **Formation** : Master Big Data
-**Date** : Avril 2026
+**Date** : Mai 2026
 
 ---
 
 ## Résumé
 
-Ce rapport présente Thumalien, un système de détection de fake news sur le réseau social Bluesky. Le pipeline NLP bilingue (FR/EN) a évolué de la V1.0 (baseline TF-IDF) à la V7 (ensemble hybride V5+V6 avec explicabilité SHAP). La V5 combine une vectorisation TF-IDF (30K features), 15 features linguistiques et un modèle d'émotions (MLP PyTorch, 7 classes) dans un classifieur LogisticRegression, entraîné sur 197 782 textes. La V6 est un modèle "style-only" topic-agnostic (28 features stylistiques + 7 émotions, GradientBoosting) conçu pour éliminer le biais thématique identifié par le gold test set. La V7 est un méta-learner qui combine les scores V5 et V6, avec explicabilité SHAP sur les features de style. Le système (collecte, MongoDB, inférence, dashboard Streamlit) est conteneurisé via Docker Compose, avec suivi carbone par CodeCarbon.
+Ce rapport présente Thumalien, un système de détection de fake news sur le réseau social Bluesky. Le pipeline NLP bilingue (FR/EN) a évolué de la V1.0 (baseline TF-IDF) à la V9 (pipeline 2 étapes fait/opinion). La V5 combine une vectorisation TF-IDF (30K features), 15 features linguistiques et un modèle d'émotions (MLP PyTorch, 7 classes) dans un classifieur LogisticRegression, entraîné sur 197 782 textes. La V6 est un modèle "style-only" topic-agnostic (28 features stylistiques + 7 émotions, GradientBoosting). La V7 est un méta-learner V5+V6 avec explicabilité SHAP. La V8 intègre CamemBERT comme 3e signal sémantique pour le français (F1 suspect +28%). La V9 introduit un pipeline en cascade : un classifieur fait/opinion (Stage 1) filtre les posts d'opinion avant la détection, réduisant les faux positifs de 67% (186 → 62) sur un gold standard de 473 posts annotés par 2 annotateurs humains (kappa inter-annotateurs = 0.498). Le système (collecte, MongoDB, inférence, dashboard Streamlit) est conteneurisé via Docker Compose, avec suivi carbone par CodeCarbon.
 
 ---
 
@@ -33,9 +33,13 @@ Ce rapport présente Thumalien, un système de détection de fake news sur le r�
 15. [Itérations V3 à V5 — Corrections et améliorations](#15-iterations-v3-a-v5--corrections-et-ameliorations)
 16. [V6 — Modèle Style-Only (topic-agnostic)](#16-v6--modele-style-only-topic-agnostic)
 17. [V7 — Ensemble Hybride + SHAP](#17-v7--ensemble-hybride--shap)
-18. [Limites et perspectives](#18-limites-et-perspectives)
-19. [Conclusion](#19-conclusion)
-20. [Références](#20-references)
+18. [V8 — Integration de CamemBERT](#18-v8--integration-de-camembert)
+19. [Echec du self-training sur donnees Bluesky](#19-echec-du-self-training-sur-donnees-bluesky)
+20. [Annotation humaine et accord inter-annotateurs](#20-annotation-humaine-et-accord-inter-annotateurs)
+21. [V9 — Pipeline 2 etapes : filtre fait/opinion](#21-v9--pipeline-2-etapes--filtre-faitopinion)
+22. [Limites et perspectives](#22-limites-et-perspectives)
+23. [Conclusion](#23-conclusion)
+24. [References](#24-references)
 
 ---
 
@@ -636,29 +640,34 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 
 | Composant | Statut | Détails |
 |-----------|--------|---------|
-| Collecte Bluesky | Opérationnel | 228 000+ posts, collecte continue |
+| Collecte Bluesky | Opérationnel | 231 000+ posts, collecte continue |
 | MongoDB | Opérationnel | Docker, 27017, persistance locale |
 | Pipeline V5 (TF-IDF) | Opérationnel | F1 CV=0.90, seuil 0.44, 197K textes |
 | Pipeline V6 (Style) | Opérationnel | GradientBoosting, 28 features stylistiques, topic-agnostic |
 | Pipeline V7 (Hybride) | Opérationnel | Méta-learner V5+V6 + SHAP explicabilité |
+| Pipeline V8 (CamemBERT) | Opérationnel | Méta-learner V5+V6+CamemBERT, F1 suspect +28% |
+| Pipeline V9 (Cascade) | Opérationnel | Filtre fait/opinion + V5, FP -67% sur gold consensus |
 | Émotions | Opérationnel | 7 classes, MLP PyTorch bilingue |
-| Dashboard | Opérationnel | Streamlit, 3 pages, V7+SHAP intégré |
+| Dashboard | Opérationnel | Streamlit, 3 pages, V9+SHAP intégré |
 | Bilan carbone | Opérationnel | CodeCarbon intégré |
 
 ### Métriques clés
 
 | Métrique | Valeur |
 |----------|--------|
-| Posts collectés | 228 000+ |
+| Posts collectés | 231 000+ |
 | Datasets d'entraînement | 7 (ISOT EN, Kaggle FR, FakeNewsNet, CONSTRAINT, Credibility, Social FR synth.) |
 | Taille dataset V5 | 197 782 textes |
 | CV F1 V5 (TF-IDF) | 0.90 |
 | CV F1 V6 (Style) | 0.830 |
 | Gold F1 suspect V5 | 0.087 |
 | Gold F1 suspect V7 Méta | 0.127 (+46%) |
-| V7 Combo Accuracy (gold) | 0.840, FP=25 |
+| Gold F1 suspect V8 | 0.163 (+28% vs V7) |
+| V9 Cascade FP (consensus 473) | 62 (-67% vs V5 seul) |
+| V9 Cascade kappa | 0.187 (3× V5) |
+| Annotation humaine | 500 posts, 2 annotateurs, kappa=0.498 |
 | Bluesky % fiable | 67% |
-| Notebooks | 25 (00 à 24) |
+| Notebooks | 28 (00 à 27) |
 
 ### Historique des versions
 
@@ -671,7 +680,9 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 | V4 | Mar 2026 | 0.935 FR | — | Amélioration FR court + augmentation |
 | V5 | Mar 2026 | 0.90 | 0.087 | +10K FR social synthétique, FR ultra-court F1=0.90 |
 | V6 | Avr 2026 | 0.830 | 0.103 (+18%) | Style-only GradientBoosting, topic-agnostic |
-| **V7** | **Avr 2026** | **—** | **0.127 (+46%)** | **Ensemble hybride V5+V6 + SHAP** |
+| V7 | Avr 2026 | — | 0.127 (+46%) | Ensemble hybride V5+V6 + SHAP |
+| V8 | Avr 2026 | — | 0.163 (+28%) | Méta-learner V5+V6+CamemBERT |
+| **V9** | **Mai 2026** | **—** | **kappa=0.187** | **Pipeline 2 étapes fait/opinion, FP -67%** |
 
 ---
 
@@ -861,47 +872,276 @@ Le dashboard V7 affiche pour chaque analyse en temps réel :
 
 ---
 
-## 18. Limites et perspectives
+## 18. V8 — Intégration de CamemBERT
+
+### Hypothèse
+
+Le méta-learner V7 combine V5 (TF-IDF lexical) et V6 (style-only). Pour le français, un troisième signal sémantique — CamemBERT, modèle Transformer pré-entraîné sur du français — pourrait capturer des patterns que le TF-IDF manque, notamment sur les textes courts de Bluesky.
+
+### Protocole
+
+- **Architecture** : V8 = méta-learner LogReg avec 7 features (au lieu de 4 pour V7)
+  - `score_v5`, `score_v6`, `score_cam` (CamemBERT, 0.5 pour les textes EN)
+  - `disagree_v5_v6`, `disagree_v5_cam`
+  - `interact_v5_v6`, `min_fiable`
+- **Évaluation** : LOO cross-validation sur le gold test set (200 posts)
+- **Notebook** : `25_V8_Hybrid_Extended_CamemBERT.py`
+
+### Résultats
+
+| Modèle | F1 suspect | F1 macro | FP |
+|--------|-----------|----------|-----|
+| V7 Meta (baseline) | 0.127 | 0.521 | 35 |
+| V8 LogReg (+CamemBERT) | **0.163** | 0.569 | 22 |
+
+**Gain** : +28% F1 suspect, -13 FP. Amélioration modeste mais cohérente. CamemBERT apporte un signal utile pour les textes FR, sans dégrader les textes EN (score neutre à 0.5).
+
+### Fichiers
+
+- `models/model_hybrid_v8.joblib` — méta-learner V8 avec flag `uses_camembert: True`
+- Dashboard mis à jour pour charger V8 automatiquement
+
+---
+
+## 19. Échec du self-training sur données Bluesky
+
+### Hypothèse
+
+V5 est entraîné sur des articles de presse (Reuters, ISOT, Kaggle) mais déployé sur des posts Bluesky courts et informels. Ce **domain shift** cause un F1 suspect de 0.087 sur le gold set. L'idée : ajouter des posts Bluesky à haute confiance au dataset d'entraînement via pseudo-labeling (self-training) pour adapter le vocabulaire TF-IDF au domaine Bluesky.
+
+### Protocole
+
+1. Exporter depuis MongoDB les posts Bluesky à haute confiance :
+   - 17 868 posts avec score V5 ≤ 0.15 (étiquetés "suspect" par V5)
+   - 37 141 posts avec score V5 ≥ 0.85 (étiquetés "fiable" par V5)
+2. Échantillonner 5 000 de chaque classe
+3. Ajouter au dataset original (~68K textes) → dataset augmenté (~78K)
+4. Ré-entraîner V5 sur le dataset augmenté
+5. Évaluer sur le gold test set (200 posts)
+6. **Notebook** : `26_V5_Finetune_Bluesky.py`
+
+### Résultats
+
+| Modèle | Accuracy | F1 suspect | FP | FN |
+|--------|---------|-----------|-----|-----|
+| V5 original | 0.685 | 0.087 | 57 | 3 |
+| V5-Bluesky (self-train) | 0.645 | **0.078** | **65** | 3 |
+
+**V5-Bluesky est PIRE que V5 original** : +8 faux positifs supplémentaires, F1 suspect en baisse.
+
+### Pourquoi ça ne marche pas
+
+Le self-training est **circulaire** : V5 génère les labels d'entraînement de V5. Les erreurs systématiques de V5 sur Bluesky (il flagge les posts courts et informels comme suspects) sont reproduites dans les pseudo-labels, puis renforcées par le ré-entraînement.
+
+```
+V5 fait des erreurs sur Bluesky
+  → On utilise ses prédictions comme labels
+  → V5 apprend à reproduire ses propres erreurs
+  → Les erreurs sont RENFORCÉES, pas corrigées
+```
+
+**Leçon** : le self-training ne fonctionne que si le modèle-source est déjà performant sur le domaine cible — ce qui est exactement le problème qu'on cherche à résoudre.
+
+### Conséquence
+
+Cette impasse a motivé la création d'un dataset annoté manuellement par des humains (section suivante).
+
+---
+
+## 20. Annotation humaine et accord inter-annotateurs
+
+### Motivation
+
+Le gold test set initial (200 posts) avait deux limites :
+1. Annoté par un LLM, pas par des humains → mesure la convergence avec le LLM, pas la vérité
+2. Très déséquilibré (191 fiables, 9 suspects) → métriques F1 instables
+
+### Protocole d'annotation
+
+1. **Échantillonnage stratifié** : 500 posts Bluesky extraits de MongoDB (231 717 posts)
+   - 250 FR + 250 EN
+   - 50 posts par tranche de score V5 (0-0.2, 0.2-0.4, 0.4-0.6, 0.6-0.8, 0.8-1.0)
+   - Mélangés aléatoirement pour éviter les biais de séquence
+2. **Guide d'annotation** : critère binaire fiable/suspect avec exemples de cas limites
+3. **Double annotation** : 2 annotateurs indépendants sur les mêmes 500 posts
+4. **Fichiers** : `bluesky_500_annotation_completed.xlsx` (A1), `bluesky_500_annotation_complete.xlsx` (A2)
+
+### Accord inter-annotateurs
+
+| Métrique | Valeur |
+|----------|--------|
+| Cohen's kappa A1 vs A2 | **0.498** (accord modéré) |
+| Accord brut | 473/500 (94.6%) |
+| Suspects A1 | 24 (4.8%) |
+| Suspects A2 | 33 (6.6%) |
+| Consensus (les deux d'accord) | 458 fiables + 15 suspects |
+| Désaccords | 27 posts |
+
+**Par langue** :
+- FR : kappa = 0.538, 11 désaccords
+- EN : kappa = 0.466, 16 désaccords
+
+**Par confiance** (annotateur 1) :
+- Confiance 3 (certain) : 98.4% d'accord
+- Confiance 2 (assez sûr) : 71.1% d'accord
+- Confiance 1 (pas sûr) : 70.0% d'accord
+
+### Comparaison V5 vs annotateurs humains
+
+| Comparaison | Cohen's kappa |
+|------------|---------------|
+| A1 vs A2 (humains) | **0.498** |
+| A1 vs V5 | 0.076 |
+| A2 vs V5 | 0.120 |
+
+Les annotateurs humains s'accordent entre eux 6x mieux que V5 ne s'accorde avec l'un ou l'autre. V5 diverge fortement du jugement humain.
+
+### Analyse des désaccords
+
+Les 27 désaccords portent presque exclusivement sur des **posts mixtes** (opinion + assertion factuelle) :
+- Opinions politiques fortes interprétées différemment (ex: "Macron pétainiste")
+- Posts avec "ALERTE INFO" mais sources douteuses
+- Clickbait avec lien source (A1 = suspect pour le titre, A2 = fiable car source présente)
+
+Cette observation a motivé la distinction fait/opinion dans le pipeline (section suivante).
+
+### V5 sur le gold standard consensus (473 posts)
+
+| Métrique | Valeur |
+|----------|--------|
+| Accuracy | 0.603 |
+| F1 suspect | 0.121 |
+| F1 macro | 0.432 |
+| Faux positifs | **186** |
+| Faux négatifs | 2 |
+| Cohen's kappa | 0.066 |
+
+V5 produit 186 faux positifs sur 458 fiables (40.6%). Le modèle sur-détecte massivement.
+
+---
+
+## 21. V9 — Pipeline 2 étapes : filtre fait/opinion
+
+### Hypothèse fondatrice
+
+L'analyse des 500 annotations révèle un pattern statistique fort :
+
+| Type de post | N | Suspects | Taux suspect |
+|---|---|---|---|
+| Contient une assertion factuelle | 102 | 23 | **22.5%** |
+| Pas d'assertion factuelle (opinion) | 398 | 1 | **0.3%** |
+
+**Test de Fisher** : odds ratio = 4.67, p = 0.0005.
+
+Un post contenant une assertion factuelle a **4.7x plus de chances** d'être suspect. Les opinions pures ne sont presque jamais de la désinformation — mais V5 les flagge quand même à cause de leur lexique agressif ou sensationnaliste.
+
+**Conclusion** : le modèle ne devrait pas évaluer les opinions. Seuls les posts contenant des claims factuelles vérifiables méritent une analyse de crédibilité. C'est aussi le consensus de 5 avis d'experts consultés (NLP, sciences politiques, ML engineering, annotation linguistique, fact-checking).
+
+### Architecture
+
+```
+Post Bluesky
+    |
+    v
+[Étape 1] Classifieur fait/opinion (TF-IDF + LogReg)
+    |                         |
+    | opinion pure            | factuel ou mixte
+    |                         |
+    v                         v
+  "fiable"                [Étape 2] V5 standard
+  (bypass)                  → fiable ou suspect
+```
+
+### Étape 1 : classifieur fait/opinion
+
+- **Modèle** : TF-IDF (5K features, bigrams) + LogReg (class_weight='balanced')
+- **Labels** : dérivés des commentaires d'annotation + marqueurs linguistiques
+  - Factuel : "alerte info", "selon", "confirmed", "a annoncé", etc.
+  - Opinion : "je pense", "I believe", marqueurs émotionnels, etc.
+- **CV 5-fold** : F1 macro = 0.720, F1 factuel = 0.539, F1 opinion = 0.900
+- **Fichier** : `models/stage1_fact_opinion.joblib`
+
+### Résultats sur consensus (473 posts)
+
+| Méthode | Acc | F1 macro | F1 suspect | Précision | Recall | FP | FN | Kappa |
+|---------|-----|---------|-----------|-----------|--------|-----|-----|-------|
+| V5 seul (baseline) | 0.603 | 0.432 | 0.121 | 0.065 | 0.867 | **186** | 2 | 0.066 |
+| Cascade (seuil=0.40) | 0.858 | 0.576 | 0.230 | 0.139 | 0.667 | **62** | 5 | 0.187 |
+| Cascade oracle | 0.958 | 0.762 | 0.545 | 0.414 | 0.800 | **17** | 3 | 0.526 |
+
+### Interprétation
+
+- **Réduction des FP** : 186 → 62 (-67%) avec le classifieur appris, 186 → 17 (-91%) avec un classifieur fait/opinion parfait
+- **Trade-off** : le recall baisse de 0.867 à 0.667 (on rate 5 suspects au lieu de 2), mais le kappa triple (0.066 → 0.187)
+- **Cascade oracle** montre le potentiel maximal de cette architecture : si le classifieur fait/opinion était parfait, le F1 suspect passerait à 0.545 et le kappa à 0.526
+
+### Limites de cette approche
+
+1. Le classifieur fait/opinion est entraîné sur des heuristiques (marqueurs lexicaux + commentaires annotateurs), pas sur des labels humains dédiés → il confond parfois des références factuelles dans des opinions
+2. Le seuil optimal (0.40) est calibré sur les mêmes données → risque de surapprentissage. Un jeu de validation indépendant serait nécessaire
+3. Les posts "mixtes" (opinion + fait) restent difficiles à traiter : ils représentent la majorité des désaccords inter-annotateurs
+
+### Notebook
+
+`27_Pipeline_2_Etapes.py` — expérience complète avec validation statistique (Fisher), CV 5-fold du Stage 1, et évaluation cascade avec optimisation de seuil.
+
+---
+
+## 22. Limites et perspectives
 
 ### Limites actuelles
 
-1. **Gold test set déséquilibré** : seulement 9 posts suspects sur 200 (4.5%), ce qui rend les métriques F1 suspect instables. Un gold set plus grand et équilibré serait nécessaire.
+1. **Annotation fait/opinion par heuristiques** : le classifieur de l'étape 1 est entraîné sur des labels dérivés de marqueurs lexicaux et de commentaires d'annotateurs, pas sur des labels humains dédiés à la distinction fait/opinion. Une annotation explicite de cette dimension améliorerait les performances (la cascade oracle montre un F1 suspect potentiel de 0.545).
 
-2. **Biais thématique résiduel** : même avec V6 (style-only), le modèle produit des faux positifs sur les posts courts de type "BREAKING" qui utilisent un style sensationnaliste légitime (agences de presse).
+2. **Gold set encore déséquilibré** : même avec 500 posts annotés, seuls 15 sont suspects par consensus (3%). Un enrichissement ciblé (active learning sur les zones de désaccord) augmenterait la puissance statistique.
 
-3. **Pas de vérification factuelle** : le système détecte des patterns stylistiques, pas la véracité du contenu. Un texte bien écrit mais faux reste indétectable.
+3. **Posts mixtes (opinion + fait)** : la frontière n'est pas nette (kappa inter-annotateurs = 0.498). Les posts qui mélangent jugement de valeur et assertion factuelle (ex. "Le vaccin cause l'autisme, ce gouvernement est criminel") restent difficiles à classer.
 
-4. **Langues limitées** : seuls FR et EN sont supportés.
+4. **Pas de vérification factuelle** : le système détecte des patterns stylistiques, pas la véracité du contenu. Un post bien écrit mais factuellement faux reste indétectable.
 
-5. **Features statiques** : les features de style sont définies à la main. Des approches par apprentissage de représentation (embeddings) pourraient capturer des patterns plus subtils.
+5. **Seuil calibré sur les données d'entraînement** : le seuil optimal du Stage 1 (0.40) est dérivé des mêmes 500 posts → risque de surapprentissage. Un jeu de validation indépendant serait nécessaire.
+
+### Ce qui a été tenté et abandonné
+
+| Approche | Hypothèse | Résultat | Raison de l'abandon |
+|----------|-----------|----------|---------------------|
+| Self-training V5 sur Bluesky | Adapter le TF-IDF au domaine Bluesky via pseudo-labeling | F1 suspect 0.078 (-10%) | Circularité : V5 renforce ses propres biais |
+| Schéma binaire brut | Fiable vs suspect sur tous les posts | 201 FP / 500 posts | Confond opinions et désinformation |
 
 ### Perspectives
 
-1. **Annotation active (Active Learning)** : utiliser les cas de désaccord V5/V6 (disagreement élevé) pour cibler l'annotation manuelle sur les posts les plus informatifs.
+1. **Annotation dédiée fait/opinion** : annoter les 500 posts avec un label explicite (factuel/opinion/mixte) par 2 annotateurs, mesurer le kappa sur cette tâche, puis ré-entraîner le Stage 1 sur des labels humains.
 
-2. **Sentence-Transformers** : embeddings sémantiques denses (all-MiniLM-L6-v2) pour remplacer ou compléter le TF-IDF, capturant le sens indépendamment de la longueur.
+2. **Schéma multi-classe** : si le kappa fait/opinion dépasse 0.65, envisager un classifieur à 3-4 classes (factuel_fiable, factuel_suspect, opinion, inclassable) au lieu de la cascade.
 
-3. **Cross-checking** : ajouter une vérification factuelle via des APIs de fact-checking (Google Fact Check Tools, ClaimBuster) pour compléter l'analyse stylistique.
+3. **Active Learning** : utiliser les 27 désaccords inter-annotateurs et les cas limites (confiance=1) pour cibler les prochaines annotations sur les posts les plus informatifs.
 
-4. **Fine-tuning sur Bluesky** : utiliser les 228K+ posts collectés avec annotation semi-supervisée pour adapter le modèle au domaine cible.
+4. **Sentence-Transformers** : embeddings sémantiques denses pour le Stage 1 (distinction fait/opinion), capturant le sens indépendamment du lexique.
 
-5. **Détection multimodale** : intégrer les images et liens partagés pour enrichir la détection.
-
----
-
-## 19. Conclusion
-
-Ce projet a permis de concevoir et déployer un pipeline NLP complet de détection de fake news sur Bluesky, de la collecte des données à la visualisation des résultats. L'approche itérative — de la V1.0 biaisée par les marqueurs Reuters à la V7 combinant signaux lexicaux et stylistiques avec explicabilité SHAP — illustre les défis concrets du Machine Learning appliqué : le data leakage, le domain shift, le biais thématique et la nécessité de calibrer finement les modèles.
-
-Le choix initial d'un modèle interprétable (LogReg + TF-IDF) a été renforcé par l'ajout du modèle V6 (style-only, GradientBoosting) et de l'explicabilité SHAP, offrant une transparence complète sur les raisons de chaque prédiction. L'évaluation rigoureuse sur un gold test set de 200 posts annotés manuellement a révélé la limitation fondamentale du TF-IDF (biais thématique) et motivé l'architecture hybride V7.
-
-Les principales contributions de ce travail sont : (1) la mise en évidence et la correction du biais Reuters, (2) l'identification du biais thématique via le gold test set et l'analyse des coefficients, (3) la conception d'un modèle style-only topic-agnostic (V6), (4) un méta-learner hybride réduisant les faux positifs de 57 à 25, et (5) l'intégration de SHAP pour l'explicabilité locale et globale des prédictions.
-
-Les limites restantes — gold set déséquilibré, style sensationnaliste légitime, absence de vérification factuelle — ouvrent la voie à une V8 intégrant l'annotation active, les embeddings sémantiques et le cross-checking factuel.
+5. **Cross-checking factuel** : APIs de fact-checking (ClaimBuster, Google Fact Check Tools) pour vérifier les assertions factuelles détectées par le Stage 1.
 
 ---
 
-## 20. Références
+## 23. Conclusion
+
+Ce projet a permis de concevoir et déployer un pipeline NLP complet de détection de fake news sur Bluesky, de la collecte des données à la visualisation des résultats. L'approche itérative — de la V1.0 biaisée par les marqueurs Reuters à la V9 (pipeline 2 étapes fait/opinion) — illustre les défis concrets du Machine Learning appliqué : le data leakage, le domain shift, le biais thématique, la circularité du self-training, et la distinction fondamentale entre opinion et désinformation.
+
+L'évolution du projet a suivi une trajectoire méthodologique rigoureuse :
+
+1. **V1-V5** : construction et correction itérative du classifieur TF-IDF, identification du biais Reuters et du domain shift
+2. **V6** : modèle style-only topic-agnostic pour éliminer le biais thématique
+3. **V7-V8** : méta-learners hybrides (V5+V6, puis +CamemBERT) avec explicabilité SHAP
+4. **Self-training** : tentative de domain adaptation par pseudo-labeling → **échec documenté** (circularité)
+5. **Annotation humaine** : 500 posts annotés par 2 annotateurs (kappa = 0.498), création d'un gold standard fiable
+6. **V9** : pipeline 2 étapes séparant fait et opinion, réduisant les FP de 186 à 62 (-67%)
+
+Les contributions principales sont : (1) la mise en évidence et la correction du biais Reuters, (2) l'identification du biais thématique via le gold test set, (3) la démonstration documentée que le self-training est circulaire sur des données hors-domaine, (4) la validation statistique (Fisher, p=0.0005) que la distinction fait/opinion est le facteur discriminant de la désinformation, (5) un pipeline 2 étapes qui triple le kappa humain-modèle (0.066 → 0.187), et (6) une démarche d'annotation humaine avec accord inter-annotateurs mesuré.
+
+Le résultat clé de ce projet n'est pas un score F1 élevé, mais une compréhension profonde de **pourquoi** la détection de fake news sur les réseaux sociaux est difficile : le problème n'est pas technique (TF-IDF vs Transformer), il est épistémologique (distinguer un fait vérifiable d'une opinion non évaluable). Cette compréhension a guidé chaque décision architecturale.
+
+---
+
+## 24. References
 
 1. Ahmed, H., Traore, I., & Saad, S. (2017). *Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques*. ISOT Fake News Dataset. University of Victoria.
 
@@ -922,3 +1162,9 @@ Les limites restantes — gold set déséquilibré, style sensationnaliste légi
 9. Lundberg, S. M. & Lee, S.-I. (2017). *A Unified Approach to Interpreting Model Predictions*. NeurIPS. (SHAP)
 
 10. Friedman, J. H. (2001). *Greedy Function Approximation: A Gradient Boosting Machine*. Annals of Statistics, 29(5), 1189-1232.
+
+11. Martin, L., Muller, B., Ortiz Suarez, P. J., et al. (2020). *CamemBERT: a Tasty French Language Model*. ACL 2020.
+
+12. Cohen, J. (1960). *A Coefficient of Agreement for Nominal Scales*. Educational and Psychological Measurement, 20(1), 37-46.
+
+13. Fisher, R. A. (1922). *On the Interpretation of Chi-Square from Contingency Tables, and the Calculation of P*. Journal of the Royal Statistical Society, 85(1), 87-94.

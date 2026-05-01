@@ -7,7 +7,7 @@
 
 Thumalien est un système d'analyse automatisée de contenus textuels pour la détection de fake news. Il traite les posts publiés sur le réseau social Bluesky en français et en anglais, et fournit pour chaque texte un score de crédibilité, une émotion dominante et une classification fiable/suspect.
 
-Le système repose sur un pipeline NLP bilingue V7 combinant TF-IDF V5 + Style V6 + Meta-learner V7 avec explicabilité SHAP. Plus de 188 000+ posts ont été collectés. Le pipeline atteint un F1-score de 0.913 en cross-validation (V5) dans les deux langues.
+Le système repose sur un pipeline NLP bilingue V9 combinant un filtre fait/opinion (Stage 1) avec un ensemble hybride TF-IDF V5 + Style V6 + CamemBERT (V8) + explicabilité SHAP. Plus de 231 000 posts ont été collectés et 500 ont été annotés manuellement par 2 annotateurs (kappa = 0.498). Le pipeline V9 réduit les faux positifs de 67% par rapport à V5 seul sur le gold standard consensus.
 
 ---
 
@@ -61,6 +61,8 @@ projet_etude/
 |   |-- metrics_expert.pkl      # Métriques d'entraînement
 |   |-- model_style_v6.joblib   # Modèle style-only V6
 |   |-- model_hybrid_v7.joblib  # Méta-learner hybride V7
+|   |-- model_hybrid_v8.joblib  # Méta-learner V8 (+CamemBERT)
+|   |-- stage1_fact_opinion.joblib  # Classifieur fait/opinion (V9)
 |   |-- emotion_bilingual.pt    # MLP PyTorch (7 émotions)
 |   |-- emotion_vocab_bilingual.pickle
 |   |-- emotion_label_encoder_bilingual.pickle
@@ -73,6 +75,7 @@ projet_etude/
 |   |-- 05_Detection_Expert_Bilingue.ipynb
 |   |-- 06_Documentation_Technique.ipynb
 |   |-- 09-24                              # Scripts d'entraînement V3-V7
+|   |-- 25-27                              # V8 CamemBERT, self-training, pipeline 2 étapes
 |-- src/
 |   |-- pipeline/
 |   |   |-- expert_detector.py  # Pipeline complet (classes principales)
@@ -127,8 +130,9 @@ Cette page permet d'analyser un texte en temps réel :
    - Un **radar chart** détaillé des 7 probabilités émotionnelles.
    - La **langue détectée** automatiquement (FR ou EN).
 
-4. La section **V7 Hybride** affiche :
-   - 4 métriques : score V5 (TF-IDF), score V6 (Style), score V7 (Hybride), désaccord V5/V6.
+4. La section **V8 Hybride** affiche :
+   - Le type de post détecté (factuel ou opinion) par le filtre Stage 1
+   - 5 métriques : score V5 (TF-IDF), score V6 (Style), score CamemBERT (FR), score V8 (Hybride), désaccord V5/V6.
    - Un graphique SHAP montrant la contribution de chaque feature stylistique.
    - Le détail des 35 features avec leur valeur SHAP.
 
@@ -145,7 +149,7 @@ Cette page fournit les indicateurs de performance et de conformité :
 
 - **Ablation study** : tableau et graphique des F1-scores pour les 7 conditions expérimentales testées (EN seul, FR seul, bilingue, bilingue + émotions, etc.).
 - **Bilan carbone** : émissions CO2 totales du projet mesurées par CodeCarbon.
-- **Roadmap** : les versions planifiées du pipeline (V1 à V7) avec leurs objectifs.
+- **Roadmap** : les versions du pipeline (V1 à V9) avec leurs objectifs et résultats.
 - **Conformité** : fiches RGPD et IA Act résumant les mesures de conformité.
 
 ---
@@ -231,6 +235,9 @@ Les notebooks documentent chaque étape du projet et sont exécutés séquentiel
 | 05 | Pipeline expert bilingue + ablation study (7 conditions) | `model_expert.pkl` + `tfidf_expert.pkl` + métriques |
 | 06 | Documentation technique complète | Limites, roadmap, PRA/PCA, Green IT, conformité |
 | 09-24 | Scripts d'entraînement V3-V7 | Modèles V3 à V7, features stylistiques, méta-learner, SHAP |
+| 25 | V8 CamemBERT intégration | Méta-learner étendu avec CamemBERT |
+| 26 | Self-training Bluesky (échec) | Tentative de domain adaptation, échec documenté |
+| 27 | Pipeline 2 étapes V9 | Filtre fait/opinion + cascade V5, FP -67% |
 
 **Pour ré-exécuter un notebook** :
 ```bash
@@ -299,7 +306,7 @@ R : Exécutez le notebook 05 (`05_Detection_Expert_Bilingue.ipynb`). Il recharge
 R : Le modèle est entraîné sur des articles de presse et peut mal généraliser sur des textes courts ou atypiques (posts de 10 mots, mèmes, satire). Le score doit être interprété comme un indicateur, pas comme un verdict. Consultez la section "Limites" du notebook 06.
 
 **Q : Puis-je ajouter d'autres langues ?**
-R : La V7 supporte uniquement le français et l'anglais. Les textes dans d'autres langues sont routés vers le pipeline anglais par défaut.
+R : Le pipeline V9 supporte uniquement le français et l'anglais. Les textes dans d'autres langues sont routés vers le pipeline anglais par défaut.
 
 **Q : Qu'est-ce que le score SHAP affiche dans le dashboard ?**
 R : SHAP (SHapley Additive exPlanations) décompose la prédiction du modèle V6 en montrant la contribution de chaque feature stylistique. Une barre positive pousse vers "suspect", négative vers "fiable".
@@ -317,4 +324,4 @@ R : Une prédiction sur un batch de 1 000 textes émet moins de 0.001 g de CO2. 
 
 ---
 
-*Thumalien v7.0 — Pipeline bilingue FR/EN — Mastère Big Data, Sup de Vinci — Avril 2026*
+*Thumalien v9.0 — Pipeline bilingue FR/EN — Mastère Big Data, Sup de Vinci — Mai 2026*

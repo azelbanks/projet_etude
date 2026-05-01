@@ -46,6 +46,8 @@
 | Model Style V6 | `models/model_style_v6.joblib` | GradientBoosting style-only (28 features + 7 émotions) | V6 |
 | Model Hybrid V7 | `models/model_hybrid_v7.joblib` | Meta-learner LogReg (V5+V6 ensemble) | V7 |
 | Hybrid Meta Learner | `models/hybrid_meta_learner.joblib` | Meta-learner for stacking | V7 |
+| Model Hybrid V8 | `models/model_hybrid_v8.joblib` | Meta-learner V5+V6+CamemBERT (7 features) | V8 |
+| Stage 1 Fait/Opinion | `models/stage1_fact_opinion.joblib` | Classifieur fait/opinion (pipeline 2 étapes) | V9 |
 | MLP Émotions | `models/emotion_bilingual.pt` | MLP PyTorch 7 classes émotionnelles bilingue | 1.0 |
 | Vocabulaire Émotions | `models/emotion_vocab_bilingual.pickle` | Mapping mot -> token (25 000 tokens) | 1.0 |
 | Encodeur Labels | `models/emotion_label_encoder_bilingual.pickle` | 7 labels d'émotions | 1.0 |
@@ -81,6 +83,9 @@
 | 22 | `notebooks/22_Gold_Test_Set_Evaluation.py` | Évaluation gold test set V2 |
 | 23 | `notebooks/23_Style_Only_V6.py` | Modèle style-only V6 (GradientBoosting) |
 | 24 | `notebooks/24_Hybrid_Ensemble_V7_SHAP.py` | Ensemble hybride V7 + SHAP |
+| 25 | `notebooks/25_V8_Hybrid_Extended_CamemBERT.py` | V8 méta-learner étendu (+CamemBERT) |
+| 26 | `notebooks/26_V5_Finetune_Bluesky.py` | Self-training Bluesky (échec documenté) |
+| 27 | `notebooks/27_Pipeline_2_Etapes.py` | Pipeline 2 étapes fait/opinion + V5 |
 
 ---
 
@@ -125,6 +130,10 @@
 | Avril 2026 | V7 Ensemble hybride V5+V6 + SHAP explicabilité | Combinaison V5+V6 avec SHAP pour explicabilité | ML Engineer | D06 sect. 17 |
 | Avril 2026 | Gold test set 200 posts annotés (Cohen kappa 0.808) | Évaluation sur jeu de test annoté manuellement | Data Scientist | D06 sect. 14 |
 | Avril 2026 | Tests significativité bootstrap sur toutes les versions | Validation statistique des améliorations entre versions | Data Scientist | D06 sect. 20 |
+| Avril 2026 | V8 intégration CamemBERT dans méta-learner | 3e signal sémantique FR, F1 suspect +28% | ML Engineer | D06 sect. 18 |
+| Avril 2026 | Self-training Bluesky : échec documenté | Pseudo-labeling circulaire, abandon motivé | Data Scientist | D06 sect. 19 |
+| Mai 2026 | Annotation humaine 500 posts (2 annotateurs, kappa=0.498) | Gold standard fiable pour évaluation Bluesky | Data Scientist | D06 sect. 20 |
+| Mai 2026 | V9 pipeline 2 étapes fait/opinion | Filtre opinions avant détection, FP -67% | ML Engineer | D06 sect. 21 |
 
 ---
 
@@ -139,10 +148,11 @@
 | V4 | Mar 2026 | Fait | FR court 0.86 | — | Augmentation FR court +32% |
 | V5 | Mar 2026 | **Production** | 0.913 | — | +10K synthetic FR social |
 | V6 | Avr 2026 | Fait | CV 0.830 | — | Style-only GradientBoosting topic-agnostic |
-| V7 | Avr 2026 | **Dernier** | Gold F1 suspect=0.127 | — | Ensemble hybride V5+V6 + SHAP |
-| V8 | — | Planifié | — | — | Active Learning + RAG fact-checking |
+| V7 | Avr 2026 | Fait | Gold F1 suspect=0.127 | — | Ensemble hybride V5+V6 + SHAP |
+| V8 | Avr 2026 | Fait | Gold F1 suspect=0.163 | — | V7 + CamemBERT (3e signal sémantique) |
+| V9 | Mai 2026 | **Dernier** | Consensus kappa=0.187 | — | Pipeline 2 étapes fait/opinion, FP -67% |
 
 ---
 
-*Document mis à jour en Avril 2026*
-*Référence : IDX-THUM-2026-001 -- Version 2.0*
+*Document mis à jour en Mai 2026*
+*Référence : IDX-THUM-2026-001 -- Version 3.0*
