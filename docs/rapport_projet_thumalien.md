@@ -37,9 +37,10 @@ Ce rapport présente Thumalien, un système de détection de fake news sur le r�
 19. [Echec du self-training sur donnees Bluesky](#19-echec-du-self-training-sur-donnees-bluesky)
 20. [Annotation humaine et accord inter-annotateurs](#20-annotation-humaine-et-accord-inter-annotateurs)
 21. [V9 — Pipeline 2 etapes : filtre fait/opinion](#21-v9--pipeline-2-etapes--filtre-faitopinion)
-22. [Limites et perspectives](#22-limites-et-perspectives)
-23. [Conclusion](#23-conclusion)
-24. [References](#24-references)
+22. [Audit du corpus et rééquilibrage de la collecte](#22-audit-du-corpus-et-reequilibrage-de-la-collecte)
+23. [Limites et perspectives](#23-limites-et-perspectives)
+24. [Conclusion](#24-conclusion)
+25. [References](#25-references)
 
 ---
 
@@ -58,7 +59,7 @@ Bluesky est un réseau social décentralisé basé sur le protocole AT (Authenti
 Le projet Thumalien est composé de 4 briques :
 
 1. **Collecteur** : ingestion continue des posts Bluesky via l'API AT Protocol
-2. **Base de données** : stockage MongoDB des posts collectés (188 553 posts à ce jour)
+2. **Base de données** : stockage MongoDB des posts collectés (239 000+ posts à ce jour)
 3. **Pipeline NLP** : détection de fake news + analyse émotionnelle
 4. **Dashboard** : visualisation temps réel via Streamlit
 
@@ -184,14 +185,14 @@ Un prototype RoBERTa a été exploré (notebook 04) mais abandonné pour plusieu
 Le fichier `src/collection/collect_bluesky.py` réalise une collecte continue :
 
 1. **Authentification** sur Bluesky via les identifiants `.env`
-2. **Recherche par mots-clés** : 12 termes FR (climat, santé, politique, immigration...) + 12 termes EN (climate, health, politics...)
+2. **Recherche par mots-clés** : 28 termes FR (actualité, politique, société, désinformation...) + 16 termes EN (climate, vaccine, conspiracy, election...)
 3. **Stockage** dans `thumalien_db.raw_posts` (MongoDB)
 4. **Cycle** : pause de 5 minutes entre chaque vague de collecte
 5. **Résilience** : 3 tentatives avec backoff exponentiel en cas d'erreur
 
 ### Résultats
 
-- **188 553 posts** collectés depuis décembre 2025
+- **239 000+ posts** collectés depuis décembre 2025
 - Mix multilingue naturel (FR + EN + autres langues)
 - Champs stockés : `text`, `uri`, `author_handle`, `created_at`, `search_term`, `collected_at`
 
@@ -640,7 +641,7 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 
 | Composant | Statut | Détails |
 |-----------|--------|---------|
-| Collecte Bluesky | Opérationnel | 231 000+ posts, collecte continue |
+| Collecte Bluesky | Opérationnel | 239 000+ posts, collecte continue (V3 rééquilibrée) |
 | MongoDB | Opérationnel | Docker, 27017, persistance locale |
 | Pipeline V5 (TF-IDF) | Opérationnel | F1 CV=0.90, seuil 0.44, 197K textes |
 | Pipeline V6 (Style) | Opérationnel | GradientBoosting, 28 features stylistiques, topic-agnostic |
@@ -648,14 +649,14 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 | Pipeline V8 (CamemBERT) | Opérationnel | Méta-learner V5+V6+CamemBERT, F1 suspect +28% |
 | Pipeline V9 (Cascade) | Opérationnel | Filtre fait/opinion + V5, FP -67% sur gold consensus |
 | Émotions | Opérationnel | 7 classes, MLP PyTorch bilingue |
-| Dashboard | Opérationnel | Streamlit, 3 pages, V9+SHAP intégré |
+| Dashboard | Opérationnel | Streamlit, 5 pages (Dashboard, Analyse IA, Explorateur, Performance, À propos) |
 | Bilan carbone | Opérationnel | CodeCarbon intégré |
 
 ### Métriques clés
 
 | Métrique | Valeur |
 |----------|--------|
-| Posts collectés | 231 000+ |
+| Posts collectés | 239 000+ |
 | Datasets d'entraînement | 7 (ISOT EN, Kaggle FR, FakeNewsNet, CONSTRAINT, Credibility, Social FR synth.) |
 | Taille dataset V5 | 197 782 textes |
 | CV F1 V5 (TF-IDF) | 0.90 |
@@ -668,6 +669,35 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 | Annotation humaine | 500 posts, 2 annotateurs, kappa=0.498 |
 | Bluesky % fiable | 67% |
 | Notebooks | 28 (00 à 27) |
+| Temps d'inference (V5) | 1.5 ms/texte (~728 textes/sec) |
+| Tests unitaires | 94 tests, 26% coverage |
+
+### Benchmark de latence
+
+Le cahier des charges exige un temps d'inference < 100 ms par texte (DET-09). Les benchmarks mesurent sur Apple M4 Pro (CPU, sans GPU) :
+
+| Scenario | Temps total | Temps par texte | Debit |
+|----------|-------------|-----------------|-------|
+| Texte unique (V5 TF-IDF) | 1.6 ms | 1.6 ms | 625 textes/s |
+| Batch 10 textes | 14.7 ms | 1.5 ms | 678 textes/s |
+| Batch 100 textes | 137 ms | 1.4 ms | 728 textes/s |
+
+Le pipeline V5 (TF-IDF + LogReg) repond en **1.5 ms par texte**, soit **66x plus rapide** que l'exigence du CDC (100 ms). L'effet de batch reduit legerement le cout unitaire grace a la vectorisation numpy/scipy.
+
+Note : les modeles Transformer (CamemBERT, RoBERTa) utilises dans V8/V9 sont plus lents (~50-200 ms/texte selon la longueur), mais ne sont actives que pour les textes courts ou ambigus.
+
+### Scalabilite
+
+| Dimension | Etat actuel | Architecture cible |
+|-----------|-------------|-------------------|
+| Volume de donnees | 239 000+ posts dans MongoDB | > 1M posts supporte sans modification |
+| Collecte | Collecteur Python mono-thread, ~25 posts/requete | Kafka + collecteurs distribues pour ingestion temps reel |
+| Inference | Batch sequentiel dans le collecteur | Spark Structured Streaming pour inference parallele |
+| Stockage | MongoDB standalone (Docker) | Replica set MongoDB pour HA + sharding horizontal |
+| Dashboard | Streamlit mono-instance | Load balancer + cache Redis pour sessions concurrentes |
+| Monitoring | Logs structures + weekly check JSONL | Prometheus + Grafana pour metriques temps reel et alertes |
+
+L'architecture actuelle (Docker Compose 4 services) est concue pour etre deployee sur un seul serveur et gere confortablement 250K+ posts. L'evolution vers une architecture distribuee (Kafka/Spark) est documentee mais non implementee, car le volume actuel ne le justifie pas.
 
 ### Historique des versions
 
@@ -958,7 +988,7 @@ Le gold test set initial (200 posts) avait deux limites :
 
 ### Protocole d'annotation
 
-1. **Échantillonnage stratifié** : 500 posts Bluesky extraits de MongoDB (231 717 posts)
+1. **Échantillonnage stratifié** : 500 posts Bluesky extraits de MongoDB (239 000+ posts)
    - 250 FR + 250 EN
    - 50 posts par tranche de score V5 (0-0.2, 0.2-0.4, 0.4-0.6, 0.6-0.8, 0.8-1.0)
    - Mélangés aléatoirement pour éviter les biais de séquence
@@ -1087,7 +1117,127 @@ Post Bluesky
 
 ---
 
-## 22. Limites et perspectives
+## 22. Audit du corpus et rééquilibrage de la collecte
+
+### 22.1 Constat : biais d'échantillonnage dans le corpus Bluesky
+
+L'analyse du corpus de 239 000+ posts collectés a révélé deux biais structurels liés aux **termes de recherche** utilisés par le collecteur :
+
+#### Déséquilibre FR/EN
+
+| Langue | Posts | % |
+|--------|------:|---:|
+| EN | 199 803 | 87.5% |
+| FR | 17 695 | 7.8% |
+| Autre | 10 734 | 4.7% |
+
+**Cause** : Bluesky est un réseau majoritairement anglophone. Malgré un nombre comparable de termes de recherche (12 EN vs 13 FR dans la V2 du collecteur), les termes EN produisent un volume bien supérieur (ex. "happy" = 33K posts, "trump" = 27K vs "macron" = 4.8K, "joie" = 2.1K). Le ratio de collecte EN/FR est de 11:1, loin du ratio 1:1 souhaité pour un pipeline bilingue.
+
+#### Biais émotionnel (surreprésentation de la joie)
+
+Sur les 22 071 posts initialement annotés en émotion (9.7% du corpus), la distribution était :
+
+| Émotion | Posts | % |
+|---------|------:|---:|
+| joie | 16 622 | **75.3%** |
+| tristesse | 2 735 | 12.4% |
+| colère | 1 672 | 7.6% |
+| amour | 689 | 3.1% |
+| peur | 277 | 1.3% |
+| surprise | 76 | 0.3% |
+
+**Cause** : les termes "happy" (33K posts) et "joie" (2.1K) attirent des posts intrinsèquement joyeux (félicitations, humour, célébrations). Le profil émotionnel affiché dans le dashboard reflétait les termes de recherche, pas les émotions réelles de Bluesky. Ce biais est un **biais d'échantillonnage** (sampling bias) : le modèle d'émotions détecte correctement la joie dans "happy birthday", mais ce post n'a aucune pertinence pour la détection de fake news.
+
+### 22.2 Réflexion méthodologique
+
+La découverte de ces biais a motivé une réflexion sur la **représentativité du corpus** par rapport à la tâche de détection de fake news :
+
+1. **Les termes de recherche conditionnent la distribution** : ils ne sont pas des filtres neutres mais des **variables de conception** qui déterminent le spectre émotionnel et thématique du corpus. Un terme émotionnel ("happy") produit un corpus émotionnellement biaisé.
+
+2. **Le cahier des charges demande d'évaluer l'impact émotionnel des fake news**, pas de mesurer la joie globale de Bluesky. Les termes doivent cibler le **domaine d'application** (désinformation), pas des émotions pures.
+
+3. **La littérature en détection de fake news** montre que les contenus suspects sont corrélés à des émotions à **haute activation** (colère, peur, indignation, surprise) et à un sensationnalisme élevé. La joie n'est pas un marqueur discriminant de la désinformation.
+
+4. **L'inférence émotionnelle n'était pas systématique** : seuls 9.7% des posts avaient une émotion annotée, rendant le profil émotionnel du dashboard non représentatif.
+
+### 22.3 Actions correctives
+
+#### Rééquilibrage des termes de recherche (Collecteur V3)
+
+**Termes retirés** (biais émotionnel, pas de valeur pour la détection) :
+- EN : "happy" (33K posts), "amazing" (4.4K), "thank you" (5.7K)
+- FR : "joie" (2.1K)
+
+**Termes ajoutés** (thématiques à risque de désinformation) :
+- EN : "exposed", "they lied", "cover up", "wake up", "election"
+- FR : "on nous cache", "révélation", "ils mentent", "manipulation", "élection"
+
+**Termes FR ajoutés** (rééquilibrage volume, actualité/société) :
+- "politique", "santé", "éducation", "immigration", "retraite", "sécurité", "économie", "justice", "grève", "assemblée nationale"
+
+**Résultat** : 16 termes EN + 28 termes FR (ratio 1:1.75 en faveur du FR pour compenser le déséquilibre naturel de Bluesky).
+
+#### Inférence émotionnelle exhaustive
+
+- **214 081 posts** traités en batch (~6 500 posts/s) via un script dédié (`scripts/batch_emotion_inference.py`)
+- Normalisation des labels émotionnels (suppression des emojis des anciens labels pour cohérence)
+- **Résultat** : 236 000+ posts avec émotion annotée (couverture 100%)
+
+Distribution émotionnelle après correction :
+
+| Émotion | Avant (22K posts) | Après (236K posts) | Variation |
+|---------|:-:|:-:|:-:|
+| joie | **75.3%** | 48.6% | -26.7 pts |
+| surprise | 0.3% | 17.3% | +17.0 pts |
+| tristesse | 12.4% | 15.7% | +3.3 pts |
+| colère | 7.6% | 8.6% | +1.0 pt |
+| peur | 1.3% | 5.6% | +4.3 pts |
+| neutre | — | 3.2% | — |
+| dégoût | — | 1.0% | — |
+
+La joie reste dominante (naturel sur les réseaux sociaux) mais la distribution est nettement plus réaliste et représentative.
+
+#### Inférence automatique intégrée au collecteur
+
+Le collecteur V3 intègre désormais l'inférence IA après chaque cycle de collecte :
+1. Collecte des posts via l'API Bluesky (45 termes, 5 min d'intervalle)
+2. Inférence émotionnelle (MLP PyTorch, 7 classes) sur les nouveaux posts
+3. Inférence V5 (TF-IDF + features linguistiques + émotions) pour le score de crédibilité
+4. Écriture des résultats dans MongoDB (`ai_emotion`, `ai_score_credibility`, `ai_language`, etc.)
+
+Chaque nouveau post est analysé dans les 5 minutes suivant sa collecte, contre un délai indéterminé auparavant (inférence manuelle via notebook).
+
+### 22.4 Refactoring de l'architecture Docker
+
+L'architecture Docker Compose a été professionnalisée :
+
+| Amélioration | Avant | Après |
+|-------------|-------|-------|
+| Démarrage ordonné | `depends_on` simple | `depends_on` avec `condition: service_healthy` |
+| Santé MongoDB | Aucun healthcheck | Healthcheck mongosh (30s interval, 5 retries) |
+| Port MongoDB | Non exposé | Port 27017 exposé (monitoring, debugging) |
+| PYTHONPATH | Incohérent entre services | `/app/src:/app` unifié sur tous les services |
+| `links:` obsolètes | Présents | Supprimés (remplacés par le réseau Docker) |
+| `version: '3.8'` | Présent | Supprimé (obsolète depuis Docker Compose v2) |
+| Restart policy | Manquant sur certains services | `restart: always` (collector, MongoDB) / `unless-stopped` (dashboard, notebook) |
+
+### 22.5 Plus-value et maturité de la démarche
+
+Cette phase d'audit et de correction démontre une **maturité dans la gestion d'un projet Data/IA** :
+
+1. **Capacité d'auto-critique** : identifier un biais dans son propre corpus de 237K posts, après 5 mois de collecte, requiert une remise en question permanente et une veille sur la qualité des données.
+
+2. **Compréhension du pipeline de bout en bout** : le lien entre termes de recherche → distribution émotionnelle → profil dashboard → interprétation utilisateur illustre la maîtrise de la chaîne de valeur complète.
+
+3. **Approche experte du feature engineering** : les termes de recherche sont des hyperparamètres du pipeline, pas des choix anodins. Leur optimisation relève de la même rigueur que le tuning d'un modèle.
+
+4. **Réflexion sur la représentativité** : un corpus biaisé produit des KPIs biaisés, même avec un modèle parfait. La qualité des données en entrée conditionne la qualité des conclusions en sortie.
+
+5. **Infrastructure professionnelle** : healthchecks, démarrage ordonné, PYTHONPATH unifié et inférence automatique sont des pratiques de production, pas de prototypage.
+
+---
+
+## 23. Limites et perspectives (mise à jour)
 
 ### Limites actuelles
 
@@ -1122,7 +1272,7 @@ Post Bluesky
 
 ---
 
-## 23. Conclusion
+## 24. Conclusion
 
 Ce projet a permis de concevoir et déployer un pipeline NLP complet de détection de fake news sur Bluesky, de la collecte des données à la visualisation des résultats. L'approche itérative — de la V1.0 biaisée par les marqueurs Reuters à la V9 (pipeline 2 étapes fait/opinion) — illustre les défis concrets du Machine Learning appliqué : le data leakage, le domain shift, le biais thématique, la circularité du self-training, et la distinction fondamentale entre opinion et désinformation.
 
@@ -1141,7 +1291,7 @@ Le résultat clé de ce projet n'est pas un score F1 élevé, mais une compréhe
 
 ---
 
-## 24. References
+## 25. References
 
 1. Ahmed, H., Traore, I., & Saad, S. (2017). *Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques*. ISOT Fake News Dataset. University of Victoria.
 

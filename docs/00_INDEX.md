@@ -104,7 +104,8 @@
 | Fichier | Chemin | Description |
 |---------|--------|-------------|
 | Docker Compose | `docker-compose.yml` | Orchestration des 4 services (MongoDB, Collector, Jupyter, Dashboard) |
-| Dockerfile | `dockerfile` | Image Python 3.9-slim avec dépendances ML |
+| Dockerfile | `dockerfile` | Image Python 3.13-slim avec dépendances ML |
+| Batch Inference | `scripts/batch_emotion_inference.py` | Inférence émotionnelle batch sur posts MongoDB |
 | Requirements | `requirements.txt` | Dépendances Python du projet |
 | Config Streamlit | `.streamlit/config.toml` | Thème dark + configuration serveur |
 | Variables d'env | `.env` (non versionné) | Identifiants Bluesky, URI MongoDB |
@@ -134,6 +135,9 @@
 | Avril 2026 | Self-training Bluesky : échec documenté | Pseudo-labeling circulaire, abandon motivé | Data Scientist | D06 sect. 19 |
 | Mai 2026 | Annotation humaine 500 posts (2 annotateurs, kappa=0.498) | Gold standard fiable pour évaluation Bluesky | Data Scientist | D06 sect. 20 |
 | Mai 2026 | V9 pipeline 2 étapes fait/opinion | Filtre opinions avant détection, FP -67% | ML Engineer | D06 sect. 21 |
+| Mai 2026 | Audit corpus et rééquilibrage collecte V3 | Biais émotionnel (75% joie), déséquilibre FR/EN (87.5% EN), 28 termes FR + 16 termes EN | Data Scientist | D06 sect. 22 |
+| Mai 2026 | Inférence batch émotions (214K posts) | Couverture émotionnelle 100%, inférence auto intégrée au collecteur | ML Engineer | D06 sect. 22 |
+| Mai 2026 | Refactoring Docker Compose professionnel | Healthchecks MongoDB, démarrage ordonné, PYTHONPATH unifié | DevOps | D06 sect. 22 |
 
 ---
 
@@ -155,4 +159,4 @@
 ---
 
 *Document mis à jour en Mai 2026*
-*Référence : IDX-THUM-2026-001 -- Version 3.0*
+*Référence : IDX-THUM-2026-001 -- Version 3.1*

@@ -222,6 +222,8 @@ def get_recent_posts(collection, limit: int = 50) -> List[Dict]:
         "ai_score_credibility": 1,
         "ai_emotion": 1,
         "prediction_label": 1,
+        "ai_v9_label": 1,
+        "ai_post_type": 1,
         "ai_language": 1,
         "ai_model_name": 1,
         "search_term": 1,

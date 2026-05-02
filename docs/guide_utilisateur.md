@@ -7,7 +7,7 @@
 
 Thumalien est un système d'analyse automatisée de contenus textuels pour la détection de fake news. Il traite les posts publiés sur le réseau social Bluesky en français et en anglais, et fournit pour chaque texte un score de crédibilité, une émotion dominante et une classification fiable/suspect.
 
-Le système repose sur un pipeline NLP bilingue V9 combinant un filtre fait/opinion (Stage 1) avec un ensemble hybride TF-IDF V5 + Style V6 + CamemBERT (V8) + explicabilité SHAP. Plus de 231 000 posts ont été collectés et 500 ont été annotés manuellement par 2 annotateurs (kappa = 0.498). Le pipeline V9 réduit les faux positifs de 67% par rapport à V5 seul sur le gold standard consensus.
+Le système repose sur un pipeline NLP bilingue V9 combinant un filtre fait/opinion (Stage 1) avec un ensemble hybride TF-IDF V5 + Style V6 + CamemBERT (V8) + explicabilité SHAP. Plus de 237 000 posts ont été collectés et 500 ont été annotés manuellement par 2 annotateurs (kappa = 0.498). Le pipeline V9 réduit les faux positifs de 67% par rapport à V5 seul sur le gold standard consensus.
 
 ---
 
