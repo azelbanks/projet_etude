@@ -104,97 +104,126 @@ THUMALIEN - Projet Etude M1
 
 ### 2.1 Planning macro (semaines)
 
-```
-Tache                          | Dec 25  | Jan 26  | Fev 26  | Mars 26 | Avril 26| Mai 26  |
-                               | S1 S2 S3| S4 S5 S6| S7 S8 S9|S10S11S12|S13S14S15|S16S17S18|
--------------------------------|---------|---------|---------|---------|---------|---------|
-WP1 Cadrage & Infra            |[========]         |         |         |         |         |
-  T1.1 Analyse besoins         |[===]    |         |         |         |         |         |
-  T1.2 Choix techno            |[===]    |         |         |         |         |         |
-  T1.3 Docker Compose          |   [====]|         |         |         |         |         |
-  T1.4 MongoDB config          |   [====]|         |         |         |         |         |
-  T1.5 Depot Git               |[==]     |         |         |         |         |         |
-                               |         |         |         |         |         |         |
-WP2 Collecte donnees           |   [=====|=========|=========|=========|=========|========]|
-  T2.1 Collecteur Bluesky      |   [====]|         |         |         |         |         |
-  T2.2 Validation schema       |   [====]|         |         |         |         |         |
-  T2.3 Audit qualite           |         |   [====]|         |         |         |         |
-  T2.4 Monitoring continu      |      [==|=========|=========|=========|=========|========]|
-                               |         |         |         |         |         |         |
-WP3 Modele emotions            |         |[========]         |         |         |         |
-  T3.1 Exploration datasets    |         |[===]    |         |         |         |         |
-  T3.2 MLP PyTorch             |         |[========]         |         |         |         |
-  T3.3 Early stopping          |         |      [==]         |         |         |         |
-  T3.4 Evaluation              |         |      [==]         |         |         |         |
-                               |         |         |         |         |         |         |
-WP4 Pipeline NLP (V1-V5)       |[===]    |[========|=========|=========|========]|         |
-  T4.1 Baseline V1.0           |[===]    |         |         |         |         |         |
-  T4.2 Audit biais Reuters     |         |[===]    |         |         |         |         |
-  T4.3 V1.5 bilingue           |         |      [==|===]     |         |         |         |
-  T4.4 V2 datasets sociaux     |         |         |[===]    |         |         |         |
-  T4.5 V3 correction preproc   |         |         |         |[===]    |         |         |
-  T4.6 V4 augmentation FR      |         |         |         |         |[===]    |         |
-  T4.7 V5 posts synthetiques   |         |         |         |         |   [==]  |         |
-  T4.8 GridSearch              |         |         |   [==]  |         |         |         |
-                               |         |         |         |         |         |         |
-WP5 Modeles Transformer        |         |         |         |         |[========]|         |
-  T5.1 CamemBERT V1            |         |         |         |         |[===]    |         |
-  T5.2 CamemBERT V2            |         |         |         |         |   [==]  |         |
-  T5.3 RoBERTa EN V1           |         |         |         |         |   [===] |         |
-  T5.4 RoBERTa EN V2           |         |         |         |         |      [=]|         |
-  T5.5 Pipeline hybride        |         |         |         |         |      [=]|         |
-                               |         |         |         |         |         |         |
-WP6 Dashboard (V1-V3)          |         |         |         |[========|===]     |         |
-  T6.1 Dashboard V1            |         |         |         |[===]    |         |         |
-  T6.2 Dashboard V2            |         |         |         |   [====]|         |         |
-  T6.3 Dashboard V3            |         |         |         |         |[===]    |         |
-  T6.4 Securite + weighted     |         |         |         |         |   [==]  |         |
-                               |         |         |         |         |         |         |
-WP7 Documentation              |         |         |[==]     |         |[========|========]|
-  T7.1 CDC techniques          |         |         |[==]     |         |         |         |
-  T7.2 RGPD & AI Act           |         |         |[==]     |         |         |         |
-  T7.3 Rapport projet          |         |         |         |         |[========|========]|
-  T7.4 Guide utilisateur       |         |         |         |         |   [====]|         |
-  T7.5 Doc technique           |         |         |         |         |[========|========]|
-  T7.6 Planification           |         |         |         |         |      [==|==]      |
-                               |         |         |         |         |         |         |
-WP8 Gold Test Set              |         |         |         |         |[========|===]     |
-  T8.1 Gold set V1 (200)       |         |         |         |         |[===]    |         |
-  T8.2 Gold set V2 (500)       |         |         |         |         |   [====]|         |
-  T8.3 Eval V5-V9 sur gold     |         |         |         |         |      [==|==]      |
-                               |         |         |         |         |         |         |
-WP9 Iterations V6-V9           |         |         |         |         |   [=====|====]    |
-  T9.1 V6 Style-Only           |         |         |         |         |   [===] |         |
-  T9.2 V7 Ensemble + SHAP      |         |         |         |         |      [==]         |
-  T9.3 V8 Meta-learner         |         |         |         |         |      [==]         |
-  T9.4 Self-training (echec)    |         |         |         |         |      [=]|         |
-  T9.5 V9 Cascade fait/opinion |         |         |         |         |         |[===]    |
-                               |         |         |         |         |         |         |
-WP10 Collecteur V3             |         |         |         |         |   [====]|         |
-  T10.1 Reequilibrage FR/EN    |         |         |         |         |   [==]  |         |
-  T10.2 Inference auto         |         |         |         |         |   [===] |         |
-  T10.3 Rate limiting          |         |         |         |         |      [=]|         |
-                               |         |         |         |         |         |         |
-WP11 Dashboard V4-V5           |         |         |         |         |      [==|====]    |
-  T11.1 Dashboard V4 (V9+SHAP) |         |         |         |         |      [==]         |
-  T11.2 Dashboard V5 (5 pages) |         |         |         |         |         |[===]    |
-                               |         |         |         |         |         |         |
-WP12 Tests & Qualite           |         |         |         |         |         |[======] |
-  T12.1 Tests unitaires (94)   |         |         |         |         |         |[===]    |
-  T12.2 Benchmark latence      |         |         |         |         |         |[==]     |
-  T12.3 Tests integration      |         |         |         |         |         |   [==]  |
-                               |         |         |         |         |         |         |
-WP13 Video MVP                 |         |         |         |         |         |   [====]|
-  T13.1 Script/storyboard      |         |         |         |         |         |   [==]  |
-  T13.2 Tournage               |         |         |         |         |         |      [=]|
-  T13.3 Montage                |         |         |         |         |         |      [=]|
-  T13.4 Livraison              |         |         |         |         |         |      [=]|
+```mermaid
+gantt
+    title Planification Projet Thumalien
+    dateFormat YYYY-MM-DD
+    axisFormat %d/%m
+    todayMarker off
+
+    section WP1 Cadrage & Infra
+    T1.5 Depot Git                          :done, t15, 2025-12-01, 2025-12-10
+    T1.1 Analyse besoins                    :done, t11, 2025-12-01, 2025-12-14
+    T1.2 Choix techno                       :done, t12, 2025-12-01, 2025-12-14
+    T1.3 Docker Compose                     :done, t13, 2025-12-10, 2025-12-22
+    T1.4 MongoDB config                     :done, t14, 2025-12-10, 2025-12-22
+    J0 Lancement projet                     :milestone, j0, 2025-12-01, 0d
+
+    section WP2 Collecte donnees
+    T2.1 Collecteur Bluesky                 :done, t21, 2025-12-10, 2025-12-22
+    T2.2 Validation schema                  :done, t22, 2025-12-10, 2025-12-22
+    T2.3 Audit qualite                      :done, t23, 2026-01-06, 2026-01-20
+    T2.4 Monitoring continu                 :done, t24, 2025-12-22, 2026-05-19
+    J1 Collecteur operationnel              :milestone, j1, 2025-12-15, 0d
+
+    section WP3 Modele emotions
+    T3.1 Exploration datasets               :done, t31, 2026-01-05, 2026-01-15
+    T3.2 MLP PyTorch                        :done, t32, 2026-01-05, 2026-01-25
+    T3.3 Early stopping                     :done, t33, 2026-01-18, 2026-01-25
+    T3.4 Evaluation                         :done, t34, 2026-01-18, 2026-01-25
+    J4 Modele emotions                      :milestone, j4, 2026-01-20, 0d
+
+    section WP4 Pipeline NLP V1-V5
+    T4.1 Baseline V1.0 (LogReg EN)          :done, t41, 2025-12-15, 2025-12-28
+    T4.2 Audit biais Reuters                :done, t42, 2026-01-05, 2026-01-15
+    T4.3 V1.5 bilingue + features           :done, t43, 2026-01-18, 2026-02-08
+    T4.8 GridSearch hyperparametres         :done, t48, 2026-02-10, 2026-02-20
+    T4.4 V2 datasets sociaux + seuil 0.44  :done, t44, 2026-02-20, 2026-03-05
+    T4.5 V3 correction preprocessing        :done, t45, 2026-03-10, 2026-03-25
+    T4.6 V4 augmentation FR court           :done, t46, 2026-04-01, 2026-04-10
+    T4.7 V5 +10K posts synthetiques         :done, t47, 2026-04-10, 2026-04-18
+    J2 Baseline V1.0                        :milestone, j2, 2025-12-20, 0d
+    J3 Audit qualite                        :milestone, j3, 2026-01-10, 0d
+    J5 Pipeline V1.5                        :milestone, j5, 2026-02-05, 0d
+    J6 GridSearch                           :milestone, j6, 2026-02-15, 0d
+    J7 Pipeline V2                          :milestone, j7, 2026-02-25, 0d
+    J9 Pipeline V3                          :milestone, j9, 2026-03-20, 0d
+    J10 Pipeline V4                         :milestone, j10, 2026-04-05, 0d
+    J11 Pipeline V5                         :milestone, j11, 2026-04-10, 0d
+
+    section WP5 Modeles Transformer
+    T5.1 CamemBERT V1 (FR)                 :done, t51, 2026-04-05, 2026-04-12
+    T5.2 CamemBERT V2 + donnees sociales   :done, t52, 2026-04-12, 2026-04-16
+    T5.3 RoBERTa EN V1                     :done, t53, 2026-04-12, 2026-04-18
+    T5.4 RoBERTa EN V2 + 10K synthetique   :done, t54, 2026-04-18, 2026-04-22
+    T5.5 Pipeline hybride stacking          :done, t55, 2026-04-18, 2026-04-22
+    J12 CamemBERT V1/V2                    :milestone, j12, 2026-04-12, 0d
+    J13 RoBERTa EN V1/V2                   :milestone, j13, 2026-04-15, 0d
+    J14 Pipeline hybride                   :milestone, j14, 2026-04-18, 0d
+
+    section WP6 Dashboard V1-V3
+    T6.1 Dashboard V1 (metriques)           :done, t61, 2026-03-01, 2026-03-12
+    T6.2 Dashboard V2 (glassmorphism)       :done, t62, 2026-03-12, 2026-03-25
+    T6.3 Dashboard V3 (radar, prediction)   :done, t63, 2026-03-25, 2026-04-08
+    T6.4 Securite + weighted loss           :done, t64, 2026-04-08, 2026-04-16
+    J8 Dashboard V2                         :milestone, j8, 2026-03-10, 0d
+
+    section WP7 Documentation
+    T7.1 CDC techniques                     :done, t71, 2026-02-01, 2026-02-14
+    T7.2 RGPD & AI Act                     :done, t72, 2026-02-01, 2026-02-14
+    T7.3 Rapport projet                     :done, t73, 2026-04-05, 2026-05-15
+    T7.4 Guide utilisateur                  :done, t74, 2026-04-10, 2026-04-28
+    T7.5 Doc technique (22 notebooks)       :done, t75, 2026-04-05, 2026-05-15
+    T7.6 Planification                      :done, t76, 2026-04-22, 2026-05-08
+    J24 Documentation finale                :milestone, j24, 2026-05-12, 0d
+
+    section WP8 Gold Test Set
+    T8.1 Gold set V1 (200 posts)            :done, t81, 2026-04-05, 2026-04-15
+    T8.2 Gold set V2 (500 posts, 2 annot.)  :done, t82, 2026-04-15, 2026-04-28
+    T8.3 Eval V5-V9 sur gold                :done, t83, 2026-04-25, 2026-05-08
+    J19 Gold Test Set V2                    :milestone, j19, 2026-04-25, 0d
+
+    section WP9 Iterations V6-V9
+    T9.1 V6 Style-Only (GBT, 28 feat.)     :done, t91, 2026-04-15, 2026-04-22
+    T9.2 V7 Ensemble + SHAP                :done, t92, 2026-04-22, 2026-04-28
+    T9.3 V8 Meta-learner                   :done, t93, 2026-04-22, 2026-04-28
+    T9.4 Self-training (echec documente)    :done, t94, 2026-04-25, 2026-04-28
+    T9.5 V9 Cascade fait/opinion            :done, t95, 2026-04-28, 2026-05-05
+    J15 Consolidation ML                    :milestone, j15, 2026-04-20, 0d
+    J16 V6 Style-Only                       :milestone, j16, 2026-04-20, 0d
+    J21 V9 Cascade                          :milestone, j21, 2026-05-02, 0d
+
+    section WP10 Collecteur V3
+    T10.1 Reequilibrage FR/EN               :done, t101, 2026-04-15, 2026-04-22
+    T10.2 Inference auto emotions + V5      :done, t102, 2026-04-15, 2026-04-25
+    T10.3 Rate limiting & backoff           :done, t103, 2026-04-22, 2026-04-28
+    J20 Collecteur V3                       :milestone, j20, 2026-04-28, 0d
+
+    section WP11 Dashboard V4-V5
+    T11.1 Dashboard V4 (V9 + SHAP)         :done, t111, 2026-04-25, 2026-05-02
+    T11.2 Dashboard V5 (5 pages, perf.)    :done, t112, 2026-05-02, 2026-05-08
+    J22 Dashboard V5                        :milestone, j22, 2026-05-05, 0d
+
+    section WP12 Tests & Qualite
+    T12.1 Tests unitaires (107 tests)       :done, t121, 2026-05-02, 2026-05-10
+    T12.2 Benchmark latence (1.5ms)         :done, t122, 2026-05-02, 2026-05-08
+    T12.3 Tests integration pipeline        :done, t123, 2026-05-08, 2026-05-14
+    J23 Tests & Benchmark                   :milestone, j23, 2026-05-08, 0d
+
+    section WP13 Video MVP
+    T13.1 Script et storyboard              :done, t131, 2026-05-08, 2026-05-13
+    T13.2 Tournage demo live                :done, t132, 2026-05-13, 2026-05-16
+    T13.3 Montage et post-production        :done, t133, 2026-05-15, 2026-05-18
+    T13.4 Livraison finale                  :done, t134, 2026-05-18, 2026-05-19
+    J25 Video MVP                           :milestone, j25, 2026-05-15, 0d
+    DEADLINE                                :milestone, crit, deadline, 2026-05-19, 0d
 ```
 
 ### 2.2 Legende
 
-- `[===]` : Duree de la tache
-- S1-S18 : Semaines (Dec 2025 Semaine 1 a Mai 2026 Semaine 18)
+- Toutes les taches sont marquees `done` (projet en phase finale)
+- Les losanges representent les jalons (milestones)
+- DEADLINE : 19 mai 2026
 
 ---
 
@@ -328,18 +357,18 @@ Toute tache sur le chemin critique qui prend du retard retarde la livraison fina
 | Tache | Azelie Bernard | Sebastien Lazcanotegui |
 |-------|:--------------:|:---------------------:|
 | WP1 Infrastructure | R/A | I |
-| WP2 Collecte | R/A | I |
+| WP2 Collecte | R/A | C (support termes de recherche) |
 | WP3 Emotions | R/A | I |
-| WP4 Pipeline V1-V5 | R/A | C (GridSearch, debiaisage) |
+| WP4 Pipeline V1-V5 | R/A | R (GridSearch, debiaisage) |
 | WP5 Transformers | R/A | I |
-| WP6 Dashboard | R/A | I |
-| WP7 Documentation | R/A | C (revue) |
-| WP8 Gold Test Set | R/A | C (annotation) |
-| WP9 Iterations V6-V9 | R/A | I |
+| WP6 Dashboard | R/A | C (feedback utilisateur) |
+| WP7 Documentation | R | R (revue, relecture, validation) |
+| WP8 Gold Test Set | R | R (annotation 2e annotateur, kappa) |
+| WP9 Iterations V6-V9 | R/A | C (evaluation gold set) |
 | WP10 Collecteur V3 | R/A | I |
-| WP11 Dashboard V4-V5 | R/A | I |
-| WP12 Tests & Qualite | R/A | I |
-| WP13 Video MVP | R | R |
+| WP11 Dashboard V4-V5 | R/A | C (tests fonctionnels) |
+| WP12 Tests & Qualite | R | C (validation resultats) |
+| WP13 Video MVP | R | R (co-production) |
 
 **Legende RACI** : R = Responsable, A = Approbateur, C = Consulte, I = Informe
 
@@ -347,20 +376,20 @@ Toute tache sur le chemin critique qui prend du retard retarde la livraison fina
 
 | Work Package | Azelie (heures) | Sebastien (heures) | Total |
 |-------------|:----------------:|:-------------------:|:-----:|
-| WP1 Cadrage & Infra | 20 | 0 | 20 |
-| WP2 Collecte | 25 | 0 | 25 |
+| WP1 Cadrage & Infra | 20 | 2 | 22 |
+| WP2 Collecte | 25 | 3 | 28 |
 | WP3 Emotions | 30 | 0 | 30 |
-| WP4 Pipeline NLP (V1-V5) | 80 | 10 | 90 |
+| WP4 Pipeline NLP (V1-V5) | 80 | 15 | 95 |
 | WP5 Transformers | 40 | 0 | 40 |
-| WP6 Dashboard (V1-V3) | 20 | 0 | 20 |
-| WP7 Documentation | 40 | 5 | 45 |
-| WP8 Gold Test Set | 25 | 5 | 30 |
-| WP9 Iterations V6-V9 | 50 | 0 | 50 |
+| WP6 Dashboard (V1-V3) | 20 | 3 | 23 |
+| WP7 Documentation | 40 | 10 | 50 |
+| WP8 Gold Test Set | 20 | 15 | 35 |
+| WP9 Iterations V6-V9 | 50 | 5 | 55 |
 | WP10 Collecteur V3 | 10 | 0 | 10 |
-| WP11 Dashboard V4-V5 | 20 | 0 | 20 |
-| WP12 Tests & Qualite | 15 | 0 | 15 |
+| WP11 Dashboard V4-V5 | 20 | 3 | 23 |
+| WP12 Tests & Qualite | 15 | 5 | 20 |
 | WP13 Video MVP | 10 | 10 | 20 |
-| **Total** | **385** | **30** | **415** |
+| **Total** | **380** | **71** | **451** |
 
 ---
 
@@ -396,7 +425,7 @@ Toute tache sur le chemin critique qui prend du retard retarde la livraison fina
 | Retard sur le pipeline NLP (chemin critique) | Moyenne | Eleve | Parallelisation des taches non-critiques (dashboard, docs) |
 | Indisponibilite API Bluesky | Faible | Moyen | Cache local, retry automatique, donnees existantes suffisantes |
 | Probleme de convergence du modele | Moyenne | Moyen | Rollback vers version precedente validee |
-| Surcharge d'un membre de l'equipe | Moyenne | Eleve | Repartition dynamique, priorisation des taches critiques |
+| Surcharge d'un membre du binome | Moyenne | Eleve | Repartition dynamique, priorisation des taches critiques, points hebdomadaires |
 | Changement de specifications | Faible | Moyen | Methodologie agile, iterations courtes |
 
 ---

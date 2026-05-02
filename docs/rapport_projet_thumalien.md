@@ -16,35 +16,53 @@ Ce rapport présente Thumalien, un système de détection de fake news sur le r�
 ## Table des matières
 
 0. [Résumé](#resume)
-1. [Présentation du projet](#1-presentation-du-projet)
-2. [Architecture technique](#2-architecture-technique)
-3. [Phase 1 — Collecte et stockage des données](#3-phase-1--collecte-et-stockage-des-donnees)
-4. [Phase 2 — Audit qualité et nettoyage](#4-phase-2--audit-qualite-et-nettoyage)
-5. [Phase 3 — Modèle d'émotions bilingue](#5-phase-3--modele-demotions-bilingue)
-6. [Phase 4 — Pipeline expert V1.5](#6-phase-4--pipeline-expert-v15)
-7. [Phase 5 — Analyse du modèle et GridSearch](#7-phase-5--analyse-du-modele-et-gridsearch)
-8. [Phase 6 — Intégration de datasets sociaux (V2)](#8-phase-6--integration-de-datasets-sociaux-v2)
-9. [Le seuil de décision : pourquoi 0.44 ?](#9-le-seuil-de-decision--pourquoi-044-)
-10. [Qu'est-ce que max_iter ?](#10-quest-ce-que-max_iter-)
-11. [Dashboard Streamlit](#11-dashboard-streamlit)
-12. [Bilan carbone (Green IT)](#12-bilan-carbone-green-it)
-13. [État actuel du projet](#13-etat-actuel-du-projet)
-14. [Évaluation sur Gold Test Set](#14-evaluation-sur-gold-test-set-200-posts-bluesky)
-15. [Itérations V3 à V5 — Corrections et améliorations](#15-iterations-v3-a-v5--corrections-et-ameliorations)
-16. [V6 — Modèle Style-Only (topic-agnostic)](#16-v6--modele-style-only-topic-agnostic)
-17. [V7 — Ensemble Hybride + SHAP](#17-v7--ensemble-hybride--shap)
-18. [V8 — Integration de CamemBERT](#18-v8--integration-de-camembert)
-19. [Echec du self-training sur donnees Bluesky](#19-echec-du-self-training-sur-donnees-bluesky)
-20. [Annotation humaine et accord inter-annotateurs](#20-annotation-humaine-et-accord-inter-annotateurs)
-21. [V9 — Pipeline 2 etapes : filtre fait/opinion](#21-v9--pipeline-2-etapes--filtre-faitopinion)
-22. [Audit du corpus et rééquilibrage de la collecte](#22-audit-du-corpus-et-reequilibrage-de-la-collecte)
-23. [Limites et perspectives](#23-limites-et-perspectives)
-24. [Conclusion](#24-conclusion)
-25. [References](#25-references)
+1. [Présentation de l'entreprise et de l'école](#1-presentation-de-lentreprise-et-de-lecole)
+2. [Présentation du projet](#2-presentation-du-projet)
+3. [Architecture technique](#3-architecture-technique)
+4. [Phase 1 — Collecte et stockage des données](#4-phase-1--collecte-et-stockage-des-donnees)
+5. [Phase 2 — Audit qualité et nettoyage](#5-phase-2--audit-qualite-et-nettoyage)
+6. [Phase 3 — Modèle d'émotions bilingue](#6-phase-3--modele-demotions-bilingue)
+7. [Phase 4 — Pipeline expert V1.5](#7-phase-4--pipeline-expert-v15)
+8. [Phase 5 — Analyse du modèle et GridSearch](#8-phase-5--analyse-du-modele-et-gridsearch)
+9. [Phase 6 — Intégration de datasets sociaux (V2)](#9-phase-6--integration-de-datasets-sociaux-v2)
+10. [Le seuil de décision : pourquoi 0.44 ?](#10-le-seuil-de-decision--pourquoi-044-)
+11. [Qu'est-ce que max_iter ?](#11-quest-ce-que-max_iter-)
+12. [Dashboard Streamlit](#12-dashboard-streamlit)
+13. [Bilan carbone (Green IT)](#13-bilan-carbone-green-it)
+14. [État actuel du projet](#14-etat-actuel-du-projet)
+15. [Évaluation sur Gold Test Set](#15-evaluation-sur-gold-test-set-200-posts-bluesky)
+16. [Itérations V3 à V5 — Corrections et améliorations](#16-iterations-v3-a-v5--corrections-et-ameliorations)
+17. [V6 — Modèle Style-Only (topic-agnostic)](#17-v6--modele-style-only-topic-agnostic)
+18. [V7 — Ensemble Hybride + SHAP](#18-v7--ensemble-hybride--shap)
+19. [V8 — Integration de CamemBERT](#19-v8--integration-de-camembert)
+20. [Echec du self-training sur donnees Bluesky](#20-echec-du-self-training-sur-donnees-bluesky)
+21. [Annotation humaine et accord inter-annotateurs](#21-annotation-humaine-et-accord-inter-annotateurs)
+22. [V9 — Pipeline 2 etapes : filtre fait/opinion](#22-v9--pipeline-2-etapes--filtre-faitopinion)
+23. [Audit du corpus et rééquilibrage de la collecte](#23-audit-du-corpus-et-reequilibrage-de-la-collecte)
+24. [Limites et perspectives](#24-limites-et-perspectives)
+25. [Conclusion](#25-conclusion)
+26. [References](#26-references)
 
 ---
 
-## 1. Présentation du projet
+## 1. Présentation de l'entreprise et de l'école
+
+### Sup de Vinci — Campus Bordeaux
+
+Sup de Vinci est une école d'informatique proposant des formations du Bac+3 au Bac+5 dans les domaines du numérique, de la data et de l'intelligence artificielle. Le campus de Bordeaux accompagne ses étudiants dans l'acquisition de compétences techniques et méthodologiques à travers des projets concrets et professionnalisants. Le présent rapport s'inscrit dans le cadre de la formation Master 1 Big Data et Intelligence Artificielle (promotion 2025-2026).
+
+### Niamato Consulting — Contexte commanditaire
+
+Niamato Consulting est une société de conseil spécialisée en data science et intelligence artificielle. Dans le cadre de ce projet, elle intervient en tant que commanditaire fictif pour le compte d'un client du secteur média et fact-checking, souhaitant disposer d'un outil de veille automatisée capable de détecter les contenus suspects sur les réseaux sociaux émergents. Le MVP Thumalien a été développé en réponse à ce besoin, avec pour objectif de livrer un prototype fonctionnel de détection de fake news sur Bluesky.
+
+### Équipe projet
+
+- **Azélie Bernard** — Lead technique : conception de l'architecture, développement du pipeline NLP, entraînement des modèles, mise en place de l'infrastructure Docker et du dashboard.
+- **Sébastien Lazcanotegui** — Validation et Qualité : annotation humaine, tests de validation, revue des résultats, contrôle qualité des données et des évaluations.
+
+---
+
+## 2. Présentation du projet
 
 ### Objectif
 
@@ -65,7 +83,7 @@ Le projet Thumalien est composé de 4 briques :
 
 ---
 
-## 2. Architecture technique
+## 3. Architecture technique
 
 ### Stack technologique
 
@@ -165,18 +183,20 @@ classDiagram
     StyleFeatureExtractorV6 ..> ExpertFakeNewsDetector : V7 combine
 ```
 
-### Pourquoi pas de deep learning pour la détection de fake news ?
+### Deep learning et détection de fake news
 
-Un prototype RoBERTa a été exploré (notebook 04) mais abandonné pour plusieurs raisons :
+Le pipeline de base (V5) repose sur TF-IDF + LogReg (pas de deep learning) pour plusieurs raisons :
 - **Temps d'entraînement** : plusieurs heures sur GPU vs 6 minutes pour le pipeline LogReg
 - **Interprétabilité** : LogReg permet d'expliquer quels mots et features influencent la décision
 - **Performance comparable** : le pipeline expert atteint F1=0.90, suffisant pour une première version
 - **Empreinte carbone** : un modèle transformer consomme 10-100x plus d'énergie
 - **Déploiement** : un modèle scikit-learn de 1 MB se déploie partout, un transformer de 500 MB est plus contraignant
 
+Cependant, les pipelines avancés V8 et V9 intègrent **CamemBERT** (modèle Transformer pré-entraîné) comme composant optionnel du méta-learner, apportant un signal sémantique complémentaire pour les textes FR courts. Un prototype RoBERTa EN a également été exploré (notebook 04).
+
 ---
 
-## 3. Phase 1 — Collecte et stockage des données
+## 4. Phase 1 — Collecte et stockage des données
 
 ### Notebooks concernés : 01, 03
 
@@ -198,7 +218,7 @@ Le fichier `src/collection/collect_bluesky.py` réalise une collecte continue :
 
 ---
 
-## 4. Phase 2 — Audit qualité et nettoyage
+## 5. Phase 2 — Audit qualité et nettoyage
 
 ### Notebooks concernés : 00, 05
 
@@ -230,7 +250,7 @@ Plutôt que de changer de dataset, nous avons préféré nettoyer celui-ci car :
 
 ---
 
-## 5. Phase 3 — Modèle d'émotions bilingue
+## 6. Phase 3 — Modèle d'émotions bilingue
 
 ### Notebook concerné : 02
 
@@ -274,6 +294,22 @@ Le projet a initialement utilisé TensorFlow/Keras, mais nous avons migré vers 
 - Entraînement en quelques minutes vs heures pour un Transformer
 - Le modèle sert de **feature extractor** (7 probabilités) pour le pipeline principal, pas de prédiction autonome
 
+### Métriques du classifieur d'émotions
+
+| Métrique | Valeur |
+|----------|--------|
+| F1 macro (test, 4 100 textes) | 0.678 |
+| F1 weighted (test) | 0.715 |
+| Accuracy validation (best epoch) | 71.3% |
+| F1 macro EN (2 000 textes, 5 classes) | 0.546 |
+| F1 weighted EN | 0.838 |
+| F1 macro FR (2 100 textes, 7 classes) | 0.594 |
+| F1 weighted FR | 0.594 |
+
+**Limites identifiées** : les classes `dégoût` et `neutre` n'ont pas d'équivalent dans le dataset EN (Twitter Emotion) et sont entraînées exclusivement sur données FR. Le F1 macro EN (0.546) est donc pénalisé par ces deux classes absentes. Le sanity check sur 10 phrases manuelles montre un taux de 3/10, signe d'un overfitting sur les patterns du dataset d'entraînement.
+
+Les probabilités de sortie (vecteur de 7 valeurs) sont utilisées comme features d'entrée du pipeline V5, et non comme prédiction finale présentée à l'utilisateur. La précision du classifieur d'émotions n'impacte donc la performance finale que de manière indirecte (l'ablation study montre un gain de +0.5 points F1 avec les features émotionnelles).
+
 ### Améliorations apportées
 
 - **Class weights** : pondération inversement proportionnelle à la fréquence de chaque classe dans `CrossEntropyLoss`, pour compenser le déséquilibre (joie=8066 vs dégoût=1400 dans le train set)
@@ -281,7 +317,7 @@ Le projet a initialement utilisé TensorFlow/Keras, mais nous avons migré vers 
 
 ---
 
-## 6. Phase 4 — Pipeline expert V1.5
+## 7. Phase 4 — Pipeline expert V1.5
 
 ### Notebooks concernés : 05, 06
 
@@ -378,7 +414,7 @@ LogisticRegression(
 
 ---
 
-## 7. Phase 5 — Analyse du modèle et GridSearch
+## 8. Phase 5 — Analyse du modèle et GridSearch
 
 ### Notebook concerné : 07
 
@@ -423,7 +459,7 @@ Le notebook 07 a comparé 3 stratégies :
 
 ---
 
-## 8. Phase 6 — Intégration de datasets sociaux (V2)
+## 9. Phase 6 — Intégration de datasets sociaux (V2)
 
 ### Notebook concerné : 08
 
@@ -483,7 +519,7 @@ Les textes sociaux sont dupliqués 2 fois (`social_oversample=2`) pour équilibr
 
 ---
 
-## 9. Le seuil de décision : pourquoi 0.44 ?
+## 10. Le seuil de décision : pourquoi 0.44 ?
 
 ### Comment fonctionne la prédiction
 
@@ -539,7 +575,7 @@ Baisser le seuil augmente le risque de **faux négatifs** (classer un texte susp
 
 ---
 
-## 10. Qu'est-ce que max_iter ?
+## 11. Qu'est-ce que max_iter ?
 
 ### Définition simple
 
@@ -584,7 +620,7 @@ Plus d'itérations = plus de temps de calcul. Mais sur un Apple M4 Pro, le passa
 
 ---
 
-## 11. Dashboard Streamlit
+## 12. Dashboard Streamlit
 
 ### Technologies
 
@@ -612,7 +648,7 @@ detector.load(suffix='expert_v2' if v2_exists else 'expert')
 
 ---
 
-## 12. Bilan carbone (Green IT)
+## 13. Bilan carbone (Green IT)
 
 ### Outil : CodeCarbon
 
@@ -620,22 +656,27 @@ CodeCarbon mesure la consommation électrique (CPU + RAM) pendant l'entraînemen
 
 ### Émissions mesurées
 
-| Entraînement | Durée | Énergie | CO2 | Équivalent |
-|-------------|-------|---------|-----|-----------|
-| V1.5 (65K articles) | 5.6 min | 0.0045 kWh | 0.25 g | 2.5 m en voiture |
-| V2 (145K articles) | 6.8 min | 0.0055 kWh | 0.30 g | 3.0 m en voiture |
+| Entraînement | Durée | CO2 | Notes |
+|-------------|-------|-----|-------|
+| V1.5 LogReg (fév. 2026) | 6.2 min | 0.28 g | Baseline bilingue |
+| V5 LogReg (avr. 2026) | 16.2 min | 0.73 g | +10K posts synthétiques |
+| V5 LogReg retraining | 25.9 min | 1.17 g | Hyperparamètres optimisés |
+| CamemBERT fine-tune | 10.7 min | 0.48 g | Textes FR courts |
+| RoBERTa EN V1 | 37.4 min | 1.69 g | Fine-tune anglais |
+| RoBERTa EN V2 | 39.3 min | 1.78 g | +10K EN synthétiques |
+| **Total projet** | **~2h16** | **6.14 g** | |
 
 ### Contexte
 
 - Un email envoyé : ~4 g CO2
 - Une recherche Google : ~7 g CO2
-- Notre entraînement complet : **0.30 g CO2**
+- **Tous nos entraînements cumulés : 6.14 g CO2** (moins qu'une recherche Google)
 
-Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogReg) plutôt qu'un Transformer (qui consommerait ~100-1000x plus).
+Le pipeline de production (V5 LogReg) ne consomme que 0.73 g. Les modèles Transformer (CamemBERT, RoBERTa) représentent 64% des émissions mais n'interviennent qu'en complément pour les textes courts.
 
 ---
 
-## 13. État actuel du projet
+## 14. État actuel du projet
 
 ### Ce qui fonctionne
 
@@ -716,7 +757,7 @@ L'architecture actuelle (Docker Compose 4 services) est concue pour etre deploye
 
 ---
 
-## 14. Évaluation sur Gold Test Set (200 posts Bluesky)
+## 15. Évaluation sur Gold Test Set (200 posts Bluesky)
 
 ### Protocole
 
@@ -758,7 +799,7 @@ La distribution des scores le confirme : le score moyen des posts fiables (0.615
 
 ---
 
-## 15. Itérations V3 à V5 — Corrections et améliorations
+## 16. Itérations V3 à V5 — Corrections et améliorations
 
 ### Notebooks concernés : 09 à 15
 
@@ -788,9 +829,11 @@ Après l'évaluation sur le gold test set (section 14), plusieurs itérations on
 
 **Note sur le gain global V4→V5** : Le gain global de V5 semble modeste (+0.8% en F1 macro), mais c'est parce que les données synthétiques ciblent spécifiquement les textes courts FR, où le gain est de +5.1%. Le F1 global est dominé par les textes longs de Reuters/ISOT qui sont déjà bien classifiés (F1 > 0.98) et masquent l'amélioration ciblée.
 
+**Limitation méthodologique** : L'oversampling x5 des textes FR courts est appliqué avant le split StratifiedKFold. Des copies d'un même texte peuvent donc se retrouver dans les folds train et validation, ce qui gonfle artificiellement les métriques CV. Le F1 CV de 0.90 est donc une borne supérieure optimiste. Les métriques du gold test set (F1 suspect = 0.087 pour V5) constituent l'évaluation non biaisée de la performance réelle.
+
 ---
 
-## 16. V6 — Modèle Style-Only (topic-agnostic)
+## 17. V6 — Modèle Style-Only (topic-agnostic)
 
 ### Notebook concerné : 23
 
@@ -833,7 +876,7 @@ Le modèle V6 supprime totalement le TF-IDF et utilise uniquement 28 features st
 
 ---
 
-## 17. V7 — Ensemble Hybride + SHAP
+## 18. V7 — Ensemble Hybride + SHAP
 
 ### Notebook concerné : 24
 
@@ -904,7 +947,7 @@ Le dashboard V7 affiche pour chaque analyse en temps réel :
 
 ---
 
-## 18. V8 — Intégration de CamemBERT
+## 19. V8 — Intégration de CamemBERT
 
 ### Hypothèse
 
@@ -935,7 +978,7 @@ Le méta-learner V7 combine V5 (TF-IDF lexical) et V6 (style-only). Pour le fran
 
 ---
 
-## 19. Échec du self-training sur données Bluesky
+## 20. Échec du self-training sur données Bluesky
 
 ### Hypothèse
 
@@ -980,7 +1023,7 @@ Cette impasse a motivé la création d'un dataset annoté manuellement par des h
 
 ---
 
-## 20. Annotation humaine et accord inter-annotateurs
+## 21. Annotation humaine et accord inter-annotateurs
 
 ### Motivation
 
@@ -1052,7 +1095,7 @@ V5 produit 186 faux positifs sur 458 fiables (40.6%). Le modèle sur-détecte ma
 
 ---
 
-## 21. V9 — Pipeline 2 étapes : filtre fait/opinion
+## 22. V9 — Pipeline 2 étapes : filtre fait/opinion
 
 ### Hypothèse fondatrice
 
@@ -1110,12 +1153,12 @@ Post Bluesky
 ### Limites de cette approche
 
 1. Le classifieur fait/opinion est entraîné sur des heuristiques (marqueurs lexicaux + commentaires annotateurs), pas sur des labels humains dédiés → il confond parfois des références factuelles dans des opinions
-2. Le seuil optimal (0.40) est calibré sur les mêmes données → risque de surapprentissage. Un jeu de validation indépendant serait nécessaire
+2. **Correction du biais de calibration** : le seuil optimal (0.45) est désormais calibré par grid search sur un split calibration/évaluation stratifié 70/30 (random_state=42). Les métriques finales sont rapportées sur les 30% d'évaluation (150 posts, 7 suspects) non utilisés pour l'optimisation du seuil, éliminant le biais d'optimisme. Les résultats sur le jeu complet (500 posts, biaisés) sont conservés pour comparaison.
 3. Les posts "mixtes" (opinion + fait) restent difficiles à traiter : ils représentent la majorité des désaccords inter-annotateurs
 
 ### Notebook
 
-`27_Pipeline_2_Etapes.py` — expérience complète avec validation statistique (Fisher), CV 5-fold du Stage 1, et évaluation cascade avec optimisation de seuil.
+`27_Pipeline_2_Etapes.py` — expérience complète avec validation statistique (Fisher), CV 5-fold du Stage 1, et évaluation cascade avec split calibration/évaluation 70/30 stratifié pour optimisation non biaisée du seuil.
 
 ### Justification scientifique du kappa et du F1
 
@@ -1157,7 +1200,7 @@ Les notations "test 9/10" ou "test 16/18" dans les tableaux de versions désigne
 
 ---
 
-## 22. Audit du corpus et rééquilibrage de la collecte
+## 23. Audit du corpus et rééquilibrage de la collecte
 
 ### 22.1 Constat : biais d'échantillonnage dans le corpus Bluesky
 
@@ -1277,7 +1320,7 @@ Cette phase d'audit et de correction démontre une **maturité dans la gestion d
 
 ---
 
-## 23. Limites et perspectives (mise à jour)
+## 24. Limites et perspectives (mise à jour)
 
 ### Limites actuelles
 
@@ -1312,7 +1355,7 @@ Cette phase d'audit et de correction démontre une **maturité dans la gestion d
 
 ---
 
-## 24. Conclusion
+## 25. Conclusion
 
 Ce projet a permis de concevoir et déployer un pipeline NLP complet de détection de fake news sur Bluesky, de la collecte des données à la visualisation des résultats. L'approche itérative — de la V1.0 biaisée par les marqueurs Reuters à la V9 (pipeline 2 étapes fait/opinion) — illustre les défis concrets du Machine Learning appliqué : le data leakage, le domain shift, le biais thématique, la circularité du self-training, et la distinction fondamentale entre opinion et désinformation.
 
@@ -1331,7 +1374,7 @@ Le résultat clé de ce projet n'est pas un score F1 élevé, mais une compréhe
 
 ---
 
-## 25. References
+## 26. References
 
 1. Ahmed, H., Traore, I., & Saad, S. (2017). *Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques*. ISOT Fake News Dataset. University of Victoria.
 

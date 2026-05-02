@@ -63,6 +63,12 @@ def load_excluded_handles():
 
 EXCLUDED_HANDLES = load_excluded_handles()
 
+
+def reload_excluded_handles():
+    """Recharge la liste d'exclusion (appelé à chaque cycle de collecte)."""
+    global EXCLUDED_HANDLES
+    EXCLUDED_HANDLES = load_excluded_handles()
+
 # --- VALIDATION DU TEXTE ---
 # Expression régulière pour détecter les textes composés uniquement d'URLs
 _URL_PATTERN = re.compile(r'https?://\S+', re.IGNORECASE)
@@ -166,6 +172,7 @@ def extract_metadata(post):
     return has_image, image_url, langs
 
 def run_collection_cycle(collection, client, monitor=None):
+    reload_excluded_handles()
     total_new = 0
     start_time = datetime.datetime.now()
     if monitor:

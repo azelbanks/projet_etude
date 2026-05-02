@@ -55,16 +55,25 @@ Data Engineer    Data Engineer        ML Engineer           Dashboard Dev
                     Chef de Projet / Product Owner
 ```
 
-### Equipe minimale viable vs equipe d'excellence
+### Organisation reelle du projet : binome complementaire
+
+Le projet Thumalien a ete realise en **binome** par Azelie Bernard et Sebastien Lazcanotegui, avec une repartition des responsabilites fondee sur la complementarite des competences :
+
+| Membre | Role principal | Contributions cles |
+|--------|---------------|-------------------|
+| **Azelie Bernard** | Lead technique & developpement | Pipeline ML (V1→V9), collecteur Bluesky, dashboard Streamlit, infrastructure Docker, conformite RGPD/AI Act, documentation technique |
+| **Sebastien Lazcanotegui** | Validation & qualite | Annotation humaine (gold test set, 2e annotateur pour le kappa inter-annotateurs), revue et validation de la documentation, tests fonctionnels, support sur le GridSearch et le debiaisage, co-production video MVP |
+
+### Projection vers une equipe d'excellence (vision industrielle)
 
 | Configuration | Effectif | Compromis |
 |---------------|----------|-----------|
-| Solo (etat actuel) | 1 personne | Polyvalence maximale, profondeur limitee |
+| Binome (etat actuel) | 2 personnes | Polyvalence maximale, complementarite dev/validation |
 | Equipe minimale | 4 personnes | Data Engineer + ML Engineer + DevOps + Chef de projet |
 | Equipe optimale | 6 personnes | Ajout Data Scientist dedie + Dashboard Dev |
 | Equipe d'excellence | 8 personnes | Tous les roles specialises, expertise maximale par domaine |
 
-**Reflexion** : le projet Thumalien a ete realise en configuration solo, ce qui temoigne d'une polyvalence remarquable. Cependant, pour atteindre un niveau de production industrielle — ou chaque composant est pousse a son maximum — la specialisation de chaque role devient indispensable. Un ingenieur ML qui doit aussi gerer l'infrastructure Docker perd du temps sur l'optimisation de ses modeles. Un Data Engineer qui doit aussi concevoir le dashboard ne peut pas pousser la resilience de son pipeline au maximum.
+**Reflexion** : le projet Thumalien a ete realise en binome, ce qui a impose une polyvalence forte a Azelie sur le plan technique et a confie a Sebastien un role structurant de validation et de qualite. Cette organisation a l'avantage de la rapidite de decision et de la communication directe. Cependant, pour atteindre un niveau de production industrielle — ou chaque composant est pousse a son maximum — la specialisation de chaque role devient indispensable. Un ingenieur ML qui doit aussi gerer l'infrastructure Docker perd du temps sur l'optimisation de ses modeles. Un Data Engineer qui doit aussi concevoir le dashboard ne peut pas pousser la resilience de son pipeline au maximum.
 
 ---
 
@@ -568,9 +577,31 @@ Thumalien integre deja CodeCarbon pour mesurer l'empreinte carbone des entrainem
 
 ---
 
-## 10. Matrice de responsabilites RACI
+## 10. Matrice de responsabilites RACI — Repartition reelle du binome
 
 La matrice RACI definit, pour chaque activite du projet, qui est **R**esponsable (fait le travail), **A**pprobateur (valide), **C**onsulte (donne un avis) et **I**nforme (tenu au courant).
+
+| Activite | Azelie Bernard | Sebastien Lazcanotegui |
+|----------|:--------------:|:---------------------:|
+| Pipeline collecte Bluesky | **R/A** | I |
+| Architecture MongoDB | **R/A** | I |
+| Pipeline ML fake news (V1→V9) | **R** | C (GridSearch, debiaisage) |
+| Modele emotions (MLP PyTorch) | **R/A** | I |
+| GridSearch / optimisation | **R** | **R** (contribution directe) |
+| Modeles Transformer (CamemBERT, RoBERTa) | **R/A** | I |
+| Dashboard Streamlit (V1→V5) | **R/A** | I |
+| Infrastructure Docker | **R/A** | I |
+| Gold test set (annotation) | **R** | **R** (2e annotateur, kappa inter-annotateurs) |
+| Tests fonctionnels | **R** | C (validation) |
+| Conformite RGPD / AI Act | **R** | C (relecture) |
+| Documentation technique | **R** | C (revue et relecture) |
+| Bilan carbone (CodeCarbon) | **R/A** | I |
+| Explicabilite (SHAP) | **R/A** | I |
+| Video MVP | **R** | **R** (co-production) |
+
+### 10.1 Projection RACI pour une equipe d'excellence (vision industrielle)
+
+A titre de reflexion professionnelle, voici comment les memes activites se repartiraient dans une equipe complete et specialisee :
 
 | Activite | Data Eng. | ML Eng. | Data Sci. | MLOps | Dashboard | DevOps | Chef Projet | Green IT |
 |----------|:---------:|:-------:|:---------:|:-----:|:---------:|:------:|:-----------:|:--------:|
@@ -596,7 +627,7 @@ La matrice RACI definit, pour chaque activite du projet, qui est **R**esponsable
 
 ### Ce que le projet Thumalien nous enseigne
 
-Thumalien, dans sa forme actuelle, est un projet remarquable par sa completude : un pipeline de bout en bout, de la collecte temps reel a la visualisation, en passant par deux modeles d'IA, le tout conteneurise et mesure en empreinte carbone. Le fait qu'il ait ete realise par une seule personne dans le cadre d'un Master en temoigne d'une polyvalence exceptionnelle.
+Thumalien, dans sa forme actuelle, est un projet remarquable par sa completude : un pipeline de bout en bout, de la collecte temps reel a la visualisation, en passant par deux modeles d'IA, le tout conteneurise et mesure en empreinte carbone. Le fait qu'il ait ete realise par un binome dans le cadre d'un Master — Azelie assurant le developpement technique et Sebastien la validation qualite — en temoigne d'une organisation efficace et d'une polyvalence forte.
 
 Mais c'est precisement cette polyvalence qui revele la necessite des roles specialises. Chaque defi rencontre dans le projet — le biais Reuters, le domain shift, le choix du seuil 0.44, la gestion du multilingue — est un probleme classique pour le specialiste concerne, mais un obstacle potentiellement bloquant pour un generaliste qui decouvre le probleme en contexte.
 
@@ -649,7 +680,7 @@ Au-dela des competences techniques, l'excellence d'une equipe data repose sur de
 
 Ce document n'est pas une fiche de poste. C'est une vision de ce que signifie porter un projet de Social Media Intelligence au plus haut niveau d'excellence. Chaque role decrit ici est une composante indispensable d'un systeme ou la qualite de l'ensemble depend de la qualite de chaque partie.
 
-Le projet Thumalien a demontre qu'une seule personne peut construire un prototype fonctionnel et intelligent. L'etape suivante — transformer ce prototype en un produit d'excellence — necessite une equipe ou chaque membre apporte une expertise profonde dans son domaine, tout en comprenant suffisamment les autres domaines pour collaborer efficacement.
+Le projet Thumalien a demontre qu'un binome complementaire — Azelie sur le developpement technique, Sebastien sur la validation et la qualite — peut construire un systeme fonctionnel et intelligent de bout en bout. L'etape suivante — transformer ce prototype en un produit d'excellence industrielle — necessiterait une equipe ou chaque membre apporte une expertise profonde dans son domaine, tout en comprenant suffisamment les autres domaines pour collaborer efficacement.
 
 **L'excellence n'est pas un etat, c'est une discipline collective.**
 

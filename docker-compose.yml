@@ -65,7 +65,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "8888:8888"
+      - "127.0.0.1:8888:8888"
     networks:
       - thumalien_network
 
@@ -89,6 +89,37 @@ services:
       - .:/app
     ports:
       - "8501:8501"
+    networks:
+      - thumalien_network
+
+  # -----------------------------------------------------------------
+  #  Service 5 : Backup MongoDB — Sauvegarde quotidienne automatisee
+  # -----------------------------------------------------------------
+  backup:
+    image: mongo:8
+    container_name: thumalien_backup
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      MONGO_HOST: mongodb
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_DB: thumalien_db
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION: "7"
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        echo "Backup scheduler started. Running daily at 02:00."
+        while true; do
+          /scripts/backup_mongodb.sh
+          sleep 86400
+        done
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./backups:/backups
     networks:
       - thumalien_network
 
