@@ -66,11 +66,17 @@ p_suspect = 1 - p_fiable
 pe = p_fiable**2 + p_suspect**2
 kappa = (po - pe) / (1 - pe) if pe < 1 else 0
 
+# Gwet's AC1 (robust to prevalence paradox)
+pi_f = (labels_a1.count('fiable') + labels_a2.count('fiable')) / (2 * len(labels_a1))
+pe_gwet = 2 * pi_f * (1 - pi_f)
+ac1 = (po - pe_gwet) / (1 - pe_gwet) if pe_gwet < 1 else 0
+
 print(f"  Posts annotes      : {len(labels_a1)}")
 print(f"  Accords            : {accords}")
 print(f"  Desaccords         : {desaccords}")
 print(f"  Accord brut (Po)   : {po:.3f}")
 print(f"  Cohen's kappa      : {kappa:.3f} ({'substantiel' if kappa > 0.6 else 'modere'})")
+print(f"  Gwet's AC1         : {ac1:.3f} (corrige le paradoxe de prevalence)")
 print(f"  Annotateur 1       : {labels_a1.count('fiable')} fiable, {labels_a1.count('suspect')} suspect")
 print(f"  Annotateur 2       : {labels_a2.count('fiable')} fiable, {labels_a2.count('suspect')} suspect")
 

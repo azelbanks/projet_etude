@@ -665,8 +665,8 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 | Gold F1 suspect V7 Méta | 0.127 (+46%) |
 | Gold F1 suspect V8 | 0.163 (+28% vs V7) |
 | V9 Cascade FP (consensus 473) | 62 (-67% vs V5 seul) |
-| V9 Cascade kappa | 0.187 (3× V5) |
-| Annotation humaine | 500 posts, 2 annotateurs, kappa=0.498 |
+| V9 Cascade kappa / AC1 | κ=0.199, AC1=0.802 |
+| Annotation humaine | 200 posts gold (2 annotateurs, κ=0.808, AC1=0.978) + 500 posts (1 annotateur) |
 | Bluesky % fiable | 67% |
 | Notebooks | 28 (00 à 27) |
 | Temps d'inference (V5) | 1.5 ms/texte (~728 textes/sec) |
@@ -712,7 +712,7 @@ L'architecture actuelle (Docker Compose 4 services) est concue pour etre deploye
 | V6 | Avr 2026 | 0.830 | 0.103 (+18%) | Style-only GradientBoosting, topic-agnostic |
 | V7 | Avr 2026 | — | 0.127 (+46%) | Ensemble hybride V5+V6 + SHAP |
 | V8 | Avr 2026 | — | 0.163 (+28%) | Méta-learner V5+V6+CamemBERT |
-| **V9** | **Mai 2026** | **—** | **kappa=0.187** | **Pipeline 2 étapes fait/opinion, FP -67%** |
+| **V9** | **Mai 2026** | **—** | **κ=0.199, AC1=0.802** | **Pipeline 2 étapes fait/opinion, FP -67%** |
 
 ---
 
@@ -785,6 +785,8 @@ Après l'évaluation sur le gold test set (section 14), plusieurs itérations on
 - **FR ultra-court F1 : 0.86 -> 0.90 (+10.4%)** | FR global F1 : 0.944
 - Test bilingue : 12/12 (vs 9/10 en V4)
 - Seuil de décision maintenu à 0.44
+
+**Note sur le gain global V4→V5** : Le gain global de V5 semble modeste (+0.8% en F1 macro), mais c'est parce que les données synthétiques ciblent spécifiquement les textes courts FR, où le gain est de +5.1%. Le F1 global est dominé par les textes longs de Reuters/ISOT qui sont déjà bien classifiés (F1 > 0.98) et masquent l'amélioration ciblée.
 
 ---
 
@@ -1102,7 +1104,7 @@ Post Bluesky
 ### Interprétation
 
 - **Réduction des FP** : 186 → 62 (-67%) avec le classifieur appris, 186 → 17 (-91%) avec un classifieur fait/opinion parfait
-- **Trade-off** : le recall baisse de 0.867 à 0.667 (on rate 5 suspects au lieu de 2), mais le kappa triple (0.066 → 0.187)
+- **Trade-off** : le recall baisse de 0.867 à 0.667 (on rate 5 suspects au lieu de 2), mais le kappa triple (0.066 → 0.199) et le Gwet's AC1 passe de 0.347 à 0.802 (+131%)
 - **Cascade oracle** montre le potentiel maximal de cette architecture : si le classifieur fait/opinion était parfait, le F1 suspect passerait à 0.545 et le kappa à 0.526
 
 ### Limites de cette approche
@@ -1117,15 +1119,22 @@ Post Bluesky
 
 ### Justification scientifique du kappa et du F1
 
-#### Kappa = 0.498 (inter-annotateurs) et 0.187 (V9 vs consensus)
+#### Kappa = 0.808 (inter-annotateurs) et 0.199 (V9 vs consensus)
 
-Le kappa de Cohen de 0.498 entre annotateurs correspond à un **accord modéré** selon l'échelle de Landis & Koch (1977). Ce niveau d'accord est cohérent avec la littérature sur l'annotation de fake news : des études récentes montrent que la détection de désinformation est une tâche intrinsèquement subjective, où même des annotateurs formés atteignent rarement un kappa > 0.6 sur des posts courts de réseaux sociaux (Baly et al., 2018 ; Patwa et al., 2021). La difficulté provient de :
+Le kappa de Cohen de 0.808 entre les deux annotateurs correspond à un **accord presque parfait** selon l'échelle de Landis & Koch (1977), sur 200 posts annotés en double aveugle (187 accords, 4 désaccords, 9 suspects unanimes). Le **Gwet's AC1 = 0.978** confirme cet excellent accord en corrigeant le biais de prévalence.
 
-- La **frontière floue entre opinion et désinformation** : un post affirmant "les vaccins sont dangereux" est-il une opinion (protégée) ou de la désinformation (détectable) ?
-- La **dépendance au contexte** : sans vérification factuelle externe, deux humains peuvent légitimement diverger
-- Le **déséquilibre des classes** : avec seulement 15 suspects sur 473 posts consensus (3.2%), le kappa est mathématiquement pénalisé par la faible prévalence
+Le kappa V9 de 0.199 reflète la difficulté du passage d'une tâche de classification académique (datasets annotés) à une tâche réelle (posts Bluesky non filtrés). Cependant, **ce kappa est artificiellement supprimé par le paradoxe de prévalence** (Cicchetti & Feinstein, 1990 ; Gwet, 2008) :
 
-Le kappa V9 de 0.187 reflète la difficulté du passage d'une tâche de classification académique (datasets annotés) à une tâche réelle (posts Bluesky non filtrés). Cette chute de performance est documentée dans la littérature sous le terme de **domain shift** (Zellers et al., 2019 ; Wang et al., 2025).
+- Avec seulement 4.8% de suspects dans le gold set, le kappa est mathématiquement pénalisé même quand l'accord brut est élevé
+- Le **Gwet's AC1 = 0.802** (bon accord) corrige ce biais et reflète plus fidèlement la performance réelle du pipeline
+
+| Comparaison | Cohen's κ | Gwet's AC1 | Accord brut | Prévalence suspect |
+|---|---|---|---|---|
+| Inter-annotateurs (200 posts) | 0.808 | **0.978** | 98.0% | 5.5% |
+| V5 vs humain (500 posts) | 0.076 | 0.347 | 58.8% | 4.8% |
+| V9 cascade vs humain (500 posts) | 0.199 | **0.802** | 84.0% | 4.8% |
+
+Le passage de V5 (AC1=0.347) à V9 (AC1=0.802) représente une amélioration de **+131%** en accord corrigé, confirmant que l'architecture cascade résout effectivement le problème des faux positifs. Cette chute entre performance synthétique et réelle est documentée dans la littérature sous le terme de **domain shift** (Zellers et al., 2019 ; Wang et al., 2025).
 
 #### F1 suspect = 0.163 sur le gold set — pourquoi c'est informatif
 
@@ -1313,10 +1322,10 @@ L'évolution du projet a suivi une trajectoire méthodologique rigoureuse :
 2. **V6** : modèle style-only topic-agnostic pour éliminer le biais thématique
 3. **V7-V8** : méta-learners hybrides (V5+V6, puis +CamemBERT) avec explicabilité SHAP
 4. **Self-training** : tentative de domain adaptation par pseudo-labeling → **échec documenté** (circularité)
-5. **Annotation humaine** : 500 posts annotés par 2 annotateurs (kappa = 0.498), création d'un gold standard fiable
+5. **Annotation humaine** : 200 posts annotés en double aveugle (κ=0.808, AC1=0.978) + 500 posts (1 annotateur), création d'un gold standard fiable
 6. **V9** : pipeline 2 étapes séparant fait et opinion, réduisant les FP de 186 à 62 (-67%)
 
-Les contributions principales sont : (1) la mise en évidence et la correction du biais Reuters, (2) l'identification du biais thématique via le gold test set, (3) la démonstration documentée que le self-training est circulaire sur des données hors-domaine, (4) la validation statistique (Fisher, p=0.0005) que la distinction fait/opinion est le facteur discriminant de la désinformation, (5) un pipeline 2 étapes qui triple le kappa humain-modèle (0.066 → 0.187), et (6) une démarche d'annotation humaine avec accord inter-annotateurs mesuré.
+Les contributions principales sont : (1) la mise en évidence et la correction du biais Reuters, (2) l'identification du biais thématique via le gold test set, (3) la démonstration documentée que le self-training est circulaire sur des données hors-domaine, (4) la validation statistique (Fisher, p=0.0005) que la distinction fait/opinion est le facteur discriminant de la désinformation, (5) un pipeline 2 étapes qui triple le kappa humain-modèle (0.066 → 0.199, AC1 : 0.347 → 0.802), et (6) une démarche d'annotation humaine avec accord inter-annotateurs mesuré.
 
 Le résultat clé de ce projet n'est pas un score F1 élevé, mais une compréhension profonde de **pourquoi** la détection de fake news sur les réseaux sociaux est difficile : le problème n'est pas technique (TF-IDF vs Transformer), il est épistémologique (distinguer un fait vérifiable d'une opinion non évaluable). Cette compréhension a guidé chaque décision architecturale.
 
@@ -1349,3 +1358,9 @@ Le résultat clé de ce projet n'est pas un score F1 élevé, mais une compréhe
 12. Cohen, J. (1960). *A Coefficient of Agreement for Nominal Scales*. Educational and Psychological Measurement, 20(1), 37-46.
 
 13. Fisher, R. A. (1922). *On the Interpretation of Chi-Square from Contingency Tables, and the Calculation of P*. Journal of the Royal Statistical Society, 85(1), 87-94.
+
+14. Gwet, K. L. (2008). *Computing inter-rater reliability and its variance in the presence of high agreement*. British Journal of Mathematical and Statistical Psychology, 61(1), 29-48.
+
+15. Cicchetti, D. V. & Feinstein, A. R. (1990). *High agreement but low kappa: II. Resolving the paradoxes*. Journal of Clinical Epidemiology, 43(6), 551-558.
+
+16. Landis, J. R. & Koch, G. G. (1977). *The measurement of observer agreement for categorical data*. Biometrics, 33(1), 159-174.
