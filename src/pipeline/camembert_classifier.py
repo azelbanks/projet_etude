@@ -55,11 +55,13 @@ except ImportError:
 class TextDataset(Dataset):
     """Dataset PyTorch pour le fine-tuning CamemBERT."""
 
-    def __init__(self, texts: List[str], labels: List[int], tokenizer, max_length: int = 128):
+    def __init__(self, texts: List[str], labels: List[int], tokenizer, max_length: int = 128,
+                 sample_weights: Optional[List[float]] = None):
         self.texts = texts
         self.labels = labels
         self.tokenizer = tokenizer
         self.max_length = max_length
+        self.sample_weights = sample_weights
 
     def __len__(self):
         return len(self.texts)
@@ -72,11 +74,14 @@ class TextDataset(Dataset):
             max_length=self.max_length,
             return_tensors='pt',
         )
-        return {
+        item = {
             'input_ids': encoding['input_ids'].squeeze(0),
             'attention_mask': encoding['attention_mask'].squeeze(0),
             'label': torch.tensor(self.labels[idx], dtype=torch.long),
         }
+        if self.sample_weights is not None:
+            item['weight'] = torch.tensor(self.sample_weights[idx], dtype=torch.float32)
+        return item
 
 
 # ================================================================
@@ -208,10 +213,12 @@ class CamemBERTClassifier:
                 indices, test_size=0.1, stratify=labels, random_state=42
             )
 
+            train_sample_weights = [sample_weights[i].item() for i in train_idx]
             train_dataset = TextDataset(
                 [texts[i] for i in train_idx],
                 [labels[i] for i in train_idx],
                 self.tokenizer, self.MAX_LENGTH,
+                sample_weights=train_sample_weights,
             )
             val_dataset = TextDataset(
                 [texts[i] for i in val_idx],
@@ -221,8 +228,6 @@ class CamemBERTClassifier:
 
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
             val_loader = DataLoader(val_dataset, batch_size=batch_size)
-
-            train_weights = sample_weights[train_idx]
 
             # Optimizer (different LR pour base et head)
             optimizer = torch.optim.AdamW([
@@ -258,17 +263,11 @@ class CamemBERTClassifier:
                     logits = self.head(cls_output)
 
                     # Weighted loss
-                    batch_start = batch_idx * batch_size
-                    batch_end = min(batch_start + batch_size, len(train_weights))
-                    if batch_end > batch_start and batch_end <= len(train_weights):
-                        w = train_weights[batch_start:batch_end].to(self.device)
-                        loss_per_sample = nn.functional.cross_entropy(
-                            logits, batch_labels, reduction='none'
-                        )
-                        w_adjusted = w[:len(loss_per_sample)]
-                        loss = (loss_per_sample * w_adjusted).mean()
-                    else:
-                        loss = criterion(logits, batch_labels)
+                    w = batch['weight'].to(self.device)
+                    loss_per_sample = nn.functional.cross_entropy(
+                        logits, batch_labels, reduction='none'
+                    )
+                    loss = (loss_per_sample * w).mean()
 
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(
