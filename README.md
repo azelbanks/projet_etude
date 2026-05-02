@@ -200,7 +200,8 @@ python3 -m pytest tests/test_benchmark_latence.py -v -s
 | Qualité données | 7 | 79% |
 | Intégration pipeline | 11 | — |
 | Benchmark latence | 3 | — |
-| **Total** | **94** | **26%** |
+| Sécurité / validation entrées | 7 | — |
+| **Total** | **107** | **29%** |
 
 ---
 

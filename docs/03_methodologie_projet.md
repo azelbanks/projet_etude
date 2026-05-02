@@ -4,7 +4,7 @@
 **Reference** : METH-THUM-2026-001
 **Version** : 1.0
 **Date** : Avril 2026
-**Chef de Projet** : Direction Projet Data
+**Equipe** : Azelie Bernard (Lead technique), Sebastien Lazcanotegui (Validation & Qualite)
 
 ---
 
@@ -76,48 +76,48 @@ Le projet Thumalien suit une methodologie **Agile adaptee aux projets Data/IA**,
 
 ### 2.1 Organisation de l'equipe
 
+Le projet Thumalien est realise en **binome** dans le cadre d'un Master Big Data. La repartition des responsabilites reflette les competences complementaires des deux membres :
+
 ```
-                    ┌──────────────────┐
-                    │  Chef de Projet  │
-                    │  (Pilotage,      │
-                    │   conformite,    │
-                    │   arbitrages)    │
-                    └────────┬─────────┘
-                             │
-            ┌────────────────┼────────────────┐
-            │                │                │
-    ┌───────┴──────┐  ┌─────┴──────┐  ┌──────┴───────┐
-    │ Pole Data    │  │ Pole IA    │  │ Pole Infra   │
-    │              │  │            │  │              │
-    │ Data Engineer│  │ ML Engineer│  │ DevOps       │
-    │              │  │ Data Sci.  │  │ Dashboard Dev│
-    │              │  │ MLOps      │  │              │
-    │              │  │ Green IT   │  │              │
-    └──────────────┘  └────────────┘  └──────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                   BINOME PROJET                          │
+│                                                          │
+│  Azelie Bernard              Sebastien Lazcanotegui      │
+│  ─────────────────           ──────────────────────      │
+│  Lead technique              Validation & Qualite        │
+│  - Pipeline ML (V1→V9)      - Annotation gold test set  │
+│  - Collecteur Bluesky        - Revue documentation       │
+│  - Dashboard Streamlit       - Tests fonctionnels        │
+│  - Infrastructure Docker     - Support GridSearch         │
+│  - Documentation technique   - Video MVP                 │
+│  - Conformite RGPD/AI Act                                │
+└──────────────────────────────────────────────────────────┘
 ```
+
+Cette organisation en binome compact permet une prise de decision rapide et une communication directe, sans les frais de coordination d'une equipe plus large.
 
 ### 2.2 Instances de gouvernance
 
+Adaptees a un binome, les instances de gouvernance privilegient la legerete et l'efficacite sur le formalisme :
+
 | Instance | Frequence | Participants | Objectif |
 |----------|-----------|-------------|----------|
-| **Daily standup** | Quotidien (15 min) | Toute l'equipe | Synchronisation, blocages |
-| **Sprint review** | Bi-hebdomadaire | Toute l'equipe + parties prenantes | Demo des livrables, feedback |
-| **Sprint planning** | Bi-hebdomadaire | Toute l'equipe | Planification des taches |
-| **Retrospective** | Bi-hebdomadaire | Equipe technique | Amelioration continue |
-| **Comite de pilotage** | Mensuel | Chef de projet + direction | Avancement, risques, budget |
-| **Revue de modele** | A chaque nouvelle version | ML Eng. + Data Sci. + Chef projet | Validation des performances |
-| **Audit de conformite** | Trimestriel | Chef projet + DPO | Conformite RGPD/AI Act |
+| **Point de synchronisation** | Hebdomadaire (~30 min) | Azelie + Sebastien | Avancement, blocages, prochaines priorites |
+| **Revue d'iteration** | Bi-mensuelle (~1h) | Azelie + Sebastien | Demo des livrables, feedback mutuel, ajustement du backlog |
+| **Bilan mensuel** | Mensuel (~30 min) | Azelie + Sebastien | Synthese d'avancement, risques, arbitrages |
+| **Revue de modele** | A chaque nouvelle version | Azelie (presentation) + Sebastien (relecture) | Validation des performances et des metriques |
+| **Point conformite** | Ponctuel (a chaque livrable RGPD/AI Act) | Azelie + Sebastien | Verification de la conformite des livrables |
 
 ### 2.3 Processus de decision
 
-| Type de decision | Decideur | Processus |
+| Type de decision | Responsable | Processus |
 |-----------------|----------|-----------|
-| Choix d'architecture technique | Data Engineer + DevOps | Proposition → revue → validation Chef de projet |
-| Choix de modele/algorithme | ML Engineer + Data Scientist | Experimentation → metriques → revue de modele → validation |
-| Seuil de decision (0.44, etc.) | Data Scientist + Chef de projet | Analyse quantitative → impact metier → validation |
-| Ajout de dataset | ML Engineer + Data Scientist | Evaluation qualite → test integration → validation |
-| Mise en production | MLOps + Chef de projet | Tests de non-regression → validation → deploiement |
-| Conformite/ethique | Chef de projet | Analyse d'impact → avis DPO → decision |
+| Choix d'architecture technique | Azelie | Proposition → discussion en binome → implementation |
+| Choix de modele/algorithme | Azelie | Experimentation → metriques → revue en binome → validation |
+| Seuil de decision (0.44, etc.) | Azelie + Sebastien | Analyse quantitative → discussion impact → validation conjointe |
+| Ajout de dataset | Azelie | Evaluation qualite → test integration → validation |
+| Mise en production | Azelie | Tests de non-regression → validation → deploiement |
+| Conformite/ethique | Azelie + Sebastien | Analyse d'impact → relecture croisee → decision |
 
 ---
 
@@ -131,11 +131,11 @@ La qualite des donnees est le fondement de tout projet IA. Un modele entraine su
 
 | Controle | Methode | Frequence | Responsable |
 |----------|---------|-----------|-------------|
-| Completude des champs | Validation du schema JSON (tous les champs requis presents) | Chaque insertion | Data Engineer |
-| Deduplication | Index unique sur `uri` dans MongoDB | Chaque insertion | Data Engineer |
-| Detection de langue | langdetect sur les 500 premiers caracteres | Chaque insertion | Pipeline |
-| Longueur minimale | Rejet des textes < 3 mots | Chaque insertion | Pipeline |
-| Volume d'ingestion | Monitoring du nombre de posts/heure | Continu | Data Engineer |
+| Completude des champs | Validation du schema JSON (tous les champs requis presents) | Chaque insertion | Azelie |
+| Deduplication | Index unique sur `uri` dans MongoDB | Chaque insertion | Azelie |
+| Detection de langue | langdetect sur les 500 premiers caracteres | Chaque insertion | Pipeline (automatise) |
+| Longueur minimale | Rejet des textes < 3 mots | Chaque insertion | Pipeline (automatise) |
+| Volume d'ingestion | Monitoring du nombre de posts/heure | Continu | Azelie |
 
 #### Controles sur les datasets d'entrainement
 
@@ -193,19 +193,19 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 | Ecart F1 FR-EN | < 15 points | 5.0 points |
 | % fiable sur Bluesky | 60-85% | 73.4% |
 | Pas de regression vs version precedente | F1 articles longs stable | 0.988 (identique V1.5) |
-| Empreinte carbone | < 1 g CO2 | 0.30 g |
+| Empreinte carbone | < 10 g CO2 (total projet) | 6.14 g |
 | Temps d'inference | < 100ms/texte | ~50ms |
 
 ### 3.3 Qualite du code
 
 | Pratique | Implementation | Responsable |
 |----------|---------------|-------------|
-| Structure modulaire | `src/collection/`, `src/pipeline/`, `dashboard/` | Toute l'equipe |
-| Versioning Git | Commits reguliers, messages descriptifs | Toute l'equipe |
-| Documentation | Docstrings, notebooks commentes, README | Toute l'equipe |
-| Tests | Tests d'integration (pipeline charge et predit) | ML Engineer + DevOps |
-| Code review | Revue par un pair avant merge | Toute l'equipe |
-| Environnement reproductible | requirements.txt, Docker, random_state=42 | DevOps + ML Engineer |
+| Structure modulaire | `src/collection/`, `src/pipeline/`, `dashboard/` | Azelie |
+| Versioning Git | Commits reguliers, messages descriptifs | Azelie + Sebastien |
+| Documentation | Docstrings, notebooks commentes, README | Azelie (redaction), Sebastien (relecture) |
+| Tests | Tests d'integration (pipeline charge et predit) | Azelie (dev), Sebastien (validation) |
+| Code review | Relecture croisee des livrables critiques | Azelie + Sebastien |
+| Environnement reproductible | requirements.txt, Docker, random_state=42 | Azelie |
 
 ---
 
@@ -222,7 +222,7 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 | R05 | Depassement de la capacite de stockage | Faible | Moyen | Faible | Monitoring de l'espace disque. Politique de retention 12 mois |
 | R06 | Demande d'effacement RGPD massive | Tres faible | Moyen | Faible | Procedure d'effacement automatisee et documentee |
 | R07 | Performance insuffisante sur nouvelle thematique | Moyenne | Moyen | Moyenne | Datasets complementaires thematiques. Retraining cible |
-| R08 | Depart d'un membre cle de l'equipe | Faible | Eleve | Moyenne | Documentation exhaustive. Bus factor > 1 pour chaque composant |
+| R08 | Indisponibilite d'un membre du binome | Faible | Eleve | Moyenne | Documentation exhaustive. Partage de connaissances regulier entre les deux membres |
 | R09 | Non-conformite reglementaire (evolution RGPD/AI Act) | Moyenne | Eleve | Haute | Veille reglementaire trimestrielle. Audit de conformite |
 | R10 | Mauvaise interpretation des scores par les utilisateurs | Moyenne | Eleve | Haute | Formation utilisateurs. Mentions explicites des limites dans le dashboard |
 
@@ -259,19 +259,23 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 | J9 — Pipeline V3 | Mars 2026 | Correction features linguistiques, retraining | Realise |
 | J10 — Pipeline V4 | Avril 2026 | Augmentation FR court, 15 features, F1 FR=0.935 | Realise |
 | J11 — Pipeline V5 | Avril 2026 | Integration 10K posts FR sociaux synthetiques, F1 global=0.913, FR court=0.904 | Realise |
-| J12 — CamemBERT FR | Avril 2026 | Fine-tuning CamemBERT pour textes courts FR | En cours |
-| J9 — Documentation | Avril 2026 | Rapport, guide utilisateur, CDC, RGPD | En cours |
+| J12 — CamemBERT FR | Avril 2026 | Fine-tuning CamemBERT V1/V2, F1 ultra-court 0.957 | Realise |
+| J13 — RoBERTa EN | Avril 2026 | Fine-tuning RoBERTa V1/V2, F1 ultra-court 0.874 | Realise |
+| J14 — Pipeline hybride V8 | Avril 2026 | Meta-learner V5+V6+CamemBERT, F1 suspect +28% | Realise |
+| J15 — Pipeline V9 cascade | Mai 2026 | Pipeline 2 etapes fait/opinion, FP -67% | Realise |
+| J16 — Documentation | Mai 2026 | Rapport, guide utilisateur, CDC, RGPD | Realise |
 
-### 5.2 Jalons futurs (planifies)
+### 5.2 Perspectives d'evolution
 
-| Jalon | Date cible | Livrable | Responsable |
-|-------|-----------|----------|-------------|
-| J10 — API REST | T2 2026 | FastAPI pour l'inference en temps reel | MLOps + DevOps |
-| J11 — Monitoring derive | T2 2026 | Detection automatique du concept drift | MLOps + Data Scientist |
-| J12 — Pipeline V3 | T3 2026 | Sentence-Transformers, embeddings 384D | ML Engineer |
-| J13 — Annotation Bluesky | T3 2026 | 1 000 posts Bluesky annotes manuellement | Data Scientist |
-| J14 — Pipeline V4 | T4 2026 | Fine-tuning CamemBERT/RoBERTa | ML Engineer |
-| J15 — Production cloud | T4 2026 | Migration vers infrastructure cloud (GCP/AWS) | DevOps |
+Le projet a atteint le pipeline V9 (cascade fait/opinion + meta-learner V8). Les axes d'amelioration identifies pour une eventuelle poursuite :
+
+| Axe | Description | Priorite |
+|-----|-------------|----------|
+| API REST | FastAPI pour l'inference en temps reel (remplacer l'appel direct au pipeline) | Haute |
+| Monitoring derive | Detection automatique du concept drift via weekly_score_check.py + alertes | Haute |
+| Annotation complementaire | Elargir le gold test set (500 → 1 000+ posts) pour des evaluations plus robustes | Moyenne |
+| Jeu de calibration independant | Separer calibration (seuil) et evaluation pour eliminer le biais d'optimisation | Moyenne |
+| Migration cloud | Deploiement sur infrastructure cloud (GCP/AWS) pour la scalabilite | Faible |
 
 ---
 
@@ -286,7 +290,7 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 | Volume de posts collectes | `db.raw_posts.countDocuments()` | Quotidien | > 1 000/jour | ~2 000/jour |
 | Uptime collecteur | Logs de collecte | Mensuel | > 95% | ~90% (estimé) |
 | Temps d'inference | Benchmark sur 1 000 textes | A chaque version | < 100ms/texte | ~50ms |
-| Empreinte carbone | CodeCarbon | A chaque entrainement | < 1 g CO2 | 0.30 g |
+| Empreinte carbone | CodeCarbon | A chaque entrainement | < 10 g CO2 (cumul) | 6.14 g |
 | Taille du dataset d'entrainement | Comptage | A chaque version | > 100 000 | 197 782 |
 
 ### 6.2 KPI projet
@@ -307,11 +311,10 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 
 | Public | Contenu | Format | Frequence | Canal |
 |--------|---------|--------|-----------|-------|
-| Equipe technique | Avancement, blocages | Standup oral | Quotidien | Reunion |
-| Direction | Synthese, risques, decisions | Comite de pilotage | Mensuel | Presentation |
+| Binome | Avancement, blocages, decisions | Point de synchronisation | Hebdomadaire | Visio / presentiel |
+| Encadrement Master | Synthese, risques, jalons | Bilan d'avancement | Mensuel | Email / document |
 | Utilisateurs | Nouvelles fonctionnalites, limites | Release notes | A chaque version | Email/doc |
 | Regulateur | Conformite, mesures | Rapport AIPD | Annuel | Document formel |
-| Communaute academique | Resultats, methodologie | Rapport technique | A chaque publication | Document/article |
 
 ### 7.2 Modele de rapport d'avancement
 
@@ -341,14 +344,13 @@ Tout changement significatif (nouveau dataset, modification d'architecture, chan
    - Impact estime (performance, securite, conformite)
 
 2. ANALYSE
-   - Le responsable technique evalue la faisabilite
-   - Le Data Scientist evalue l'impact sur les metriques
-   - Le Chef de projet evalue l'impact sur le planning
+   - Azelie evalue la faisabilite technique et l'impact sur les metriques
+   - Discussion en binome sur l'impact planning et les risques
 
 3. DECISION
-   - Validation par le Chef de projet
-   - Si impact conformite : avis DPO
-   - Si impact performance : revue de modele
+   - Validation conjointe en point de synchronisation
+   - Si impact conformite : relecture croisee
+   - Si impact performance : revue de modele en binome
 
 4. IMPLEMENTATION
    - Branche Git dediee
@@ -356,7 +358,7 @@ Tout changement significatif (nouveau dataset, modification d'architecture, chan
    - Documentation mise a jour
 
 5. VALIDATION
-   - Revue par un pair
+   - Relecture par le second membre du binome
    - Tests d'acceptation
    - Merge et deploiement
 ```

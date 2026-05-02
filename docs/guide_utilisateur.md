@@ -13,7 +13,7 @@ Le système repose sur un pipeline NLP bilingue V9 combinant un filtre fait/opin
 
 ### 2. Prérequis
 
-- Python 3.9+
+- Python 3.13+
 - pip (gestionnaire de paquets)
 - MongoDB (optionnel — le dashboard fonctionne en mode démo sans base de données)
 - Environ 2 Go d'espace disque (modèles + données)
@@ -312,7 +312,7 @@ R : Le pipeline V9 supporte uniquement le français et l'anglais. Les textes dan
 R : SHAP (SHapley Additive exPlanations) décompose la prédiction du modèle V6 en montrant la contribution de chaque feature stylistique. Une barre positive pousse vers "suspect", négative vers "fiable".
 
 **Q : Quel est le coût carbone d'une prédiction ?**
-R : Une prédiction sur un batch de 1 000 textes émet moins de 0.001 g de CO2. L'entraînement complet émet environ 0.01 g de CO2 (moins qu'un email).
+R : Une prédiction sur un batch de 1 000 textes émet moins de 0.001 g de CO2. L'ensemble des entraînements du projet (LogReg + CamemBERT + RoBERTa) a émis 6.14 g de CO2, soit moins qu'une recherche Google (~7 g).
 
 ---
 

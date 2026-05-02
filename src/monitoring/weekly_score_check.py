@@ -53,7 +53,8 @@ def _build_mongo_uri() -> str:
     host = os.environ.get('MONGO_HOST', 'localhost:27017')
 
     if user and password:
-        return f'mongodb://{user}:{password}@{host}/'
+        from urllib.parse import quote_plus
+        return f'mongodb://{quote_plus(user)}:{quote_plus(password)}@{host}/'
     return f'mongodb://{host}/'
 
 

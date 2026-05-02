@@ -11,14 +11,20 @@ Solution : Pipeline en cascade :
      → Les posts "opinion pure" sont directement classes "fiable"
   Etape 2 — V5 standard sur les posts factuels uniquement
 
-Resultats (sur 500 posts, annotateur 1) :
-  - V5 seul :     Acc=0.588, F1_suspect=0.156, FP=201, kappa=0.076, AC1=0.347
-  - Cascade :     Acc=0.938, F1_suspect=0.244, FP=12,  kappa=0.213, AC1=0.802
+Resultats (eval split 30%, non biaise, seuil calibre sur 70%) :
+  - V5 seul :     Acc=0.553, F1_suspect=0.152, FP=66,  kappa=0.073, AC1=0.270
+  - Cascade :     Acc=0.847, F1_suspect=0.148, FP=18,  kappa=0.085, AC1=0.817
+  - Reduction FP : -73% (66 → 18)
 
-Resultats (sur 473 posts, consensus 2 annotateurs) :
-  - V5 seul :     Acc=0.603, F1_suspect=0.121, FP=186, kappa=0.066
-  - Cascade :     Acc=0.858, F1_suspect=0.230, FP=62,  kappa=0.187
-  - Reduction FP : -67% (186 → 62)
+Resultats (full 500 posts, biaise — seuil optimise sur meme jeu) :
+  - V5 seul :     Acc=0.588, F1_suspect=0.156, FP=201, kappa=0.076, AC1=0.347
+  - Cascade :     Acc=0.880, F1_suspect=0.250, FP=46,  kappa=0.196, AC1=0.859
+  - Reduction FP : -77% (201 → 46)
+
+Methodologie : split calibration/evaluation 70/30 stratifie (random_state=42)
+  - Le seuil cascade (0.45) est optimise par grid search sur les 70% (calibration)
+  - Les metriques finales sont rapportees sur les 30% (evaluation, non biaise)
+  - Les resultats sur le jeu complet sont aussi fournis pour comparaison
 
 Note : Le kappa est artificiellement supprime par le paradoxe de prevalence
 (seulement 4.8% de suspects). Le Gwet's AC1, insensible a ce biais, montre
@@ -37,7 +43,7 @@ warnings.filterwarnings('ignore')
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import StratifiedKFold, cross_val_predict
+from sklearn.model_selection import StratifiedKFold, cross_val_predict, train_test_split
 from sklearn.metrics import (f1_score, accuracy_score, confusion_matrix,
                              cohen_kappa_score, classification_report)
 from sklearn.pipeline import Pipeline
@@ -194,76 +200,130 @@ print(f"  CV F1 macro :  {f1_score(type_int, stage1_pred, average='macro'):.3f}"
 pipe_stage1.fit(texts, type_int)
 
 # ================================================================
-#  5. EVALUATION CASCADE
+#  5. SPLIT CALIBRATION / EVALUATION (70/30 stratifie)
 # ================================================================
-print("\n[5/5] Evaluation pipeline cascade...")
+print("\n[5/7] Split calibration/evaluation 70/30 stratifie...")
 
-# Optimize Stage 1 threshold
-best_f1 = 0
-best_th = 0.5
-results = []
+indices = np.arange(len(df))
+idx_calib, idx_eval = train_test_split(
+    indices, test_size=0.30, stratify=human_labels, random_state=42
+)
+
+print(f"  Calibration : {len(idx_calib)} posts ({human_labels[idx_calib].sum()} suspects)")
+print(f"  Evaluation  : {len(idx_eval)} posts ({human_labels[idx_eval].sum()} suspects)")
+
+# ================================================================
+#  6. OPTIMISATION SEUIL SUR CALIBRATION UNIQUEMENT
+# ================================================================
+print("\n[6/7] Optimisation seuil cascade sur calibration...")
+
+
+def evaluate_cascade(threshold, idx, stage1_proba, v5_labels, human_labels):
+    """Evaluate cascade at a given threshold on a subset of indices."""
+    cascade = np.zeros(len(idx), dtype=int)
+    for j, i in enumerate(idx):
+        if stage1_proba[i, 1] < threshold:
+            cascade[j] = 0  # opinion -> fiable
+        else:
+            cascade[j] = v5_labels[i]  # factuel -> V5
+    y_true = human_labels[idx]
+    acc = accuracy_score(y_true, cascade)
+    f1m = f1_score(y_true, cascade, average='macro')
+    f1s = f1_score(y_true, cascade, pos_label=1, zero_division=0)
+    kappa = cohen_kappa_score(y_true, cascade)
+    ac1 = gwet_ac1(y_true, cascade)
+    cm = confusion_matrix(y_true, cascade)
+    fp = cm[0, 1] if cm.shape[1] > 1 else 0
+    fn = cm[1, 0] if cm.shape[0] > 1 else y_true.sum()
+    return {'th': threshold, 'acc': acc, 'f1m': f1m, 'f1s': f1s,
+            'fp': fp, 'fn': fn, 'kappa': kappa, 'ac1': ac1}
+
+
+# Grid search on calibration set only
+best_f1_calib = 0
+best_th_calib = 0.5
+results_calib = []
 
 for th in np.arange(0.10, 0.90, 0.05):
-    cascade = np.zeros(len(df), dtype=int)
-    for i in range(len(df)):
-        if stage1_proba[i, 1] < th:
-            cascade[i] = 0  # opinion → fiable
-        else:
-            cascade[i] = v5_labels[i]  # factuel → V5
+    row = evaluate_cascade(th, idx_calib, stage1_proba, v5_labels, human_labels)
+    results_calib.append(row)
+    if row['f1m'] > best_f1_calib:
+        best_f1_calib = row['f1m']
+        best_th_calib = row['th']
 
-    acc = accuracy_score(human_labels, cascade)
-    f1m = f1_score(human_labels, cascade, average='macro')
-    f1s = f1_score(human_labels, cascade, pos_label=1, zero_division=0)
-    kappa = cohen_kappa_score(human_labels, cascade)
-    cm = confusion_matrix(human_labels, cascade)
-    fp = cm[0, 1]
-    fn = cm[1, 0] if cm.shape[0] > 1 else human_labels.sum()
+print(f"  Seuil optimal (calibration) : {best_th_calib:.2f}")
 
-    ac1 = gwet_ac1(human_labels, cascade)
-    results.append({'th': th, 'acc': acc, 'f1m': f1m, 'f1s': f1s, 'fp': fp, 'fn': fn, 'kappa': kappa, 'ac1': ac1})
-    if f1m > best_f1:
-        best_f1 = f1m
-        best_th = th
+# ================================================================
+#  7. EVALUATION FINALE
+# ================================================================
+print("\n[7/7] Evaluation pipeline cascade...")
 
-df_results = pd.DataFrame(results)
 
-# Final comparison
-print(f"\n  {'Methode':<30s} {'Acc':>6s} {'F1mac':>6s} {'F1sus':>6s} {'FP':>5s} {'FN':>5s} {'kappa':>6s} {'AC1':>6s}")
-print(f"  {'-'*73}")
+def print_comparison(label, idx_set, best_threshold):
+    """Print comparison table for a given subset."""
+    header = f"\n  --- {label} ({len(idx_set)} posts) ---"
+    print(header)
+    print(f"  {'Methode':<30s} {'Acc':>6s} {'F1mac':>6s} {'F1sus':>6s} {'FP':>5s} {'FN':>5s} {'kappa':>6s} {'AC1':>6s}")
+    print(f"  {'-'*73}")
 
-for name, pred in [
-    ('V5 seul (baseline)', v5_labels),
-]:
-    acc = accuracy_score(human_labels, pred)
-    f1m = f1_score(human_labels, pred, average='macro')
-    f1s = f1_score(human_labels, pred, pos_label=1, zero_division=0)
-    kappa = cohen_kappa_score(human_labels, pred)
-    ac1 = gwet_ac1(human_labels, pred)
-    cm = confusion_matrix(human_labels, pred)
-    fp = cm[0, 1]
-    fn = cm[1, 0]
-    print(f"  {name:<30s} {acc:>6.3f} {f1m:>6.3f} {f1s:>6.3f} {fp:>5d} {fn:>5d} {kappa:>6.3f} {ac1:>6.3f}")
+    # V5 baseline
+    y_true = human_labels[idx_set]
+    y_v5 = v5_labels[idx_set]
+    acc = accuracy_score(y_true, y_v5)
+    f1m = f1_score(y_true, y_v5, average='macro')
+    f1s = f1_score(y_true, y_v5, pos_label=1, zero_division=0)
+    kappa = cohen_kappa_score(y_true, y_v5)
+    ac1 = gwet_ac1(y_true, y_v5)
+    cm = confusion_matrix(y_true, y_v5)
+    fp = cm[0, 1] if cm.shape[1] > 1 else 0
+    fn = cm[1, 0] if cm.shape[0] > 1 else y_true.sum()
+    print(f"  {'V5 seul (baseline)':<30s} {acc:>6.3f} {f1m:>6.3f} {f1s:>6.3f} {fp:>5d} {fn:>5d} {kappa:>6.3f} {ac1:>6.3f}")
+    baseline_fp = fp
 
-# Cascade at best threshold
-best_row = df_results[df_results['th'] == best_th].iloc[0]
-print(f"  {'Cascade (seuil=' + f'{best_th:.2f})':<30s} {best_row['acc']:>6.3f} {best_row['f1m']:>6.3f} {best_row['f1s']:>6.3f} {best_row['fp']:>5.0f} {best_row['fn']:>5.0f} {best_row['kappa']:>6.3f} {best_row['ac1']:>6.3f}")
+    # Cascade at best threshold
+    row = evaluate_cascade(best_threshold, idx_set, stage1_proba, v5_labels, human_labels)
+    name = f"Cascade (seuil={best_threshold:.2f})"
+    print(f"  {name:<30s} {row['acc']:>6.3f} {row['f1m']:>6.3f} {row['f1s']:>6.3f} {row['fp']:>5.0f} {row['fn']:>5.0f} {row['kappa']:>6.3f} {row['ac1']:>6.3f}")
 
-# Reduction
-baseline_fp = ((v5_labels == 1) & (human_labels == 0)).sum()
-cascade_fp = int(best_row['fp'])
-print(f"\n  Reduction FP : {baseline_fp} → {cascade_fp} (-{(1 - cascade_fp/baseline_fp)*100:.0f}%)")
-print(f"  Seuil optimal Stage 1 : {best_th:.2f}")
+    cascade_fp = int(row['fp'])
+    if baseline_fp > 0:
+        print(f"  Reduction FP : {baseline_fp} -> {cascade_fp} (-{(1 - cascade_fp/baseline_fp)*100:.0f}%)")
+    return row
 
-# Save model
+
+# A) Results on evaluation set (unbiased — threshold chosen on calibration)
+eval_row = print_comparison("Results (eval split, unbiased)", idx_eval, best_th_calib)
+
+# B) Results on full dataset for comparison (biased — same data for threshold + eval)
+# Also run grid search on full dataset to get its own best threshold
+best_f1_full = 0
+best_th_full = 0.5
+results_full = []
+
+for th in np.arange(0.10, 0.90, 0.05):
+    row = evaluate_cascade(th, indices, stage1_proba, v5_labels, human_labels)
+    results_full.append(row)
+    if row['f1m'] > best_f1_full:
+        best_f1_full = row['f1m']
+        best_th_full = row['th']
+
+full_row = print_comparison("Results (full, biased)", indices, best_th_full)
+
+print(f"\n  Seuil optimal (calibration 70%) : {best_th_calib:.2f}")
+print(f"  Seuil optimal (full, biased)    : {best_th_full:.2f}")
+
+# Save model (use threshold from proper calibration)
 model_data = {
     'pipeline': pipe_stage1,
-    'threshold': best_th,
+    'threshold': best_th_calib,
     'classes': ['opinion', 'factuel'],
     'metrics': {
         'cv_f1_macro_stage1': float(f1_score(type_int, stage1_pred, average='macro')),
-        'cascade_f1_macro': float(best_f1),
-        'cascade_fp': cascade_fp,
-        'baseline_fp': baseline_fp,
+        'cascade_f1_macro_eval': float(eval_row['f1m']),
+        'cascade_f1_macro_full': float(full_row['f1m']),
+        'cascade_fp_eval': int(eval_row['fp']),
+        'cascade_fp_full': int(full_row['fp']),
+        'baseline_fp': int(((v5_labels == 1) & (human_labels == 0)).sum()),
         'fisher_p_value': float(p_value),
         'odds_ratio': float(odds_ratio),
     }

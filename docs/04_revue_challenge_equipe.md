@@ -386,7 +386,7 @@ CodeCarbon est integre dans le pipeline d'entrainement et les emissions sont enr
 
 **Challenge 1 — L'empreinte de l'inference n'est pas mesuree**
 
-L'entrainement consomme 0.30 g CO2, mais combien consomme l'inference quotidienne sur 2 000 posts ? Sur une annee, l'inference cumule probablement plus que l'entrainement.
+L'entrainement cumule consomme 6.14 g CO2 (dont 64% pour les Transformers CamemBERT/RoBERTa), mais combien consomme l'inference quotidienne sur 2 000 posts ? Sur une annee, l'inference cumule probablement plus que l'entrainement.
 
 *Recommandation* : Ajouter CodeCarbon autour de la boucle d'inference dans le pipeline quotidien. Calculer l'empreinte totale annuelle (entrainement + inference).
 

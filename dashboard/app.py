@@ -191,178 +191,9 @@ def load_pipeline():
 #  V6 Style Feature Extractor (topic-agnostic, 28 features)
 # ---------------------------------------------------------------------------
 
-class StyleFeatureExtractorV6:
-    """Extracteur de features stylistiques -- topic-agnostic (28 features)."""
+from pipeline.style_features import StyleFeatureExtractorV6  # noqa: E402
 
-    from pipeline.expert_detector import LinguisticFeatureExtractor as _LFE
-    SENSATIONALIST_EN = _LFE.SENSATIONALIST_EN
-    SENSATIONALIST_FR = _LFE.SENSATIONALIST_FR
 
-    CALL_TO_ACTION_FR = [
-        r'\b(partagez|diffusez|faites tourner|rt svp|a partager)\b',
-        r'\b(likez|abonnez|suivez|inscrivez)\b',
-        r'\b(signez la petition|mobilisons|reagissez)\b',
-        r'\b(avant (la )?censure|avant suppression|avant qu.?ils? suppriment)\b',
-    ]
-    CALL_TO_ACTION_EN = [
-        r'\b(share|retweet|spread the word|pass it on)\b',
-        r'\b(subscribe|follow|like|sign the petition)\b',
-        r'\b(before (they|it gets?) deleted?|before censored)\b',
-        r'\b(act now|do something|fight back|resist)\b',
-    ]
-    HEDGING_FR = [
-        r'\b(selon|d.?apr[e\u00e8]s|il para[i\u00ee]t que|il semblerait)\b',
-        r'\b(certains disent|on dit que|des sources)\b',
-        r'\b(apparemment|soi-?disant|pr[e\u00e9]tendument)\b',
-    ]
-    HEDGING_EN = [
-        r'\b(allegedly|reportedly|according to|sources say)\b',
-        r'\b(it is said|some say|rumor has it|unconfirmed)\b',
-        r'\b(supposedly|purportedly|claimed)\b',
-    ]
-    AUTHORITY_CLAIM_FR = [
-        r'\b(un (m[e\u00e9]decin|scientifique|expert|chercheur|professeur) (affirme|confirme|r[e\u00e9]v[e\u00e8]le))\b',
-        r'\b(etude (prouve|montre|confirme))\b',
-        r'\b(c.?est prouv[e\u00e9]|la science dit|les chiffres parlent)\b',
-    ]
-    AUTHORITY_CLAIM_EN = [
-        r'\b(doctor|scientist|expert|professor|researcher) (says|confirms|reveals)\b',
-        r'\b(study (proves|shows|confirms))\b',
-        r'\b(science says|the data shows|proven)\b',
-    ]
-    SOURCE_CITATION_PATTERNS = [
-        r'\b(reuters|afp|ap news|associated press)\b',
-        r'\b(selon (le |la |l.?)?[A-Z])',
-        r'\b(source[s]?\s*:)',
-        r'\b(d.?apr[e\u00e8]s (le |la |l.?)?[A-Z])',
-        r'\b(published in|peer.?reviewed|journal)\b',
-        r'\b(lib[e\u00e9]ration|le monde|figaro|bbc|cnn|nyt|washington post)\b',
-    ]
-
-    FEATURE_NAMES = [
-        'word_count', 'sentence_count', 'avg_sentence_length',
-        'avg_word_length', 'is_short_text', 'paragraph_count',
-        'exclamation_count', 'question_count', 'punct_density',
-        'ellipsis_count', 'repeated_punct_ratio', 'emoji_count',
-        'caps_ratio', 'all_caps_words_ratio', 'caps_lock_words_count',
-        'sensationalism_score', 'interpellation_score',
-        'call_to_action_score', 'hedging_score', 'authority_claim_score',
-        'has_url', 'has_source_citation', 'numeric_density',
-        'quote_count', 'named_entity_density',
-        'lexical_diversity', 'repeated_char_ratio', 'spelling_anomaly_score',
-    ]
-
-    FEATURE_LABELS_FR = {
-        'word_count': 'Nombre de mots', 'sentence_count': 'Nombre de phrases',
-        'avg_sentence_length': 'Longueur moy. phrases', 'avg_word_length': 'Longueur moy. mots',
-        'is_short_text': 'Texte court (<20 mots)', 'paragraph_count': 'Nombre de paragraphes',
-        'exclamation_count': "Points d'exclamation", 'question_count': "Points d'interrogation",
-        'punct_density': 'Densité ponctuation', 'ellipsis_count': 'Points de suspension',
-        'repeated_punct_ratio': 'Ponctuation répétée', 'emoji_count': 'Emojis',
-        'caps_ratio': 'Ratio majuscules', 'all_caps_words_ratio': 'Mots tout en MAJUSCULES',
-        'caps_lock_words_count': 'Nb mots CAPS LOCK', 'sensationalism_score': 'Sensationnalisme',
-        'interpellation_score': 'Interpellation', 'call_to_action_score': "Appel à l'action",
-        'hedging_score': 'Langage évasif', 'authority_claim_score': "Appel à l'autorité",
-        'has_url': 'Présence URL', 'has_source_citation': 'Citation de source',
-        'numeric_density': 'Densité numérique', 'quote_count': 'Citations/guillemets',
-        'named_entity_density': 'Densité entités nommées', 'lexical_diversity': 'Diversité lexicale (TTR)',
-        'repeated_char_ratio': 'Caractères répétés', 'spelling_anomaly_score': 'Anomalies orthographiques',
-        'emo_anger': 'Émotion : Colère', 'emo_disgust': 'Émotion : Dégoût',
-        'emo_joy': 'Émotion : Joie', 'emo_neutral': 'Émotion : Neutre',
-        'emo_fear': 'Émotion : Peur', 'emo_surprise': 'Émotion : Surprise',
-        'emo_sadness': 'Émotion : Tristesse',
-    }
-
-    @classmethod
-    def extract(cls, texts) -> np.ndarray:
-        """Extraire 28 features stylistiques (sans emotions)."""
-        n = len(texts)
-        results = np.zeros((n, len(cls.FEATURE_NAMES)), dtype=np.float64)
-        for i, text in enumerate(texts):
-            text = str(text)
-            text_lower = text.lower()
-            words = text.split()
-            n_words = len(words) if words else 1
-            n_chars = len(text) if text else 1
-            alpha_chars = sum(c.isalpha() for c in text)
-
-            results[i, 0] = n_words
-            sentences = re.split(r'[.!?]+', text)
-            sentences = [s for s in sentences if s.strip()]
-            n_sentences = len(sentences) if sentences else 1
-            results[i, 1] = n_sentences
-            results[i, 2] = n_words / n_sentences
-            results[i, 3] = np.mean([len(w) for w in words]) if words else 0
-            results[i, 4] = 1.0 if n_words < 20 else 0.0
-            paragraphs = [p for p in text.split('\n') if p.strip()]
-            results[i, 5] = len(paragraphs)
-            results[i, 6] = text.count('!')
-            results[i, 7] = text.count('?')
-            results[i, 8] = sum(c in '!?.,;:\u2026' for c in text) / n_chars
-            results[i, 9] = text.count('...') + text.count('\u2026')
-            repeated = len(re.findall(r'([!?.])\1{1,}', text))
-            results[i, 10] = repeated / n_chars if n_chars > 0 else 0
-            emoji_count = len(re.findall(
-                r'[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF'
-                r'\U0001F680-\U0001F6FF\U0001F1E0-\U0001F1FF'
-                r'\U00002702-\U000027B0\U0001F900-\U0001F9FF'
-                r'\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF'
-                r'\U00002600-\U000026FF]', text))
-            results[i, 11] = emoji_count
-            results[i, 12] = sum(c.isupper() for c in text) / alpha_chars if alpha_chars > 0 else 0
-            caps_words = sum(1 for w in words if w.isupper() and len(w) > 1)
-            results[i, 13] = caps_words / n_words if n_words > 0 else 0
-            results[i, 14] = caps_words
-            sens_score = 0
-            for w in cls.SENSATIONALIST_EN | cls.SENSATIONALIST_FR:
-                if re.search(r'(?:^|\b|\s)' + re.escape(w) + r'(?:\b|\s|$)', text_lower):
-                    sens_score += 1
-            results[i, 15] = sens_score
-            interp_score = 0
-            for pat in (cls._LFE.INTERPELLATION_PATTERNS_FR + cls._LFE.INTERPELLATION_PATTERNS_EN):
-                if re.search(pat, text_lower):
-                    interp_score += 1
-            results[i, 16] = interp_score
-            cta_score = 0
-            for pat in cls.CALL_TO_ACTION_FR + cls.CALL_TO_ACTION_EN:
-                if re.search(pat, text_lower):
-                    cta_score += 1
-            results[i, 17] = cta_score
-            hedge_score = 0
-            for pat in cls.HEDGING_FR + cls.HEDGING_EN:
-                if re.search(pat, text_lower):
-                    hedge_score += 1
-            results[i, 18] = hedge_score
-            auth_score = 0
-            for pat in cls.AUTHORITY_CLAIM_FR + cls.AUTHORITY_CLAIM_EN:
-                if re.search(pat, text_lower):
-                    auth_score += 1
-            results[i, 19] = auth_score
-            results[i, 20] = 1.0 if re.search(r'http|www\.', text) else 0.0
-            source_score = 0
-            for pat in cls.SOURCE_CITATION_PATTERNS:
-                if re.search(pat, text_lower):
-                    source_score += 1
-            results[i, 21] = source_score
-            results[i, 22] = sum(c.isdigit() for c in text) / n_chars
-            results[i, 23] = text.count('"') + text.count('\u201c') + text.count('\u00ab')
-            if len(words) > 1:
-                ne_count = sum(1 for j, w in enumerate(words[1:], 1) if w[0].isupper() and w.isalpha())
-                results[i, 24] = ne_count / n_words
-            else:
-                results[i, 24] = 0
-            words_lower = [w.lower() for w in words]
-            results[i, 25] = len(set(words_lower)) / n_words if n_words > 0 else 0
-            repeated_chars = len(re.findall(r'(.)\1{2,}', text_lower))
-            results[i, 26] = repeated_chars / n_words if n_words > 0 else 0
-            common_short = {'je', 'tu', 'il', 'on', 'le', 'la', 'de', 'a', 'i', '\u00e0',
-                            'y', 'or', 'et', 'en', 'du', 'un', 'au', 'ne', 'se', 'me',
-                            'te', 'ce', 'ma', 'sa', 'ta', 'is', 'am', 'an', 'as', 'at',
-                            'be', 'by', 'do', 'go', 'he', 'if', 'in', 'it', 'me', 'my',
-                            'no', 'of', 'on', 'or', 'so', 'to', 'up', 'us', 'we'}
-            anomalous = sum(1 for w in words_lower if 1 <= len(w) <= 2 and w not in common_short)
-            results[i, 27] = anomalous / n_words if n_words > 0 else 0
-        return results
 
 
 # ---------------------------------------------------------------------------
@@ -680,12 +511,12 @@ def make_gauge(score):
 
 def hero(title, subtitle):
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #0E1117 0%, #1A1F2E 50%, #0E1117 100%);
+    <div role="banner" aria-label="{html.escape(title)}" style="background: linear-gradient(135deg, #0E1117 0%, #1A1F2E 50%, #0E1117 100%);
                 padding: 36px 40px; border-radius: 16px; margin-bottom: 20px;
                 border: 1px solid rgba(0, 212, 255, 0.1);
                 position: relative; overflow: hidden;">
         <div style="position:absolute;top:0;right:0;width:200px;height:200px;
-                    background:radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);"></div>
+                    background:radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);" aria-hidden="true"></div>
         <div style="font-size: 2.6rem; font-weight: 300; letter-spacing: 6px;
                     color: #00D4FF; text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);">
             {html.escape(title)}
@@ -700,8 +531,8 @@ def hero(title, subtitle):
 def metric_card(icon, label, value, color, delta=None):
     delta_html = f'<div class="metric-delta" style="color:{color};">{html.escape(str(delta))}</div>' if delta else ''
     return f"""
-    <div class="glass-card" style="text-align:center; min-height:130px;">
-        <div class="metric-icon">{icon}</div>
+    <div class="glass-card" role="status" aria-label="{html.escape(str(label))}: {html.escape(str(value))}" style="text-align:center; min-height:130px;">
+        <div class="metric-icon" aria-hidden="true">{icon}</div>
         <div class="metric-value" style="color:{color};">{html.escape(str(value))}</div>
         <div class="metric-label">{html.escape(str(label))}</div>
         {delta_html}
@@ -712,7 +543,7 @@ def metric_card(icon, label, value, color, delta=None):
 def footer():
     st.divider()
     st.markdown(
-        '<div class="footer-text">'
+        '<div class="footer-text" role="contentinfo" aria-label="Informations sur le pipeline Thumalien">'
         'Thumalien v9.0 &mdash; Pipeline fait/opinion + V5+V6+CamemBERT + SHAP '
         '&mdash; Seuil 0.44 &mdash; WCAG 2.1 AA &mdash; '
         'Descriptions textuelles sur toutes les visualisations'
@@ -975,7 +806,7 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
             pt_icon = '' if post_type == 'factuel' else ''
             note = '' if post_type == 'factuel' else ' — les opinions ne sont pas évaluées comme désinformation'
             st.markdown(
-                f'<div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 16px;'
+                f'<div role="status" aria-live="polite" aria-label="Stage 1: {html.escape(pt_label)}" style="background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 16px;'
                 f'border-left:4px solid {pt_color};margin-bottom:16px;">'
                 f'{pt_icon} <b>Stage 1 :</b> <span style="color:{pt_color}">{html.escape(pt_label)}</span>'
                 f' (P(factuel) = {post_type_proba:.2f}){note}</div>',
@@ -996,8 +827,8 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
             verdict_color = '#00E676' if is_fiable else '#FF1744'
             verdict_icon = '' if is_fiable else ''
             st.markdown(
-                f'<div class="{css_class}">'
-                f'<div style="font-size:2.5rem;">{verdict_icon}</div>'
+                f'<div class="{css_class}" role="status" aria-live="polite" aria-label="Verdict: {verdict_text}">'
+                f'<div style="font-size:2.5rem;" aria-hidden="true">{verdict_icon}</div>'
                 f'<div style="font-size:1.8rem;font-weight:700;color:{verdict_color};margin-top:8px;">{verdict_text}</div>'
                 f'<div style="margin-top:12px;color:#B0B0B0;">Langue : {lang.upper()}</div>'
                 f'</div>',
@@ -1007,8 +838,8 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
         with c3:
             emoji = EMOTION_EMOJIS.get(dominant_emotion, '')
             st.markdown(
-                '<div class="glass-card" style="text-align:center;">'
-                f'<div style="font-size:2.5rem;">{emoji}</div>'
+                f'<div class="glass-card" role="status" aria-live="polite" aria-label="Emotion dominante: {EMOTION_DISPLAY[dominant_emotion]} ({dominant_proba:.1%})" style="text-align:center;">'
+                f'<div style="font-size:2.5rem;" aria-hidden="true">{emoji}</div>'
                 f'<div style="font-size:1.4rem;font-weight:600;color:#00D4FF;margin-top:8px;">'
                 f'{EMOTION_DISPLAY[dominant_emotion]}</div>'
                 f'<div style="margin-top:8px;color:#B0B0B0;">{dominant_proba:.1%}</div>'
@@ -1060,7 +891,7 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
                     for s in explanation['sensationalist_words']
                 )
                 st.markdown(
-                    '<div class="glass-card">'
+                    '<div class="glass-card" role="region" aria-label="Mots sensationnalistes detectes">'
                     '<div style="font-size:1rem;font-weight:600;color:#FF1744;margin-bottom:10px;">'
                     'Mots sensationnalistes détectés</div>'
                     f'<div>{pills}</div></div>',
@@ -1432,7 +1263,7 @@ def _section_carbon():
         km_voiture = em_df['emissions'].sum() / 0.12
         smartphones = total_energy * 1000 / 12
         st.markdown(
-            '<div class="glass-card">'
+            '<div class="glass-card" role="region" aria-label="Equivalences ecologiques">'
             '<div style="font-size:1rem;font-weight:600;color:#00D4FF;margin-bottom:10px;">'
             'Équivalences écologiques</div>'
             '<div style="display:flex;gap:30px;flex-wrap:wrap;font-size:0.9rem;line-height:1.8;">'
@@ -1466,20 +1297,20 @@ def _section_compliance():
     c1, c2 = st.columns(2)
     with c1:
         st.markdown(
-            '<div class="glass-card">'
+            '<div class="glass-card" role="region" aria-label="Conformite RGPD">'
             '<div style="font-size:1.3rem;margin-bottom:8px;color:#00D4FF;">RGPD</div>'
             '<ul style="font-size:0.88rem;line-height:1.8;color:#B0B0B0;">'
             '<li>Données publiques uniquement (posts Bluesky)</li>'
             '<li>Pas de profilage individuel</li>'
             '<li>Droit à l\'effacement via suppression MongoDB</li>'
             '<li>Aucune donnée personnelle stockée</li>'
-            '<li>Pas de transfert hors UE</li>'
+            '<li>Collecte via API Bluesky (serveurs US), traitement local UE</li>'
             '</ul></div>',
             unsafe_allow_html=True,
         )
     with c2:
         st.markdown(
-            '<div class="glass-card">'
+            '<div class="glass-card" role="region" aria-label="Conformite AI Act europeen">'
             '<div style="font-size:1.3rem;margin-bottom:8px;color:#00D4FF;">AI Act européen</div>'
             '<ul style="font-size:0.88rem;line-height:1.8;color:#B0B0B0;">'
             '<li>Système classé risque limité (art. 52)</li>'
@@ -1601,7 +1432,7 @@ def main():
 
     # --- Sidebar ---
     st.sidebar.markdown(
-        '<div style="text-align:center;padding:12px 0;">'
+        '<div role="banner" aria-label="Thumalien Intelligence Center" style="text-align:center;padding:12px 0;">'
         '<span style="font-size:1.4rem;letter-spacing:4px;color:#00D4FF;font-weight:300;">'
         'THUMALIEN</span><br>'
         '<span style="font-size:0.7rem;color:#607D8B;">Intelligence Center v9.0</span>'
@@ -1628,17 +1459,17 @@ def main():
 
     # Sidebar status
     st.sidebar.markdown(
-        '<div style="font-size:0.8rem;color:#B0B0B0;">'
-        f'<span class="status-dot" style="background:#00E676;"></span> Pipeline {model_suffix.replace("expert_", "").upper()}<br>'
-        f'<span class="status-dot" style="background:{"#00E676" if v6_data else "#FF1744"};"></span> '
+        '<div role="status" aria-label="Statut des composants du pipeline" style="font-size:0.8rem;color:#B0B0B0;">'
+        f'<span class="status-dot" style="background:#00E676;" aria-hidden="true"></span> Pipeline {model_suffix.replace("expert_", "").upper()}<br>'
+        f'<span class="status-dot" style="background:{"#00E676" if v6_data else "#FF1744"};" aria-hidden="true"></span> '
         f'V6 Style {"OK" if v6_data else "N/A"}<br>'
-        f'<span class="status-dot" style="background:{"#00E676" if v7_data else "#FF1744"};"></span> '
+        f'<span class="status-dot" style="background:{"#00E676" if v7_data else "#FF1744"};" aria-hidden="true"></span> '
         f'V8 Hybride {"OK" if v7_data else "N/A"}<br>'
-        f'<span class="status-dot" style="background:{"#00E676" if cam_classifier else "#FFD600"};"></span> '
+        f'<span class="status-dot" style="background:{"#00E676" if cam_classifier else "#FFD600"};" aria-hidden="true"></span> '
         f'CamemBERT {"OK" if cam_classifier else "N/A"}<br>'
-        f'<span class="status-dot" style="background:{"#00E676" if stage1_data else "#FF1744"};"></span> '
+        f'<span class="status-dot" style="background:{"#00E676" if stage1_data else "#FF1744"};" aria-hidden="true"></span> '
         f'Stage 1 {"OK" if stage1_data else "N/A"}<br>'
-        f'<span class="status-dot" style="background:{"#00E676" if not is_demo else "#FFD600"};"></span> '
+        f'<span class="status-dot" style="background:{"#00E676" if not is_demo else "#FFD600"};" aria-hidden="true"></span> '
         f'MongoDB {"Connecté" if not is_demo else "Démo"}'
         '</div>',
         unsafe_allow_html=True,

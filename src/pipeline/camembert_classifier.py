@@ -262,12 +262,15 @@ class CamemBERTClassifier:
                     cls_output = outputs.last_hidden_state[:, 0, :]  # [CLS] token
                     logits = self.head(cls_output)
 
-                    # Weighted loss
-                    w = batch['weight'].to(self.device)
-                    loss_per_sample = nn.functional.cross_entropy(
-                        logits, batch_labels, reduction='none'
-                    )
-                    loss = (loss_per_sample * w).mean()
+                    # Weighted loss (weights come from the Dataset via the batch)
+                    if 'weight' in batch:
+                        w = batch['weight'].to(self.device)
+                        loss_per_sample = nn.functional.cross_entropy(
+                            logits, batch_labels, reduction='none'
+                        )
+                        loss = (loss_per_sample * w).mean()
+                    else:
+                        loss = criterion(logits, batch_labels)
 
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(
