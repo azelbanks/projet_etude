@@ -9,7 +9,8 @@ venv/
 .env
 
 # Data (Très important : ne jamais commiter vos données brutes)
-data/
+data/*
+!data/excluded_handles.txt
 *.csv
 *.json
 *.xlsx
@@ -18,6 +19,7 @@ data/
 # Exception : garder les modeles ML (< 100MB)
 !models/*.pkl
 !models/*.joblib
+!models/config.json
 
 # Large model files (> 100MB, GitHub limit)
 models/camembert_best.pt

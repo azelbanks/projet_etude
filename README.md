@@ -20,15 +20,15 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 * **Explicabilité SHAP :** Chaque prédiction est accompagnée d'une explication visuelle des facteurs de décision.
 * **Dashboard Interactif :** 5 pages Streamlit (Dashboard, Analyse IA, Explorateur, Performance, À propos).
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon.
-* **Tests :** 94 tests unitaires et d'intégration (pytest), benchmark latence automatisé.
+* **Tests :** 107 tests unitaires et d'intégration (pytest), benchmark latence automatisé.
 
 ### Métriques clés (V9)
-* **239 000+ posts** collectés depuis décembre 2025
+* **245 000+ posts** collectés depuis décembre 2025 (collecte continue)
 * **197 782 textes** d'entraînement (7 datasets, FR+EN)
 * **F1-score V5** : 0.913 (CV), seuil de décision : 0.44
 * **V9 Cascade** : faux positifs réduits de -67% (Fisher p=0.0005)
 * **CamemBERT FR** : F1 0.957 sur textes ultra-courts
-* **RoBERTa EN V2** : F1 0.874 sur textes ultra-courts (+8.2% vs V1)
+* **RoBERTa EN V2** : F1 0.874 sur textes ultra-courts (+4.3% vs V1)
 * **Latence** : 1.5 ms/texte (728 textes/sec)
 * **67%** des posts Bluesky classés fiables
 * **Empreinte CO2** : 0.55 g (total entraînement)

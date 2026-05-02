@@ -39,7 +39,7 @@ Chaque role est evalue sur 5 axes, notes de A (excellence) a D (insuffisant) :
 
 ### 3.1 Etat des lieux
 
-Le pipeline de collecte (`collect_bluesky.py`, 169 lignes) est fonctionnel et a permis de collecter 188 553 posts. Il utilise l'API AT Protocol avec authentification, recherche par 24 mots-cles bilingues, stockage MongoDB avec deduplication par `bulk_write`, et resilience par backoff exponentiel.
+Le pipeline de collecte (`collect_bluesky.py`, ~470 lignes) est fonctionnel et a permis de collecter plus de 245 000 posts (collecte continue jusqu'au 19 mai 2026). Il utilise l'API AT Protocol avec authentification, recherche par 44 mots-cles bilingues (28 FR + 16 EN), stockage MongoDB avec deduplication par `bulk_write`, resilience par backoff exponentiel, et inference IA automatique a chaque cycle (emotions + V5 + Stage1 V9).
 
 ### 3.2 Evaluation
 

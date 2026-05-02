@@ -74,8 +74,8 @@ class TestBenchmarkLatence:
         print(f"  Iterations :   10")
         print(f"{'='*60}")
 
-        # Le pipeline doit repondre en moins de 5 secondes pour un texte
-        assert avg_ms < 5000, f"Latence moyenne trop elevee: {avg_ms:.0f}ms"
+        # CDC exige < 100ms par texte ; on verifie < 200ms (marge)
+        assert avg_ms < 200, f"Latence moyenne trop elevee: {avg_ms:.0f}ms (CDC: <100ms)"
 
     def test_batch_10_latency(self, detector, sample_texts):
         """Mesure le temps d'inference pour un batch de 10 textes."""
@@ -104,7 +104,9 @@ class TestBenchmarkLatence:
         print(f"  Iterations :           5")
         print(f"{'='*60}")
 
-        assert avg_ms < 30000, f"Batch trop lent: {avg_ms:.0f}ms"
+        # CDC: < 100ms/texte, soit < 1000ms pour 10 textes
+        assert avg_ms < 1000, f"Batch trop lent: {avg_ms:.0f}ms pour 10 textes (CDC: <1000ms)"
+        assert per_text_ms < 200, f"Latence par texte trop elevee: {per_text_ms:.0f}ms"
 
     def test_batch_100_latency(self, detector, sample_texts):
         """Mesure le temps d'inference pour un batch de 100 textes."""
@@ -126,4 +128,6 @@ class TestBenchmarkLatence:
         print(f"{'='*60}")
 
         assert len(result) == 100
-        assert elapsed_ms < 60000
+        # CDC: < 100ms/texte, soit < 10s pour 100 textes
+        assert elapsed_ms < 10000, f"Batch 100 trop lent: {elapsed_ms:.0f}ms (CDC: <10000ms)"
+        assert per_text_ms < 200, f"Latence par texte trop elevee: {per_text_ms:.0f}ms"

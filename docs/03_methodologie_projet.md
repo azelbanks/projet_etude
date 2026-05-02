@@ -68,7 +68,7 @@ Le projet Thumalien suit une methodologie **Agile adaptee aux projets Data/IA**,
 | **V7** | Avril 2026 | Ensemble hybride meta-learner V5+V6 + SHAP | FP reduits de 57 a 25 sur gold set |
 | **V8** | Avril 2026 | Integration CamemBERT comme 3e signal semantique | F1 suspect +28% |
 | **V9** | Mai 2026 | Pipeline 2 etapes fait/opinion | FP -67% (186 a 62), kappa 0.187 |
-| **Collecteur V3** | Mai 2026 | Reequilibrage FR/EN (28 FR + 16 EN), suppression biais emotionnel, inference auto | 237 000+ posts, 100% annotes |
+| **Collecteur V3** | Mai 2026 | Reequilibrage FR/EN (28 FR + 16 EN), suppression biais emotionnel, inference auto V9 | 245 000+ posts (collecte continue), 100% annotes |
 
 ---
 

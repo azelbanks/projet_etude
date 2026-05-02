@@ -260,7 +260,7 @@ Le rapport du projet montre deja une excellente demarche scientifique (analyse d
 #### Mission 2 — Analyse exploratoire et signal faibles
 
 **Taches** :
-- Concevoir des analyses exploratoires avancees sur les 188 553 posts collectes : clustering thematique (LDA, BERTopic), detection de communautes, evolution temporelle des sujets
+- Concevoir des analyses exploratoires avancees sur les 245 000+ posts collectes (collecte continue) : clustering thematique (LDA, BERTopic), detection de communautes, evolution temporelle des sujets
 - Identifier les signaux faibles : emergence de nouveaux themes, changement de tonalite emotionnelle sur un sujet, augmentation soudaine du score de suspicion sur un mot-cle
 - Creer des rapports d'analyse automatises hebdomadaires : tendances, anomalies, sujets emergents
 - Mener des analyses de correlation entre le score de credibilite et les features emotionnelles : les posts suspects sont-ils systematiquement plus emotionnels ? Quelles emotions sont les plus correlees a la desinformation ?

@@ -34,7 +34,7 @@ Selon l'article 35 du RGPD, une AIPD est obligatoire lorsque le traitement est s
 | Decision automatisee avec effet juridique | Non | Le score est indicatif, aucune decision automatisee |
 | Surveillance systematique | Partiellement | Collecte continue mais sur posts publics uniquement |
 | Donnees sensibles (Art. 9) | Non | Pas de collecte d'opinions politiques, religion, sante en tant que telles |
-| Donnees a grande echelle | Oui | 188 553 posts collectes |
+| Donnees a grande echelle | Oui | 245 000+ posts collectes (collecte continue) |
 | Croisement de donnees | Non | Pas de croisement avec d'autres bases |
 | Personnes vulnerables | Non | Pas de ciblage de populations vulnerables |
 | Usage innovant de technologies | Oui | IA appliquee a la detection de desinformation |
@@ -122,7 +122,7 @@ Avis : Le traitement peut etre mis en oeuvre sous reserve du suivi des mesures
 | **Limitation des finalites** (Art. 5.1.b) | Les donnees ne sont utilisees que pour la detection de desinformation et l'analyse emotionnelle. Pas de finalite commerciale, pas de revente | Conforme |
 | **Minimisation** (Art. 5.1.c) | Seuls les champs necessaires sont collectes (texte, date, handle, metriques d'engagement). Pas de collecte de donnees de profil, de reseau social ou de contenus prives | Conforme |
 | **Exactitude** (Art. 5.1.d) | Les donnees sont collectees directement depuis l'API Bluesky sans modification du contenu original | Conforme |
-| **Limitation de conservation** (Art. 5.1.e) | Politique de retention : 12 mois pour les donnees brutes. Donnees anonymisees pour les statistiques agregees | A implementer (TTL index) |
+| **Limitation de conservation** (Art. 5.1.e) | Politique de retention : 12 mois pour les donnees brutes via TTL index MongoDB (`idx_collected_at_ttl_12months`, expireAfterSeconds=31536000). Donnees anonymisees pour les statistiques agregees | Conforme |
 | **Integrite et confidentialite** (Art. 5.1.f) | Identifiants stockes dans .env, MongoDB non expose, infrastructure Docker isolee | Conforme |
 | **Responsabilite** (Art. 5.2) | Ce document constitue la preuve de conformite. Registre des traitements disponible | Conforme |
 
@@ -136,7 +136,7 @@ Avis : Le traitement peut etre mis en oeuvre sous reserve du suivi des mesures
 | **Effacement** (Art. 17) | Suppression sur demande de tous les posts d'un utilisateur | Requete : `db.raw_posts.deleteMany({author_handle: "xxx"})` — delai < 5 secondes |
 | **Limitation** (Art. 18) | Possibilite de marquer des posts comme "non traitables" pour exclure des analyses | Champ `ai_processed: "excluded"` |
 | **Portabilite** (Art. 20) | Export JSON des donnees d'un utilisateur sur demande | `mongoexport --query '{author_handle: "xxx"}'` |
-| **Opposition** (Art. 21) | Droit d'opposition au traitement. En cas d'exercice, effacement complet et ajout du handle dans une liste d'exclusion | A implementer (liste noire de collecte) |
+| **Opposition** (Art. 21) | Droit d'opposition : effacement complet + ajout du handle dans `data/excluded_handles.txt`. Le collecteur verifie cette liste a chaque cycle et exclut les posts automatiquement | Conforme |
 | **Decision automatisee** (Art. 22) | Le score de credibilite est un indicateur, pas une decision automatisee produisant des effets juridiques | Non applicable |
 
 ### 3.3 Registre des traitements (Article 30)
@@ -201,27 +201,38 @@ Bien que non obligatoires pour un systeme a risque limite, nous appliquons volon
 ### 4.4 Model Card — Fiche d'identite du modele
 
 ```
-NOM DU MODELE : Thumalien Expert Detector V2
+NOM DU MODELE : Thumalien Pipeline V9 Cascade
 TYPE : Classification binaire (Fiable / Suspect)
-ARCHITECTURE : TF-IDF (30K) + 12 features linguistiques + 7 emotions → LogisticRegression calibree
-DONNEES D'ENTRAINEMENT : 145 703 textes (6 datasets : ISOT EN, Kaggle FR, FakeNewsNet, CONSTRAINT, Credibility Corpus)
+ARCHITECTURE : Pipeline 2 etapes :
+  - Stage 1 : Filtre fait/opinion (TF-IDF + LogReg, seuil 0.40)
+  - Stage 2 : Meta-learner V8 (V5 TF-IDF + V6 Style + CamemBERT)
+  Opinions classees suspectes → reclassees fiables automatiquement
+COMPOSANTS :
+  - V5 : TF-IDF (30K) + 15 features linguistiques + 7 emotions → LogReg calibree
+  - V6 : 28 features stylistiques (6 blocs) → GradientBoosting topic-agnostic
+  - CamemBERT : Transformer FR fine-tune (F1 ultra-court 0.957)
+  - RoBERTa : Transformer EN fine-tune (F1 ultra-court 0.874)
+DONNEES D'ENTRAINEMENT : 197 782 textes (7 datasets : ISOT EN, ISOT debiaise, Kaggle FR, FakeNewsNet, CONSTRAINT, Credibility Corpus, donnees synthetiques FR+EN)
 LANGUES : Francais, Anglais
 PERFORMANCE :
-  - F1 CV global : 0.897
-  - F1 holdout : 0.90
-  - Accuracy holdout : 93%
-  - F1 textes courts (< 30 mots) : 0.80
-SEUIL DE DECISION : 0.44
+  - F1 CV global V5 : 0.913
+  - CamemBERT FR ultra-court : 0.957
+  - RoBERTa EN ultra-court : 0.874
+  - V9 : reduction faux positifs -67% vs V5 (Fisher p=0.0005)
+  - Gold test set (473 posts consensus, kappa=0.498) : F1 suspect 0.163
+  - Latence : 1.5 ms/texte (728 textes/sec)
+SEUIL DE DECISION : 0.44 (V5), 0.40 (Stage 1 fait/opinion)
 LIMITES CONNUES :
   - Ne verifie pas la veracite factuelle, detecte des patterns stylistiques
   - Performance reduite sur textes < 15 mots
-  - Biais thematique vers la politique US et le COVID-19
+  - Biais thematique residuel vers la politique US et le COVID-19
   - Langues autres que FR/EN non supportees
+  - F1 suspect sur donnees reelles (gold set) reste faible (0.163)
   - Le modele peut evoluer dans le temps (concept drift)
 USAGE PREVU : Aide a la decision pour analystes, journalistes, chercheurs
 USAGE PROSCRIT : Censure automatisee, profilage individuel, decisions juridiques
-EMPREINTE CARBONE : 0.30 g CO2 (entrainement complet)
-DATE D'ENTRAINEMENT : Fevrier 2026
+EMPREINTE CARBONE : 0.55 g CO2 (total entrainements V1-V9 + Transformers)
+DATE D'ENTRAINEMENT : Decembre 2025 — Mai 2026 (9 iterations)
 RESPONSABLE : Azelie Bernard
 ```
 
@@ -235,21 +246,24 @@ RESPONSABLE : Azelie Bernard
 |--------|--------|--------|
 | Isolation reseau | MongoDB accessible uniquement via le reseau Docker interne (`thumalien_network`) | Implementee |
 | Gestion des secrets | Identifiants Bluesky et MongoDB dans `.env`, fichier exclu du versionning (`.gitignore`) | Implementee |
-| Pas de port expose | En production, seul le port 8501 (Streamlit) est expose | Implementee |
+| Restriction des ports | MongoDB restreint a localhost (`127.0.0.1:27017`). Seuls les ports 8501 (Streamlit) et 8888 (Jupyter, dev uniquement) sont exposes | Implementee |
 | Minimisation | Seuls les champs necessaires sont collectes (pas de profil complet, pas de followers) | Implementee |
 | Logs | Les operations de collecte sont loguees (volume, erreurs) | Implementee |
 
 ### 5.2 Mesures a implementer (plan d'action)
 
-| Mesure | Priorite | Echeance | Responsable |
-|--------|----------|----------|-------------|
-| Index TTL sur MongoDB (suppression automatique apres 12 mois) | Haute | T2 2026 | Data Engineer |
-| Liste d'exclusion des handles (droit d'opposition) | Haute | T2 2026 | Data Engineer |
-| Hachage des handles dans la base (pseudonymisation renforcee) | Moyenne | T3 2026 | Data Engineer |
-| Chiffrement au repos de MongoDB | Moyenne | T3 2026 | DevOps |
-| Scan de vulnerabilites des images Docker (Trivy) | Haute | T2 2026 | DevOps |
-| Mecanisme de feedback utilisateur (contester une prediction) | Moyenne | T3 2026 | Dashboard Dev |
-| Audit annuel de conformite | Haute | T2 2027 | Chef de Projet |
+| Mesure | Priorite | Echeance | Responsable | Statut |
+|--------|----------|----------|-------------|--------|
+| ~~Index TTL sur MongoDB (suppression automatique apres 12 mois)~~ | Haute | T2 2026 | Data Engineer | **Implementee** (`setup_indexes.py`, TTL 365j) |
+| ~~Liste d'exclusion des handles (droit d'opposition)~~ | Haute | T2 2026 | Data Engineer | **Implementee** (`data/excluded_handles.txt` + `collect_bluesky.py`) |
+| ~~Restriction port MongoDB (127.0.0.1)~~ | Haute | T2 2026 | DevOps | **Implementee** (`docker-compose.yml`) |
+| ~~Sanitization HTML des entrees dashboard~~ | Haute | T2 2026 | Dashboard Dev | **Implementee** (`app.py`, strip HTML + limite 10K) |
+| ~~CI/CD automatise (tests)~~ | Haute | T2 2026 | DevOps | **Implementee** (`.github/workflows/tests.yml`) |
+| Hachage des handles dans la base (pseudonymisation renforcee) | Moyenne | T3 2026 | Data Engineer | A implementer |
+| Chiffrement au repos de MongoDB | Moyenne | T3 2026 | DevOps | A implementer |
+| Scan de vulnerabilites des images Docker (Trivy) | Haute | T2 2026 | DevOps | A implementer |
+| Mecanisme de feedback utilisateur (contester une prediction) | Moyenne | T3 2026 | Dashboard Dev | A implementer |
+| Audit annuel de conformite | Haute | T2 2027 | Chef de Projet | A implementer |
 
 ---
 

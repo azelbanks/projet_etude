@@ -59,7 +59,7 @@ Bluesky est un réseau social décentralisé basé sur le protocole AT (Authenti
 Le projet Thumalien est composé de 4 briques :
 
 1. **Collecteur** : ingestion continue des posts Bluesky via l'API AT Protocol
-2. **Base de données** : stockage MongoDB des posts collectés (239 000+ posts à ce jour)
+2. **Base de données** : stockage MongoDB des posts collectés (245 000+ posts à date, collecte continue)
 3. **Pipeline NLP** : détection de fake news + analyse émotionnelle
 4. **Dashboard** : visualisation temps réel via Streamlit
 
@@ -192,7 +192,7 @@ Le fichier `src/collection/collect_bluesky.py` réalise une collecte continue :
 
 ### Résultats
 
-- **239 000+ posts** collectés depuis décembre 2025
+- **245 000+ posts** collectés depuis décembre 2025
 - Mix multilingue naturel (FR + EN + autres langues)
 - Champs stockés : `text`, `uri`, `author_handle`, `created_at`, `search_term`, `collected_at`
 
@@ -641,7 +641,7 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 
 | Composant | Statut | Détails |
 |-----------|--------|---------|
-| Collecte Bluesky | Opérationnel | 239 000+ posts, collecte continue (V3 rééquilibrée) |
+| Collecte Bluesky | Opérationnel | 245 000+ posts, collecte continue (V3 rééquilibrée) |
 | MongoDB | Opérationnel | Docker, 27017, persistance locale |
 | Pipeline V5 (TF-IDF) | Opérationnel | F1 CV=0.90, seuil 0.44, 197K textes |
 | Pipeline V6 (Style) | Opérationnel | GradientBoosting, 28 features stylistiques, topic-agnostic |
@@ -656,7 +656,7 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 
 | Métrique | Valeur |
 |----------|--------|
-| Posts collectés | 239 000+ |
+| Posts collectés | 245 000+ |
 | Datasets d'entraînement | 7 (ISOT EN, Kaggle FR, FakeNewsNet, CONSTRAINT, Credibility, Social FR synth.) |
 | Taille dataset V5 | 197 782 textes |
 | CV F1 V5 (TF-IDF) | 0.90 |
@@ -670,7 +670,7 @@ Le pipeline est extrêmement économe grâce au choix d'un modèle léger (LogRe
 | Bluesky % fiable | 67% |
 | Notebooks | 28 (00 à 27) |
 | Temps d'inference (V5) | 1.5 ms/texte (~728 textes/sec) |
-| Tests unitaires | 94 tests, 26% coverage |
+| Tests unitaires | 107 tests, 26% coverage |
 
 ### Benchmark de latence
 
@@ -690,7 +690,7 @@ Note : les modeles Transformer (CamemBERT, RoBERTa) utilises dans V8/V9 sont plu
 
 | Dimension | Etat actuel | Architecture cible |
 |-----------|-------------|-------------------|
-| Volume de donnees | 239 000+ posts dans MongoDB | > 1M posts supporte sans modification |
+| Volume de donnees | 245 000+ posts dans MongoDB | > 1M posts supporte sans modification |
 | Collecte | Collecteur Python mono-thread, ~25 posts/requete | Kafka + collecteurs distribues pour ingestion temps reel |
 | Inference | Batch sequentiel dans le collecteur | Spark Structured Streaming pour inference parallele |
 | Stockage | MongoDB standalone (Docker) | Replica set MongoDB pour HA + sharding horizontal |
@@ -988,7 +988,7 @@ Le gold test set initial (200 posts) avait deux limites :
 
 ### Protocole d'annotation
 
-1. **Échantillonnage stratifié** : 500 posts Bluesky extraits de MongoDB (239 000+ posts)
+1. **Échantillonnage stratifié** : 500 posts Bluesky extraits de MongoDB (245 000+ posts)
    - 250 FR + 250 EN
    - 50 posts par tranche de score V5 (0-0.2, 0.2-0.4, 0.4-0.6, 0.6-0.8, 0.8-1.0)
    - Mélangés aléatoirement pour éviter les biais de séquence
@@ -1115,13 +1115,44 @@ Post Bluesky
 
 `27_Pipeline_2_Etapes.py` — expérience complète avec validation statistique (Fisher), CV 5-fold du Stage 1, et évaluation cascade avec optimisation de seuil.
 
+### Justification scientifique du kappa et du F1
+
+#### Kappa = 0.498 (inter-annotateurs) et 0.187 (V9 vs consensus)
+
+Le kappa de Cohen de 0.498 entre annotateurs correspond à un **accord modéré** selon l'échelle de Landis & Koch (1977). Ce niveau d'accord est cohérent avec la littérature sur l'annotation de fake news : des études récentes montrent que la détection de désinformation est une tâche intrinsèquement subjective, où même des annotateurs formés atteignent rarement un kappa > 0.6 sur des posts courts de réseaux sociaux (Baly et al., 2018 ; Patwa et al., 2021). La difficulté provient de :
+
+- La **frontière floue entre opinion et désinformation** : un post affirmant "les vaccins sont dangereux" est-il une opinion (protégée) ou de la désinformation (détectable) ?
+- La **dépendance au contexte** : sans vérification factuelle externe, deux humains peuvent légitimement diverger
+- Le **déséquilibre des classes** : avec seulement 15 suspects sur 473 posts consensus (3.2%), le kappa est mathématiquement pénalisé par la faible prévalence
+
+Le kappa V9 de 0.187 reflète la difficulté du passage d'une tâche de classification académique (datasets annotés) à une tâche réelle (posts Bluesky non filtrés). Cette chute de performance est documentée dans la littérature sous le terme de **domain shift** (Zellers et al., 2019 ; Wang et al., 2025).
+
+#### F1 suspect = 0.163 sur le gold set — pourquoi c'est informatif
+
+Le F1 suspect de 0.163 est faible en valeur absolue, mais ce chiffre doit être contextualisé :
+
+1. **La prévalence est extrêmement basse** (3.2% de suspects) : dans ce régime, même un classifieur aléatoire calibré aurait un F1 ≈ 0.06. Le V9 fait **2.7x mieux que le hasard**.
+2. **La baseline V5 était à 0.087** : le V9 représente une amélioration de **+87%** en F1 suspect, obtenue sans augmenter les faux négatifs de manière critique.
+3. **L'objectif n'est pas la censure automatique** : le système est un outil d'aide à la décision. Un taux de faux positifs de 13% (62/473) est acceptable pour un système de signalement qui nécessite une validation humaine en aval.
+4. **L'oracle cascade (F1 = 0.545)** montre que l'architecture est correcte — c'est le classifieur fait/opinion qui limite la performance, pas le pipeline V5 lui-même.
+
+#### Notation "test X/Y" dans les tableaux
+
+Les notations "test 9/10" ou "test 16/18" dans les tableaux de versions désignent le **nombre de cas de test manuels réussis** sur un jeu de tests qualitatifs prédéfinis. Ces cas de test sont des posts Bluesky sélectionnés manuellement pour leur difficulté :
+
+- 5 posts fiables "neutres" (ex: météo, actualité factuelle)
+- 5 posts suspects "évidents" (ex: conspiration, sensationnalisme)
+- Pour RoBERTa V2 : 8 cas supplémentaires de textes ultra-courts
+
+"Test 16/18" signifie que 16 des 18 cas de test prédéfinis ont été correctement classifiés par le modèle. Ce n'est pas une métrique statistique rigoureuse mais un **smoke test qualitatif** complémentaire aux métriques de cross-validation.
+
 ---
 
 ## 22. Audit du corpus et rééquilibrage de la collecte
 
 ### 22.1 Constat : biais d'échantillonnage dans le corpus Bluesky
 
-L'analyse du corpus de 239 000+ posts collectés a révélé deux biais structurels liés aux **termes de recherche** utilisés par le collecteur :
+L'analyse du corpus de 245 000+ posts collectés a révélé deux biais structurels liés aux **termes de recherche** utilisés par le collecteur :
 
 #### Déséquilibre FR/EN
 

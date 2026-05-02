@@ -929,6 +929,9 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
         text_input = examples[example]
 
     if (clicked or example) and text_input.strip():
+        # Sanitize: limit input length and strip HTML tags for safety
+        text_input = text_input[:10_000]
+        text_input = re.sub(r'<[^>]+>', '', text_input)
         with st.spinner('Analyse en cours...'):
             result = detector.predict(pd.Series([text_input]))
             score = float(result['ai_score_credibility'].iloc[0])

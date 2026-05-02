@@ -48,6 +48,21 @@ SEARCH_CONFIG = {
 SLEEP_TIME = 300  # 5 minutes
 MAX_RETRIES = 3
 
+# --- RGPD Art. 21 : Liste d'exclusion (droit d'opposition) ---
+_EXCLUDED_HANDLES_FILE = os.path.join(
+    os.path.dirname(__file__), '..', '..', 'data', 'excluded_handles.txt'
+)
+
+def load_excluded_handles():
+    """Charge la liste des handles exclus depuis data/excluded_handles.txt."""
+    path = os.path.abspath(_EXCLUDED_HANDLES_FILE)
+    if not os.path.exists(path):
+        return set()
+    with open(path, 'r', encoding='utf-8') as f:
+        return {line.strip() for line in f if line.strip()}
+
+EXCLUDED_HANDLES = load_excluded_handles()
+
 # --- VALIDATION DU TEXTE ---
 # Expression régulière pour détecter les textes composés uniquement d'URLs
 _URL_PATTERN = re.compile(r'https?://\S+', re.IGNORECASE)
@@ -176,6 +191,11 @@ def run_collection_cycle(collection, client, monitor=None):
                 skipped = 0
 
                 for post in data.posts:
+                    # --- RGPD Art. 21 : droit d'opposition ---
+                    if getattr(post.author, 'handle', None) in EXCLUDED_HANDLES:
+                        skipped += 1
+                        continue
+
                     # --- Validation du texte ---
                     is_valid, result = validate_text(post.record.text)
                     if not is_valid:

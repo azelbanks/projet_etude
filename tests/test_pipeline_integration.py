@@ -64,6 +64,9 @@ class TestPipelineIntegration:
         result = detector.predict(texts)
         assert len(result) == 3
         assert all(result['ai_score_credibility'].between(0, 1))
+        # Scores should not all be identical (model differentiates)
+        scores = result['ai_score_credibility'].values
+        assert not np.all(scores == scores[0]), "Model returns identical scores for different texts"
 
     def test_special_characters(self, detector):
         """Texts with emojis and special chars should not crash."""
@@ -73,12 +76,40 @@ class TestPipelineIntegration:
         ])
         result = detector.predict(texts)
         assert len(result) == 2
+        assert all(result['ai_score_credibility'].between(0, 1))
+        assert all(result['prediction_label'].isin([0, 1]))
 
     def test_long_text(self, detector):
         """A very long text should be handled without error."""
         long_text = "This is a test sentence. " * 200
         result = detector.predict(pd.Series([long_text]))
         assert len(result) == 1
+
+    def test_suspect_vs_fiable_discrimination(self, detector):
+        """Model should assign higher suspicion to obviously suspect texts."""
+        suspect = pd.Series(["BREAKING: Government EXPOSED hiding TRUTH about 5G mind control!!!"])
+        fiable = pd.Series(["The annual economic report was published by the central bank today."])
+        score_suspect = detector.predict(suspect)['ai_score_credibility'].iloc[0]
+        score_fiable = detector.predict(fiable)['ai_score_credibility'].iloc[0]
+        assert score_suspect < score_fiable, (
+            f"Model fails to discriminate: suspect={score_suspect:.3f} vs fiable={score_fiable:.3f}"
+        )
+
+    def test_health_check_passes(self, detector):
+        """Health check should pass on a loaded model."""
+        health = detector.health_check()
+        assert health['healthy'] is True, f"Health check failed: {health}"
+
+    def test_prediction_labels_are_binary(self, detector):
+        """All prediction labels should be 0 or 1."""
+        texts = pd.Series([
+            "Normal news article about the economy.",
+            "SHOCKING CONSPIRACY revealed by anonymous source!!!",
+            "Le temps est beau aujourd'hui.",
+            "ALERTE: on nous ment sur tout !!!",
+        ])
+        result = detector.predict(texts)
+        assert set(result['prediction_label'].unique()).issubset({0, 1})
 
 
 class TestLinguisticFeaturesEdgeCases:

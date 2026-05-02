@@ -264,7 +264,7 @@ Scene OBS : ecran + webcam picture-in-picture
 Script Azelie :
 "Le collecteur tourne en continu. Chaque post est enrichi :
 texte, auteur, timestamp, langue detectee.
-En 5 mois, on a collecte 188 553 posts."
+En 6 mois, on a collecte plus de 245 000 posts, et la collecte continue."
 (montrer MongoDB Compass ou shell : les documents, le count)
 "On a mis en place des indexes, de la validation de schema,
 et un monitoring de la qualite des donnees."
