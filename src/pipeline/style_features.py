@@ -82,10 +82,6 @@ class StyleFeatureExtractorV6:
         'numeric_density': 'Densit\u00e9 num\u00e9rique', 'quote_count': 'Citations/guillemets',
         'named_entity_density': 'Densit\u00e9 entit\u00e9s nomm\u00e9es', 'lexical_diversity': 'Diversit\u00e9 lexicale (TTR)',
         'repeated_char_ratio': 'Caract\u00e8res r\u00e9p\u00e9t\u00e9s', 'spelling_anomaly_score': 'Anomalies orthographiques',
-        'emo_anger': '\u00c9motion : Col\u00e8re', 'emo_disgust': '\u00c9motion : D\u00e9go\u00fbt',
-        'emo_joy': '\u00c9motion : Joie', 'emo_neutral': '\u00c9motion : Neutre',
-        'emo_fear': '\u00c9motion : Peur', 'emo_surprise': '\u00c9motion : Surprise',
-        'emo_sadness': '\u00c9motion : Tristesse',
     }
 
     _LFE = LinguisticFeatureExtractor

@@ -1,0 +1,12 @@
+credentials:
+  usernames:
+    admin:
+      name: Administrateur
+      password: "$2b$12$1.AOtpQacaA2ILKQhjO6Iug8Zyd2hh/h4VR3PO4KBfdtm40P4lgK."
+    viewer:
+      name: Lecteur
+      password: "$2b$12$1.AOtpQacaA2ILKQhjO6Iug8Zyd2hh/h4VR3PO4KBfdtm40P4lgK."
+cookie:
+  expiry_days: 7
+  key: "thumalien_auth_cookie_key_2026"
+  name: "thumalien_auth"

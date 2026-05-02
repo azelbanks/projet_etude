@@ -18,6 +18,8 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 import joblib
+import yaml
+import streamlit_authenticator as stauth
 
 # ---------------------------------------------------------------------------
 #  MongoDB aggregation helpers (graceful fallback if unavailable)
@@ -1422,6 +1424,13 @@ Score final + Explication SHAP
 #  Main
 # ===================================================================
 
+def _load_auth_config():
+    """Charge la configuration d'authentification depuis auth_config.yaml."""
+    config_path = os.path.join(os.path.dirname(__file__), 'auth_config.yaml')
+    with open(config_path) as f:
+        return yaml.safe_load(f)
+
+
 def main():
     st.set_page_config(
         page_title='Thumalien — Détection de Fake News',
@@ -1432,7 +1441,26 @@ def main():
 
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+    # --- Authentication ---
+    auth_config = _load_auth_config()
+    authenticator = stauth.Authenticate(
+        auth_config['credentials'],
+        auth_config['cookie']['name'],
+        auth_config['cookie']['key'],
+        auth_config['cookie']['expiry_days'],
+    )
+
+    authenticator.login()
+
+    if st.session_state.get('authentication_status') is None:
+        st.info('Veuillez vous connecter pour accéder au dashboard.')
+        return
+    if st.session_state.get('authentication_status') is False:
+        st.error('Identifiants incorrects.')
+        return
+
     # --- Sidebar ---
+    authenticator.logout('Déconnexion', 'sidebar')
     st.sidebar.markdown(
         '<div role="banner" aria-label="Thumalien Intelligence Center" style="text-align:center;padding:12px 0;">'
         '<span style="font-size:1.4rem;letter-spacing:4px;color:#00D4FF;font-weight:300;">'

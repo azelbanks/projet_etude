@@ -18,3 +18,10 @@ scipy==1.17.0
 joblib==1.5.2
 shap==0.51.0
 openpyxl
+fastapi==0.115.12
+uvicorn==0.34.3
+httpx==0.28.1
+pytest>=8.0
+pytest-cov>=7.0
+streamlit-authenticator>=0.4.0
+pyyaml
