@@ -430,6 +430,124 @@ Toute tache sur le chemin critique qui prend du retard retarde la livraison fina
 
 ---
 
+## 9. Planning previsionnel vs reel
+
+### 9.1 Tableau comparatif des jalons
+
+| # | Jalon | Date prevue | Date reelle | Delta | Statut |
+|---|-------|:-----------:|:-----------:|:-----:|--------|
+| J1 | Setup infrastructure (Docker, Git, MongoDB) | Dec 2025 | Dec 2025 | 0 | A l'heure |
+| J2 | Collecte donnees operationnelle | Jan 2026 | Jan 2026 | 0 | A l'heure |
+| J3 | V1 Pipeline NLP (Baseline) | Fev 2026 | Jan 2026 | **-1 mois** | En avance |
+| J4 | Dashboard V1 | Fev 2026 | Fev 2026 | 0 | A l'heure |
+| J5 | GridSearch hyperparametres | Mar 2026 | Mar 2026 | 0 | A l'heure |
+| J6 | Datasets sociaux integres | Mar 2026 | Mar 2026 | 0 | A l'heure |
+| J7 | Gold Test Set V1 | Mar 2026 | Mar 2026 | 0 | A l'heure |
+| J8 | V3-V5 corrections pipeline | Avr 2026 | Avr 2026 | 0 | A l'heure |
+| J9 | V6 Style-Only (topic-agnostic) | Non prevu | Avr 2026 | -- | Emergent |
+| J10 | V7-V8 Meta-learners (ensemble) | Non prevu | Avr 2026 | -- | Emergent |
+| J11 | Annotation 500 posts (2 annotateurs) | Avr 2026 | Avr 2026 | 0 | A l'heure |
+| J12 | CamemBERT fine-tuning (FR) | Mai 2026 | Avr 2026 | **-1 mois** | En avance |
+| J13 | RoBERTa EN fine-tuning | Non prevu | Avr 2026 | -- | Emergent |
+| J14 | V8 Meta-learner CamemBERT | Non prevu | Avr 2026 | -- | Emergent |
+| J15 | V9 Pipeline Cascade fait/opinion | Mai 2026 | Mai 2026 | 0 | A l'heure |
+| J16 | Documentation finale | Mai 2026 | Mai 2026 | 0 | A l'heure |
+
+### 9.2 Diagramme Gantt previsionnel vs reel
+
+```mermaid
+gantt
+    title Planning previsionnel vs reel - Projet Thumalien
+    dateFormat YYYY-MM-DD
+    axisFormat %b %Y
+    todayMarker off
+
+    section J1 Setup
+    Prevu                          :done, j1p, 2025-12-01, 2025-12-31
+    Reel                           :done, j1r, 2025-12-01, 2025-12-31
+
+    section J2 Collecte
+    Prevu                          :done, j2p, 2026-01-01, 2026-01-31
+    Reel                           :done, j2r, 2026-01-01, 2026-01-31
+
+    section J3 V1 Pipeline
+    Prevu                          :done, j3p, 2026-02-01, 2026-02-28
+    Reel (en avance)               :done, crit, j3r, 2026-01-10, 2026-01-31
+
+    section J4 Dashboard V1
+    Prevu                          :done, j4p, 2026-02-01, 2026-02-28
+    Reel                           :done, j4r, 2026-02-01, 2026-02-28
+
+    section J5 GridSearch
+    Prevu                          :done, j5p, 2026-03-01, 2026-03-31
+    Reel                           :done, j5r, 2026-03-01, 2026-03-31
+
+    section J6 Datasets sociaux
+    Prevu                          :done, j6p, 2026-03-01, 2026-03-31
+    Reel                           :done, j6r, 2026-03-01, 2026-03-31
+
+    section J7 Gold Test Set
+    Prevu                          :done, j7p, 2026-03-01, 2026-03-31
+    Reel                           :done, j7r, 2026-03-01, 2026-03-31
+
+    section J8 V3-V5 corrections
+    Prevu                          :done, j8p, 2026-04-01, 2026-04-30
+    Reel                           :done, j8r, 2026-04-01, 2026-04-30
+
+    section J9 V6 Style-Only
+    Reel (emergent)                :done, crit, j9r, 2026-04-15, 2026-04-22
+
+    section J10 V7-V8 Meta-learners
+    Reel (emergent)                :done, crit, j10r, 2026-04-22, 2026-04-28
+
+    section J11 Annotation 500
+    Prevu                          :done, j11p, 2026-04-01, 2026-04-30
+    Reel                           :done, j11r, 2026-04-15, 2026-04-28
+
+    section J12 CamemBERT
+    Prevu                          :done, j12p, 2026-05-01, 2026-05-31
+    Reel (en avance)               :done, crit, j12r, 2026-04-05, 2026-04-16
+
+    section J13 RoBERTa EN
+    Reel (emergent)                :done, crit, j13r, 2026-04-12, 2026-04-22
+
+    section J14 V8 Meta CamemBERT
+    Reel (emergent)                :done, crit, j14r, 2026-04-22, 2026-04-28
+
+    section J15 V9 Cascade
+    Prevu                          :done, j15p, 2026-05-01, 2026-05-31
+    Reel                           :done, j15r, 2026-04-28, 2026-05-05
+
+    section J16 Documentation
+    Prevu                          :done, j16p, 2026-05-01, 2026-05-31
+    Reel                           :done, j16r, 2026-05-01, 2026-05-15
+```
+
+### 9.3 Analyse des ecarts
+
+**Synthese globale** : sur 16 jalons identifies a posteriori, 10 ont ete livres a l'heure, 2 en avance et 4 sont des jalons emergents non prevus dans la planification initiale. Aucun retard significatif n'a ete constate sur l'ensemble du projet.
+
+**Jalons en avance :**
+
+- **J3 - V1 Pipeline NLP** (-1 mois) : la baseline TF-IDF + Logistic Regression s'est revelee plus rapide a implementer que prevu. Le travail preparatoire d'infrastructure (Docker, MongoDB) realise en decembre a permis de demarrer le pipeline des janvier au lieu de fevrier.
+- **J12 - CamemBERT** (-1 mois) : initialement prevu pour mai, le fine-tuning CamemBERT a pu etre lance des debut avril grace a l'avance accumulee sur le pipeline classique (V5 finalisee mi-avril) et a la disponibilite des donnees sociales annotees.
+
+**Jalons emergents (non prevus) :**
+
+- **J9 - V6 Style-Only** : approche topic-agnostic basee sur 28 features stylistiques pures, emergee de l'analyse du gold test set qui a revele une dependance au sujet dans les versions precedentes.
+- **J10 - V7/V8 Meta-learners** : combinaisons ensemblistes des modeles V5, V6 et CamemBERT, motivees par la complementarite observee entre les approches lexicale, stylistique et transformer.
+- **J13 - RoBERTa EN** : ajout d'un modele anglophone pour completer CamemBERT, en reponse au besoin bilingue identifie dans le gold test set.
+- **J14 - V8 Meta CamemBERT** : meta-learner integrant CamemBERT, consequence directe de la disponibilite anticipee de ce modele.
+
+**Facteurs explicatifs :**
+
+1. **Approche agile iterative** : l'evaluation systematique sur le gold test set (V1 puis V2 avec 500 posts et 2 annotateurs) a permis d'identifier les faiblesses de chaque version et d'orienter les iterations suivantes de maniere empirique plutot que planifiee.
+2. **Parallelisation efficace** : les taches non-critiques (dashboard, documentation) ont ete menees en parallele du chemin critique NLP, absorbant les temps morts.
+3. **Pas de retard majeur** : l'absence de blocages techniques (API Bluesky stable, convergence rapide des modeles) a permis de maintenir le planning, voire de prendre de l'avance.
+4. **Scope creep positif** : les 4 jalons emergents representent un enrichissement du perimetre sans impact sur la deadline, rendu possible par l'avance accumulee sur les jalons planifies.
+
+---
+
 *Document valide par l'equipe projet - Mai 2026*
 *Reference : PLAN-THUM-2026-001 - Version 2.0*
 *Deadline de livraison : 19 mai 2026*

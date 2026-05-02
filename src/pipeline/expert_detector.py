@@ -37,7 +37,7 @@ import torch.nn as nn
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
-from sklearn.ensemble import GradientBoostingClassifier, VotingClassifier
+from sklearn.ensemble import VotingClassifier
 from sklearn.model_selection import (
     StratifiedKFold,
     cross_validate,
@@ -51,7 +51,6 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
-    roc_curve,
 )
 from sklearn.calibration import CalibratedClassifierCV
 from scipy.sparse import hstack
