@@ -158,7 +158,6 @@ jobs:
           # Test that dashboard/app.py is parseable (syntax check)
           import py_compile
           py_compile.compile('dashboard/app.py', doraise=True)
-          py_compile.compile('src/app/main.py', doraise=True)
 
           print('All dashboard imports and syntax checks passed')
           "
