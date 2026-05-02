@@ -12,13 +12,17 @@ Solution : Pipeline en cascade :
   Etape 2 — V5 standard sur les posts factuels uniquement
 
 Resultats (sur 500 posts, annotateur 1) :
-  - V5 seul :     Acc=0.588, F1_suspect=0.156, FP=201, kappa=0.076
-  - Cascade :     Acc=0.938, F1_suspect=0.244, FP=12,  kappa=0.213
+  - V5 seul :     Acc=0.588, F1_suspect=0.156, FP=201, kappa=0.076, AC1=0.347
+  - Cascade :     Acc=0.938, F1_suspect=0.244, FP=12,  kappa=0.213, AC1=0.802
 
 Resultats (sur 473 posts, consensus 2 annotateurs) :
   - V5 seul :     Acc=0.603, F1_suspect=0.121, FP=186, kappa=0.066
   - Cascade :     Acc=0.858, F1_suspect=0.230, FP=62,  kappa=0.187
   - Reduction FP : -67% (186 → 62)
+
+Note : Le kappa est artificiellement supprime par le paradoxe de prevalence
+(seulement 4.8% de suspects). Le Gwet's AC1, insensible a ce biais, montre
+que la cascade atteint un accord de 0.802 (bon) vs 0.347 (faible) pour V5.
 
 Auteur : Thumalien Team
 """
@@ -38,6 +42,17 @@ from sklearn.metrics import (f1_score, accuracy_score, confusion_matrix,
                              cohen_kappa_score, classification_report)
 from sklearn.pipeline import Pipeline
 from scipy.stats import fisher_exact
+
+
+def gwet_ac1(y_true, y_pred):
+    """Gwet's AC1 — robust alternative to Cohen's kappa for imbalanced data.
+    Unlike kappa, AC1 is not suppressed by low prevalence (prevalence paradox)."""
+    n = len(y_true)
+    po = np.mean(np.array(y_true) == np.array(y_pred))
+    pi_0 = (np.sum(np.array(y_true) == 0) + np.sum(np.array(y_pred) == 0)) / (2 * n)
+    pi_1 = 1 - pi_0
+    pe = 2 * pi_0 * pi_1
+    return (po - pe) / (1 - pe) if pe < 1 else 0
 import joblib
 
 _proj = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -204,7 +219,8 @@ for th in np.arange(0.10, 0.90, 0.05):
     fp = cm[0, 1]
     fn = cm[1, 0] if cm.shape[0] > 1 else human_labels.sum()
 
-    results.append({'th': th, 'acc': acc, 'f1m': f1m, 'f1s': f1s, 'fp': fp, 'fn': fn, 'kappa': kappa})
+    ac1 = gwet_ac1(human_labels, cascade)
+    results.append({'th': th, 'acc': acc, 'f1m': f1m, 'f1s': f1s, 'fp': fp, 'fn': fn, 'kappa': kappa, 'ac1': ac1})
     if f1m > best_f1:
         best_f1 = f1m
         best_th = th
@@ -212,8 +228,8 @@ for th in np.arange(0.10, 0.90, 0.05):
 df_results = pd.DataFrame(results)
 
 # Final comparison
-print(f"\n  {'Methode':<30s} {'Acc':>6s} {'F1mac':>6s} {'F1sus':>6s} {'FP':>5s} {'FN':>5s} {'kappa':>6s}")
-print(f"  {'-'*65}")
+print(f"\n  {'Methode':<30s} {'Acc':>6s} {'F1mac':>6s} {'F1sus':>6s} {'FP':>5s} {'FN':>5s} {'kappa':>6s} {'AC1':>6s}")
+print(f"  {'-'*73}")
 
 for name, pred in [
     ('V5 seul (baseline)', v5_labels),
@@ -222,14 +238,15 @@ for name, pred in [
     f1m = f1_score(human_labels, pred, average='macro')
     f1s = f1_score(human_labels, pred, pos_label=1, zero_division=0)
     kappa = cohen_kappa_score(human_labels, pred)
+    ac1 = gwet_ac1(human_labels, pred)
     cm = confusion_matrix(human_labels, pred)
     fp = cm[0, 1]
     fn = cm[1, 0]
-    print(f"  {name:<30s} {acc:>6.3f} {f1m:>6.3f} {f1s:>6.3f} {fp:>5d} {fn:>5d} {kappa:>6.3f}")
+    print(f"  {name:<30s} {acc:>6.3f} {f1m:>6.3f} {f1s:>6.3f} {fp:>5d} {fn:>5d} {kappa:>6.3f} {ac1:>6.3f}")
 
 # Cascade at best threshold
 best_row = df_results[df_results['th'] == best_th].iloc[0]
-print(f"  {'Cascade (seuil=' + f'{best_th:.2f})':<30s} {best_row['acc']:>6.3f} {best_row['f1m']:>6.3f} {best_row['f1s']:>6.3f} {best_row['fp']:>5.0f} {best_row['fn']:>5.0f} {best_row['kappa']:>6.3f}")
+print(f"  {'Cascade (seuil=' + f'{best_th:.2f})':<30s} {best_row['acc']:>6.3f} {best_row['f1m']:>6.3f} {best_row['f1s']:>6.3f} {best_row['fp']:>5.0f} {best_row['fn']:>5.0f} {best_row['kappa']:>6.3f} {best_row['ac1']:>6.3f}")
 
 # Reduction
 baseline_fp = ((v5_labels == 1) & (human_labels == 0)).sum()
