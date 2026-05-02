@@ -1,13 +1,16 @@
 .env
 .env.*
 data/db/
+backups/
 logs/
 __pycache__/
 *.pyc
 .git/
+.github/
 .Trash-0/
 emissions.csv*
 models/*.pt
 models/*.pkl
 notebooks/*.ipynb
+docs/pdf/
 *.bak

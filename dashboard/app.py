@@ -826,22 +826,24 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
             verdict_text = 'FIABLE' if is_fiable else 'SUSPECT'
             verdict_color = '#00E676' if is_fiable else '#FF1744'
             verdict_icon = '' if is_fiable else ''
+            safe_lang = html.escape(str(lang).upper())
             st.markdown(
                 f'<div class="{css_class}" role="status" aria-live="polite" aria-label="Verdict: {verdict_text}">'
                 f'<div style="font-size:2.5rem;" aria-hidden="true">{verdict_icon}</div>'
                 f'<div style="font-size:1.8rem;font-weight:700;color:{verdict_color};margin-top:8px;">{verdict_text}</div>'
-                f'<div style="margin-top:12px;color:#B0B0B0;">Langue : {lang.upper()}</div>'
+                f'<div style="margin-top:12px;color:#B0B0B0;">Langue : {safe_lang}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
 
         with c3:
             emoji = EMOTION_EMOJIS.get(dominant_emotion, '')
+            safe_emotion = html.escape(str(EMOTION_DISPLAY.get(dominant_emotion, dominant_emotion)))
             st.markdown(
-                f'<div class="glass-card" role="status" aria-live="polite" aria-label="Emotion dominante: {EMOTION_DISPLAY[dominant_emotion]} ({dominant_proba:.1%})" style="text-align:center;">'
+                f'<div class="glass-card" role="status" aria-live="polite" aria-label="Emotion dominante: {safe_emotion} ({dominant_proba:.1%})" style="text-align:center;">'
                 f'<div style="font-size:2.5rem;" aria-hidden="true">{emoji}</div>'
                 f'<div style="font-size:1.4rem;font-weight:600;color:#00D4FF;margin-top:8px;">'
-                f'{EMOTION_DISPLAY[dominant_emotion]}</div>'
+                f'{safe_emotion}</div>'
                 f'<div style="margin-top:8px;color:#B0B0B0;">{dominant_proba:.1%}</div>'
                 '<div class="metric-label">Émotion dominante</div>'
                 '</div>',

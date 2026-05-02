@@ -896,7 +896,7 @@ class EmotionFeatureExtractor:
     """
 
     VOCAB_SIZE = 25000
-    MAX_LENGTH = 60
+    MAX_LENGTH = 100
     EMBED_DIM = 64
     NUM_CLASSES = 7
 
@@ -928,12 +928,17 @@ class EmotionFeatureExtractor:
         with open(le_path, 'rb') as f:
             self.label_encoder = pickle.load(f)
 
-        self.model = _EmotionMLP(
-            self.VOCAB_SIZE, self.EMBED_DIM, self.NUM_CLASSES
-        ).to(self.device)
-        self.model.load_state_dict(
-            torch.load(pt_path, map_location=self.device, weights_only=True)
-        )
+        cp = torch.load(pt_path, map_location=self.device, weights_only=True)
+        if isinstance(cp, dict) and 'model_state_dict' in cp:
+            sd = cp['model_state_dict']
+            self.MAX_LENGTH = cp.get('max_len', 100)
+        else:
+            sd = cp
+        vs = sd['embedding.weight'].shape[0]
+        ed = sd['embedding.weight'].shape[1]
+        nc = sd['fc3.weight'].shape[0]
+        self.model = _EmotionMLP(vs, ed, nc).to(self.device)
+        self.model.load_state_dict(sd)
         self.model.eval()
         self._loaded = True
         logger.info("Modèle émotions chargé : %s", pt_path)
@@ -954,7 +959,7 @@ class EmotionFeatureExtractor:
         if not self._loaded:
             raise RuntimeError("Modèle émotions non chargé. Appelez load() d'abord.")
 
-        oov_idx = self.vocab['<OOV>']
+        oov_idx = self.vocab.get('<OOV>', self.vocab.get('<UNK>', 1))
         sequences = []
         for text in texts:
             tokens = str(text).lower().split()
