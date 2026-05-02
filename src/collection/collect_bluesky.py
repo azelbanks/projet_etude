@@ -127,19 +127,20 @@ def connect_db():
     else:
         uri = f"mongodb://{MONGO_HOST}:27017/"
     print(f"🔌 Connexion à MongoDB : {MONGO_HOST} (auth={'oui' if MONGO_USER else 'non'})")
+    MAX_RETRIES = 20
     retries = 0
-    while True:
+    while retries < MAX_RETRIES:
         try:
             client = MongoClient(uri, serverSelectionTimeoutMS=5000)
             client.admin.command('ping')
             print(f"✅ MongoDB connecté (Database: thumalien_db)!")
-            # On retourne la collection
             return client['thumalien_db']['raw_posts']
         except Exception as e:
             wait = 5 * (retries + 1)
-            print(f"⏳ Base de données indisponible. Nouvelle tentative dans {wait}s... ({e})")
-            time.sleep(wait)
             retries += 1
+            print(f"⏳ Base de données indisponible. Tentative {retries}/{MAX_RETRIES} dans {wait}s... ({e})")
+            time.sleep(wait)
+    raise ConnectionError(f"MongoDB inaccessible après {MAX_RETRIES} tentatives")
 
 def get_bluesky_client():
     try:
@@ -329,7 +330,7 @@ def _load_inference_models():
             _emotion_le = _pickle.load(f)
 
         cp = torch.load(os.path.join(model_dir, 'emotion_bilingual.pt'),
-                        map_location='cpu', weights_only=False)
+                        map_location='cpu', weights_only=True)
         if isinstance(cp, dict) and 'model_state_dict' in cp:
             sd = cp['model_state_dict']
             _emotion_max_len = cp.get('max_len', 100)

@@ -88,7 +88,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "8501:8501"
+      - "127.0.0.1:8501:8501"
     networks:
       - thumalien_network
 
