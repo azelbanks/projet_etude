@@ -26,3 +26,22 @@ def sample_texts():
 def model_dir():
     """Path to the models directory."""
     return os.path.join(os.path.dirname(__file__), '..', 'models')
+
+
+# ---------------------------------------------------------------------------
+#  Visibility for skipped tests (model-dependent)
+# ---------------------------------------------------------------------------
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """Print a visible warning when model-dependent tests are skipped."""
+    skipped = terminalreporter.stats.get("skipped", [])
+    model_skipped = [s for s in skipped if "Model files not found" in str(getattr(s, 'longrepr', ''))]
+    if model_skipped:
+        terminalreporter.write_sep("!", "ATTENTION: tests ignores (modeles absents)")
+        terminalreporter.write_line(
+            f"  {len(model_skipped)} tests ont ete ignores car les fichiers modeles"
+            f" ne sont pas presents dans models/."
+        )
+        terminalreporter.write_line(
+            "  Pour les executer : assurez-vous que model_expert_v5.pkl est present."
+        )

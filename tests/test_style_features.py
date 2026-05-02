@@ -53,3 +53,28 @@ class TestStyleFeatureExtractorV6:
         result = StyleFeatureExtractorV6.extract(sample_texts)
         assert not np.isnan(result).any(), "Feature matrix contains NaN values"
         assert np.isfinite(result).all(), "Feature matrix contains non-finite values"
+
+    def test_suspect_vs_fiable_features_differ(self):
+        """Suspect and fiable texts should produce measurably different features."""
+        suspect = pd.Series(["BREAKING: EXPOSED!!! Government LIES about VACCINES!!! Share NOW!!!"])
+        fiable = pd.Series(["The central bank published its quarterly economic report today."])
+        feat_s = StyleFeatureExtractorV6.extract(suspect)
+        feat_f = StyleFeatureExtractorV6.extract(fiable)
+        # Suspect should have higher sensationalism, more caps, more punctuation
+        sens_idx = StyleFeatureExtractorV6.FEATURE_NAMES.index('sensationalism_score')
+        caps_idx = StyleFeatureExtractorV6.FEATURE_NAMES.index('all_caps_words_ratio')
+        assert feat_s[0, sens_idx] > feat_f[0, sens_idx], "Suspect should have higher sensationalism"
+        assert feat_s[0, caps_idx] > feat_f[0, caps_idx], "Suspect should have more caps"
+
+    def test_empty_text_handled(self):
+        """Empty text should produce features without crashing."""
+        texts = pd.Series(["", "   "])
+        result = StyleFeatureExtractorV6.extract(texts)
+        assert result.shape == (2, 28)
+        assert np.isfinite(result).all()
+
+    def test_feature_names_match_output(self):
+        """FEATURE_NAMES list should match the number of extracted features."""
+        texts = pd.Series(["Test text"])
+        result = StyleFeatureExtractorV6.extract(texts)
+        assert len(StyleFeatureExtractorV6.FEATURE_NAMES) == result.shape[1]

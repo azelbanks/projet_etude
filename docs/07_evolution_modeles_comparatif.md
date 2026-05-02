@@ -718,7 +718,7 @@ Cette section a ete revisee par analyse critique des axes reellement implementab
 | 2 | ~~Re-fine-tune CamemBERT V2 (P2)~~ | **FAIT** | ~~Dataset synthetique~~ | **F1 FR court 0.957, test 9/10 (vs 3/6)** |
 | 3 | ~~Seuil adaptatif par langue (P3)~~ | **FAIT** | ~~V5~~ | **Non significatif (+0.17% F1), seuil 0.44 conserve** |
 | 4 | ~~Pipeline hybride stacking (P1)~~ | **FAIT** | ~~V5 + CamemBERT V2~~ | **F1 FR +0.52%, FR court 15-30 +1.49%** |
-| 5 | ~~RoBERTa EN V1 (P4)~~ | **FAIT** | ~~Infrastructure CamemBERT~~ | **F1 EN ultra-court 0.838 (+8.2%), test 6/10** |
+| 5 | ~~RoBERTa EN V1 (P4)~~ | **FAIT** | ~~Infrastructure CamemBERT~~ | **F1 EN ultra-court 0.838 (+8.2% vs V5 TF-IDF), test 6/10** |
 | 6 | ~~RoBERTa EN V2 (+10K EN social)~~ | **FAIT** | ~~Dataset EN synthetique~~ | **F1 EN ultra-court 0.874 (+4.3%), test 16/18** |
 | 7 | Integration features Bluesky (source, viralite) | 2 semaines | Acces API Bluesky | Reduction faux positifs |
 

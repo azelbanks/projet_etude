@@ -32,7 +32,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - Configuration MongoDB avec index unique et volumes persistants
 - Rééquilibrage FR/EN de la collecte (V3 collecteur : 28 termes FR + 16 termes EN, suppression des biais émotionnels)
 - Inférence automatique intégrée au collecteur (émotions + V5 à chaque cycle)
-- **Résultat** : 239 000+ posts collectés depuis décembre 2025, 100% annotés émotionnellement
+- **Résultat** : 245 000+ posts collectés depuis décembre 2025 (collecte continue), 100% annotés émotionnellement
 
 ### 2.2 Pipeline NLP (Jan - Avril 2026)
 - Baseline V1.0 : TF-IDF + LogisticRegression (F1=0.99, identifié le biais Reuters)
@@ -87,7 +87,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - Intégration complète dans le dashboard Streamlit
 
 ### 2.9 Tests et qualité (Mai 2026)
-- Suite de 94 tests unitaires et d'intégration (pytest) couvrant 26% du code source
+- Suite de 107 tests unitaires et d'intégration (pytest) couvrant 26% du code source
 - Tests des modules critiques : collecteur (validation texte, détection langue), pipeline NLP (features linguistiques, features stylistiques V6, détecteur expert V5), CamemBERT (architecture réseau, dataset PyTorch), MongoDB (agrégations, requêtes), monitoring (scoring, rapports)
 - Benchmark de latence automatisé : 1.5 ms/texte (728 textes/sec), 66x sous l'exigence CDC (100 ms)
 - Tests d'intégration bilingues, edge cases (textes vides, emojis, textes longs, caractères spéciaux)
@@ -150,7 +150,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - SHAP apporte une transparence complète sur les raisons de chaque prédiction
 
 ### Ce que j'aurais fait différemment
-- **Tests unitaires dès le début** : le bug des 5 features nulles (V2→V3) aurait été détecté immédiatement avec des tests de non-régression. La suite de tests (94 tests, 26% coverage) a été ajoutée tardivement mais reste un acquis méthodologique important.
+- **Tests unitaires dès le début** : le bug des 5 features nulles (V2→V3) aurait été détecté immédiatement avec des tests de non-régression. La suite de tests (107 tests, 26% coverage) a été ajoutée tardivement mais reste un acquis méthodologique important.
 - **MLflow pour le tracking** : les 28 notebooks documentent chaque expérience, mais un outil dédié (MLflow, W&B) aurait permis un suivi plus systématique des hyperparamètres et des métriques.
 - **Annotation humaine plus précoce** : le gold test set a révélé un écart majeur entre la performance en cross-validation (F1=0.90) et la performance réelle sur Bluesky. Cette prise de conscience, arrivée tardivement, a motivé les itérations V6-V9.
 - **Répartition de la charge** : en tant que lead technique, j'ai centralisé trop de responsabilités. Déléguer certains modules (dashboard, documentation) plus tôt aurait accéléré le projet.
@@ -166,7 +166,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 
 ## 6. Bilan personnel
 
-Ce projet représente 6 mois de travail intensif sur un problème complexe et ouvert : la détection de désinformation sur les réseaux sociaux. En tant que lead technique, j'ai mené un projet Data/IA de bout en bout — de la collecte de 239 000+ posts Bluesky au déploiement d'un dashboard interactif, en passant par 9 itérations du pipeline NLP.
+Ce projet représente 6 mois de travail intensif sur un problème complexe et ouvert : la détection de désinformation sur les réseaux sociaux. En tant que lead technique, j'ai mené un projet Data/IA de bout en bout — de la collecte de 245 000+ posts Bluesky au déploiement d'un dashboard interactif, en passant par 9 itérations du pipeline NLP.
 
 Les apprentissages clés :
 - **L'évaluation est plus importante que l'entraînement** : un F1=0.99 en cross-validation masquait un biais Reuters. Le gold test set a été un tournant dans ma compréhension de l'évaluation des modèles.

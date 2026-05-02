@@ -1,0 +1,27 @@
+{
+  "production": {
+    "pipeline_version": "V9",
+    "v5_model": "model_expert_v5.pkl",
+    "v5_tfidf": "tfidf_expert_v5.pkl",
+    "v5_threshold": 0.44,
+    "v6_model": "model_style_v6.joblib",
+    "v7_model": "model_hybrid_v7.joblib",
+    "v8_model": "model_hybrid_v8.joblib",
+    "stage1_model": "stage1_fact_opinion.joblib",
+    "stage1_threshold": 0.40,
+    "emotion_model": "emotion_bilingual.pt",
+    "camembert_model": "camembert_best.pt"
+  },
+  "thresholds": {
+    "v5_default": 0.44,
+    "stage1_fact_opinion": 0.40,
+    "v7_fallback": 0.42,
+    "adaptive_short_15": 0.54,
+    "adaptive_short_30": 0.49
+  },
+  "metadata": {
+    "training_data_size": 197782,
+    "languages": ["fr", "en"],
+    "last_updated": "2026-05-02"
+  }
+}

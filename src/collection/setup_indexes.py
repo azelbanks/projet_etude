@@ -64,6 +64,14 @@ def setup_indexes(db):
     name = col.create_index([("text", TEXT)], name="idx_text_fulltext")
     print(f"  Index cree : {name}  (text, full-text)")
 
+    # 7. TTL index on collected_at — automatic deletion after 12 months (RGPD data retention)
+    name = col.create_index(
+        [("collected_at", ASCENDING)],
+        expireAfterSeconds=31536000,
+        name="idx_collected_at_ttl_12months",
+    )
+    print(f"  Index cree : {name}  (collected_at TTL 365 jours)")
+
     print("Tous les index ont ete crees avec succes.")
 
 

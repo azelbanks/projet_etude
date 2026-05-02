@@ -87,7 +87,7 @@ THUMALIEN - Projet Etude M1
 |   |-- T11.2 : Dashboard V5 (5 pages, accents, Performance)
 |
 |-- WP12 : Tests & Qualite (Mai 2026)
-|   |-- T12.1 : Tests unitaires (94 tests, 26% coverage)
+|   |-- T12.1 : Tests unitaires (107 tests, 26% coverage)
 |   |-- T12.2 : Benchmark latence (1.5ms/texte)
 |   |-- T12.3 : Tests d'integration pipeline
 |
@@ -225,7 +225,7 @@ WP13 Video MVP                 |         |         |         |         |        
 | 28/04/2026 | J20 - Collecteur V3 | Reeequilibrage FR/EN + inference auto | Azelie |
 | 02/05/2026 | J21 - V9 Cascade fait/opinion | FP -67%, Fisher p=0.0005 | Azelie |
 | 05/05/2026 | J22 - Dashboard V5 | 5 pages, accents FR, page Performance | Azelie |
-| 08/05/2026 | J23 - Tests & Benchmark | 94 tests, 1.5ms/texte, 728 textes/sec | Azelie |
+| 08/05/2026 | J23 - Tests & Benchmark | 107 tests, 1.5ms/texte, 728 textes/sec | Azelie |
 | 12/05/2026 | J24 - Documentation finale | Rapport, planification, rendus individuels | Azelie |
 | 15/05/2026 | J25 - Video MVP | Video 15-20 min face-cam + dossier | Azelie + Sebastien |
 | **19/05/2026** | **DEADLINE** | **Livraison finale — dossier + video + code** | **Equipe** |
