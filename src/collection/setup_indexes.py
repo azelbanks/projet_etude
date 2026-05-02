@@ -9,6 +9,7 @@ Environment variables (optional, falls back to no-auth local connection):
 """
 
 import os
+from urllib.parse import quote_plus
 from pymongo import MongoClient, DESCENDING, ASCENDING, TEXT
 from dotenv import load_dotenv
 
@@ -22,7 +23,7 @@ def connect_db():
     host = os.getenv("MONGO_HOST", "localhost")
 
     if user and password:
-        uri = f"mongodb://{user}:{password}@{host}:27017/"
+        uri = f"mongodb://{quote_plus(user)}:{quote_plus(password)}@{host}:27017/"
     else:
         uri = f"mongodb://{host}:27017/"
 
