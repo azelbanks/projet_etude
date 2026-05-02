@@ -64,6 +64,11 @@ Le projet Thumalien suit une methodologie **Agile adaptee aux projets Data/IA**,
 | **V3** | Mars 2026 | Correction features linguistiques (bug preprocessing) | F1 = 0.900, Precision +19.3% |
 | **V4** | Avril 2026 | Amelioration FR court : augmentation, 15 features, vocabulaire enrichi | F1 global = 0.905, FR court F1 = 0.86 (+32%) |
 | **V5** | Avril 2026 | Integration 10K posts FR sociaux synthetiques, F1 FR court 0.65->0.90 | F1 global = 0.913, F1 FR = 0.944, FR court F1 = 0.904, F1 EN = 0.894 |
+| **V6** | Avril 2026 | Modele style-only topic-agnostic (28 features stylistiques) | GradientBoosting CV F1 = 0.830 |
+| **V7** | Avril 2026 | Ensemble hybride meta-learner V5+V6 + SHAP | FP reduits de 57 a 25 sur gold set |
+| **V8** | Avril 2026 | Integration CamemBERT comme 3e signal semantique | F1 suspect +28% |
+| **V9** | Mai 2026 | Pipeline 2 etapes fait/opinion | FP -67% (186 a 62), kappa 0.187 |
+| **Collecteur V3** | Mai 2026 | Reequilibrage FR/EN (28 FR + 16 EN), suppression biais emotionnel, inference auto | 237 000+ posts, 100% annotes |
 
 ---
 
@@ -371,6 +376,12 @@ Tout changement significatif (nouveau dataset, modification d'architecture, chan
 | Avril 2026 | Integration 10K posts FR sociaux synthetiques (V5) | FR court F1=0.86 encore insuffisant, dataset FR sous-represente | F1 global=0.913, FR court F1=0.904, FR=0.944, EN=0.894, dataset 197 782 textes (FR=86K/43.5%, EN=112K/56.5%) |
 | Fev 2026 | Seuil 0.44 (vs 0.50) | Calibration pour textes courts | +7 points de fiabilite Bluesky |
 | Mars 2026 | Dashboard glassmorphism | Amelioration UX/UI | Dashboard professionnel |
+| Avril 2026 | V6 style-only topic-agnostic | Biais thematique detecte sur gold set | FP reduits, approche complementaire |
+| Avril 2026 | V7 ensemble hybride + SHAP | Combiner V5+V6 avec explicabilite | Meta-learner, transparence totale |
+| Avril 2026 | V8 integration CamemBERT | 3e signal semantique pour le francais | F1 suspect +28% |
+| Mai 2026 | V9 pipeline 2 etapes fait/opinion | Distinction fait/opinion comme facteur discriminant | FP -67%, kappa 3x |
+| Mai 2026 | Reequilibrage collecte (V3 collecteur) | Biais emotionnel (75% joie) et desequilibre FR/EN (87.5% EN) | 28 termes FR + 16 EN, inference auto |
+| Mai 2026 | Refactoring Docker professionnel | Architecture non robuste (pas de healthcheck, demarrage non ordonne) | Healthchecks, depends_on conditionnel, PYTHONPATH unifie |
 
 ---
 

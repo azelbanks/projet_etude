@@ -238,13 +238,23 @@ def run_collection_cycle(collection, client, monitor=None):
                     if monitor:
                         monitor.record_keyword(kw, lang, added=0, duplicates=0)
 
-                # Petit délai aléatoire pour simuler un comportement humain (Anti-Bot)
-                time.sleep(random.uniform(0.5, 1.5))
+                # Délai aléatoire entre requêtes (respect rate limit API)
+                time.sleep(random.uniform(1.0, 2.5))
 
             except Exception as e:
+                err_str = str(e).lower()
                 print(f"⚠️ Erreur sur '{kw}' ({lang}): {e}")
                 if monitor:
                     monitor.record_keyword(kw, lang, errors=1, error_msg=e)
+
+                # Rate limit détecté : backoff progressif
+                if '429' in err_str or 'rate' in err_str or 'too many' in err_str:
+                    wait = random.uniform(30, 60)
+                    print(f"   ⏳ Rate limit détecté — pause {wait:.0f}s")
+                    time.sleep(wait)
+                else:
+                    # Erreur réseau ou autre : petite pause de sécurité
+                    time.sleep(random.uniform(3, 5))
 
     print(f"📦 Cycle terminé. {total_new} documents traités/ajoutés.")
     if monitor:
@@ -261,6 +271,8 @@ _emotion_le = None
 _emotion_max_len = 100
 _detector = None
 _emo_extractor = None
+_stage1_pipe = None
+_stage1_threshold = 0.40
 
 
 def _load_inference_models():
@@ -314,7 +326,17 @@ def _load_inference_models():
         _emo_extractor = EmotionFeatureExtractor(model_dir=model_dir)
         _emo_extractor.load()
 
-        print("  Modeles d'inference charges (emotions + V5)")
+        # Stage 1 fait/opinion (V9)
+        global _stage1_pipe, _stage1_threshold
+        import joblib as _joblib
+        s1_path = os.path.join(model_dir, 'stage1_fact_opinion.joblib')
+        if os.path.exists(s1_path):
+            s1_data = _joblib.load(s1_path)
+            _stage1_pipe = s1_data['pipeline']
+            _stage1_threshold = s1_data.get('threshold', 0.40)
+            print("  Modeles d'inference charges (emotions + V5 + Stage1 V9)")
+        else:
+            print("  Modeles d'inference charges (emotions + V5, Stage1 non disponible)")
         return True
     except Exception as e:
         print(f"  Modeles d'inference non disponibles: {e}")
@@ -374,21 +396,47 @@ def run_inference_cycle(collection):
         import pandas as pd
         v5_result = _detector.predict(pd.Series(texts))
 
+        # Stage 1 fait/opinion (V9)
+        post_types = [None] * len(texts)
+        post_type_probas = [None] * len(texts)
+        if _stage1_pipe is not None:
+            try:
+                s1_probas = _stage1_pipe.predict_proba(texts)
+                for i in range(len(texts)):
+                    pf = float(s1_probas[i, 1])
+                    post_type_probas[i] = round(pf, 4)
+                    post_types[i] = 'factuel' if pf >= _stage1_threshold else 'opinion'
+            except Exception:
+                pass
+
         ops = []
         for i, _id in enumerate(ids):
+            v5_label = int(v5_result['prediction_label'].iloc[i])
+
+            # V9 : opinions suspectes => reclassees fiables
+            v9_label = v5_label
+            if post_types[i] == 'opinion' and v5_label == 1:
+                v9_label = 0
+
+            update_fields = {
+                'ai_emotion': str(emo_labels[i]),
+                'ai_score_credibility': float(v5_result['ai_score_credibility'].iloc[i]),
+                'prediction_label': v5_label,
+                'ai_v9_label': v9_label,
+                'ai_language': str(v5_result['language'].iloc[i]),
+                'ai_analysis_log': str(v5_result['ai_analysis_log'].iloc[i]),
+                'ai_model_version': 'expert_v5',
+                'ai_model_name': 'ExpertFakeNewsDetector_v5',
+                'ai_processed_at': datetime.datetime.now(),
+                'ai_processed': True,
+            }
+            if post_types[i] is not None:
+                update_fields['ai_post_type'] = post_types[i]
+                update_fields['ai_post_type_proba'] = post_type_probas[i]
+
             ops.append(UpdateOne(
                 {'_id': _id},
-                {'$set': {
-                    'ai_emotion': str(emo_labels[i]),
-                    'ai_score_credibility': float(v5_result['ai_score_credibility'].iloc[i]),
-                    'prediction_label': int(v5_result['prediction_label'].iloc[i]),
-                    'ai_language': str(v5_result['language'].iloc[i]),
-                    'ai_analysis_log': str(v5_result['ai_analysis_log'].iloc[i]),
-                    'ai_model_version': 'expert_v5',
-                    'ai_model_name': 'ExpertFakeNewsDetector_v5',
-                    'ai_processed_at': datetime.datetime.now(),
-                    'ai_processed': True,
-                }}
+                {'$set': update_fields}
             ))
 
         if ops:

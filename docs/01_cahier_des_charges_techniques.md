@@ -66,7 +66,7 @@ La proliferation de la desinformation sur les reseaux sociaux constitue un enjeu
 | ID | Exigence | Priorite | Critere d'acceptation |
 |----|----------|----------|----------------------|
 | COL-01 | Le systeme doit collecter les posts publics Bluesky via l'API AT Protocol | Critique | Connexion etablie, posts recus et stockes |
-| COL-02 | La collecte doit couvrir au minimum 12 termes de recherche en francais et 12 en anglais | Haute | 24 termes configures et actifs |
+| COL-02 | La collecte doit couvrir au minimum 28 termes de recherche en francais et 16 en anglais | Haute | 44 termes configures et actifs |
 | COL-03 | Le systeme doit supporter une collecte continue (24/7) avec redemarrage automatique | Haute | Uptime > 95% sur 30 jours |
 | COL-04 | La deduplication doit empecher le stockage de posts identiques | Haute | 0 doublons sur un echantillon de 10 000 posts |
 | COL-05 | Le collecteur doit gerer les erreurs reseau avec backoff exponentiel (3 tentatives minimum) | Haute | Reprise automatique apres coupure de 5 min |

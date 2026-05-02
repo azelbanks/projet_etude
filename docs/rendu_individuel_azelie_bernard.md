@@ -30,7 +30,9 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - Mise en place de l'architecture Docker Compose (MongoDB, Jupyter, Streamlit, Collecteur)
 - Développement du collecteur Bluesky avec gestion des erreurs et déduplication
 - Configuration MongoDB avec index unique et volumes persistants
-- **Résultat** : 228 000+ posts collectés depuis décembre 2025
+- Rééquilibrage FR/EN de la collecte (V3 collecteur : 28 termes FR + 16 termes EN, suppression des biais émotionnels)
+- Inférence automatique intégrée au collecteur (émotions + V5 à chaque cycle)
+- **Résultat** : 239 000+ posts collectés depuis décembre 2025, 100% annotés émotionnellement
 
 ### 2.2 Pipeline NLP (Jan - Avril 2026)
 - Baseline V1.0 : TF-IDF + LogisticRegression (F1=0.99, identifié le biais Reuters)
@@ -53,10 +55,12 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - Fine-tuning RoBERTa EN V1/V2 pour l'anglais (F1 ultra-court = 0.874)
 - Pipeline hybride stacking V5 + CamemBERT V2
 
-### 2.4 Dashboard Streamlit (Mars 2026)
-- Design glassmorphism dark theme
-- 3 pages : vue globale, prédiction live, explicabilité
-- Radar charts, métriques temps réel, connexion MongoDB
+### 2.4 Dashboard Streamlit (Mars - Mai 2026)
+- Design glassmorphism dark theme, interface intégralement en français
+- 5 pages : Dashboard (vue globale), Analyse IA (prédiction live V9), Explorateur (posts MongoDB), Performance (métriques temps réel), À propos
+- Radar charts, distribution des scores, analyse SHAP intégrée, connexion MongoDB temps réel
+- V4 : intégration pipeline V9 cascade fait/opinion + SHAP
+- V5 : refactoring complet Plotly, accents français, page Performance avec benchmarks
 
 ### 2.5 Modèle d'émotions (Jan 2026)
 - MLP PyTorch bilingue, 7 classes d'émotions
@@ -82,6 +86,12 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - V7 Combo accuracy = 0.840 (vs 0.685 V5), FP = 25 (vs 57 V5)
 - Intégration complète dans le dashboard Streamlit
 
+### 2.9 Tests et qualité (Mai 2026)
+- Suite de 94 tests unitaires et d'intégration (pytest) couvrant 26% du code source
+- Tests des modules critiques : collecteur (validation texte, détection langue), pipeline NLP (features linguistiques, features stylistiques V6, détecteur expert V5), CamemBERT (architecture réseau, dataset PyTorch), MongoDB (agrégations, requêtes), monitoring (scoring, rapports)
+- Benchmark de latence automatisé : 1.5 ms/texte (728 textes/sec), 66x sous l'exigence CDC (100 ms)
+- Tests d'intégration bilingues, edge cases (textes vides, emojis, textes longs, caractères spéciaux)
+
 ---
 
 ## 3. Compétences mobilisées et acquises
@@ -96,11 +106,12 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 | Transformers (Hugging Face) | Débutant | Intermédiaire | CamemBERT, RoBERTa, stacking |
 | Docker / Docker Compose | Intermédiaire | Avancé | Architecture micro-services |
 | MongoDB | Débutant | Intermédiaire | Schéma, index, agrégations |
-| Streamlit | Débutant | Intermédiaire | Dashboard interactif 3 pages |
+| Streamlit | Débutant | Avancé | Dashboard interactif 5 pages, Plotly avancé |
 | Git / GitHub | Intermédiaire | Avancé | Versioning, merge, collaboration |
 | Explicabilité IA (SHAP) | Débutant | Intermédiaire | TreeExplainer, feature importance, intégration dashboard |
 | Feature Engineering avancé | Intermédiaire | Avancé | 28 features stylistiques, meta-features, stacking |
 | Ensemble Learning | Débutant | Intermédiaire | Meta-learner, stacking, GradientBoosting |
+| Tests / CI | Débutant | Intermédiaire | pytest, mocking, benchmarking, coverage |
 
 ### 3.2 Compétences transversales
 
@@ -139,24 +150,31 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - SHAP apporte une transparence complète sur les raisons de chaque prédiction
 
 ### Ce que j'aurais fait différemment
-- Commencer par des tests unitaires dès le début (le bug des features nulles aurait été détecté plus tôt)
-- Utiliser MLflow pour le tracking des expériences au lieu de notebooks individuels
-- Prévoir une stratégie d'annotation manuelle plus tôt dans le projet
-- Mieux répartir la charge de travail dans l'équipe
+- **Tests unitaires dès le début** : le bug des 5 features nulles (V2→V3) aurait été détecté immédiatement avec des tests de non-régression. La suite de tests (94 tests, 26% coverage) a été ajoutée tardivement mais reste un acquis méthodologique important.
+- **MLflow pour le tracking** : les 28 notebooks documentent chaque expérience, mais un outil dédié (MLflow, W&B) aurait permis un suivi plus systématique des hyperparamètres et des métriques.
+- **Annotation humaine plus précoce** : le gold test set a révélé un écart majeur entre la performance en cross-validation (F1=0.90) et la performance réelle sur Bluesky. Cette prise de conscience, arrivée tardivement, a motivé les itérations V6-V9.
+- **Répartition de la charge** : en tant que lead technique, j'ai centralisé trop de responsabilités. Déléguer certains modules (dashboard, documentation) plus tôt aurait accéléré le projet.
 
-### Limites identifiées
-- Le modèle reste dépendant des datasets d'entraînement (pas de fact-checking réel)
-- Le gold set consensus (473 posts, 15 suspects) reste déséquilibré
-- La distinction fait/opinion repose sur des heuristiques, pas sur des labels humains dédiés
-- Le monitoring en production est minimal (pas de Grafana/Prometheus)
+### Axes d'amélioration identifiés
+- **Fact-checking réel** : le pipeline détecte des signaux stylistiques de désinformation, mais ne vérifie pas les faits. L'intégration d'une API de fact-checking (ClaimBuster, Google Fact Check) serait un gain majeur.
+- **Gold set plus équilibré** : le consensus (473 posts, 15 suspects) est très déséquilibré. Un échantillonnage ciblé de posts suspects permettrait une évaluation plus robuste.
+- **Labels fait/opinion dédiés** : la distinction fait/opinion (V9) repose sur des heuristiques lexicales. Des labels humains explicites amélioreraient la cascade (l'oracle montre un F1 suspect potentiel de 0.545).
+- **Monitoring production** : le weekly score check (JSONL) est fonctionnel mais rudimentaire. Prometheus + Grafana permettraient des alertes temps réel et des dashboards de drift monitoring.
+- **Tests end-to-end** : les tests unitaires couvrent les composants isolés, mais un test d'intégration complet (collecte → MongoDB → inference → dashboard) validerait la chaîne complète.
 
 ---
 
 ## 6. Bilan personnel
 
-Ce projet m'a permis de mener un projet Data/IA de bout en bout, de la collecte au déploiement. J'ai particulièrement progressé en NLP et Deep Learning, domaines dans lesquels j'étais débutante en début de projet. La complexité du problème (détection de fake news dans un contexte bilingue, multi-longueur) m'a appris que les solutions simples sont souvent les meilleures (TF-IDF + features > modèle complexe mal entraîné), et que l'itération constante est la clé de l'amélioration.
+Ce projet représente 6 mois de travail intensif sur un problème complexe et ouvert : la détection de désinformation sur les réseaux sociaux. En tant que lead technique, j'ai mené un projet Data/IA de bout en bout — de la collecte de 239 000+ posts Bluesky au déploiement d'un dashboard interactif, en passant par 9 itérations du pipeline NLP.
 
-La dimension éthique (biais, conformité RGPD, AI Act) a été particulièrement formatrice et sera un atout pour ma carrière professionnelle.
+Les apprentissages clés :
+- **L'évaluation est plus importante que l'entraînement** : un F1=0.99 en cross-validation masquait un biais Reuters. Le gold test set a été un tournant dans ma compréhension de l'évaluation des modèles.
+- **L'itération constante est la seule voie** : chaque version (V1→V9) a corrigé une faiblesse identifiée en production. Les "échecs" (self-training, seuil adaptatif) sont aussi riches d'enseignements que les succès.
+- **Les solutions simples dominent** : TF-IDF + features linguistiques (V5, 1.5ms/texte) reste plus robuste en production qu'un Transformer seul. L'architecture hybride (V8/V9) combine le meilleur des deux approches.
+- **L'éthique n'est pas optionnelle** : la conformité RGPD, l'AI Act, le bilan carbone (CodeCarbon) et l'explicabilité (SHAP) m'ont appris que la responsabilité d'un ingénieur IA dépasse la performance technique.
+
+Ce projet m'a fait passer de débutante à un niveau intermédiaire-avancé en NLP/Deep Learning. La rigueur scientifique acquise (tests de significativité, kappa inter-annotateurs, validation sur données réelles) sera un atout déterminant pour ma carrière professionnelle en data science.
 
 ---
 

@@ -14,20 +14,23 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 
 ### Fonctionnalités Clés
 * **Collecte en temps réel :** Ingestion continue des posts Bluesky via l'API AT Protocol.
-* **Détection de Fake News :** Pipeline NLP bilingue FR/EN (Régression Logistique + TF-IDF + 12 features linguistiques) pour évaluer la crédibilité (Score 0 à 1).
+* **Détection de Fake News (V9) :** Pipeline cascade 2 étapes : filtre fait/opinion puis analyse V8 (meta-learner V5+V6+CamemBERT). Bilingue FR/EN, 15 features linguistiques + 28 features stylistiques.
 * **Analyse Émotionnelle (Deep Learning) :** Réseau de neurones MLP (PyTorch) classifiant les textes selon 7 émotions (Colère, Dégoût, Joie, Neutre, Peur, Surprise, Tristesse).
 * **Modèles avancés :** CamemBERT (FR, F1 0.957) et RoBERTa (EN, F1 0.874) fine-tunés pour les textes ultra-courts type réseaux sociaux.
-* **Pipeline hybride :** Stacking V5 + CamemBERT V2 pour une couverture bilingue optimale.
-* **Dashboard Interactif :** Visualisation des données et KPI en temps réel via Streamlit.
+* **Explicabilité SHAP :** Chaque prédiction est accompagnée d'une explication visuelle des facteurs de décision.
+* **Dashboard Interactif :** 5 pages Streamlit (Dashboard, Analyse IA, Explorateur, Performance, À propos).
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon.
+* **Tests :** 94 tests unitaires et d'intégration (pytest), benchmark latence automatisé.
 
-### Métriques clés (V2)
-* **188 553 posts** collectés depuis décembre 2025
-* **145 703 textes** d'entraînement (6 datasets, FR+EN)
-* **F1-score** : 0.90 (holdout pipeline expert), seuil de décision : 0.44
+### Métriques clés (V9)
+* **239 000+ posts** collectés depuis décembre 2025
+* **197 782 textes** d'entraînement (7 datasets, FR+EN)
+* **F1-score V5** : 0.913 (CV), seuil de décision : 0.44
+* **V9 Cascade** : faux positifs réduits de -67% (Fisher p=0.0005)
 * **CamemBERT FR** : F1 0.957 sur textes ultra-courts
 * **RoBERTa EN V2** : F1 0.874 sur textes ultra-courts (+8.2% vs V1)
-* **73.4%** des posts Bluesky classés fiables (vs 23% en V1.5)
+* **Latence** : 1.5 ms/texte (728 textes/sec)
+* **67%** des posts Bluesky classés fiables
 * **Empreinte CO2** : 0.55 g (total entraînement)
 
 ---
@@ -52,7 +55,7 @@ graph LR
 
 ```
 projet_etude/
-├── dashboard/              # Application Streamlit (Dashboard V3)
+├── dashboard/              # Application Streamlit (Dashboard V5, 5 pages)
 ├── data/training/          # Datasets d'entraînement (FR+EN, 6 sources)
 ├── docs/                   # Documentation complète du projet
 │   └── pdf/                # Documents PDF exportés
@@ -98,6 +101,9 @@ projet_etude/
 | 22 | `22_Gold_Test_Set_Evaluation.py` | Évaluation pipeline V5 sur 200 posts annotés (F1 suspect=0.087) |
 | 23 | `23_Style_Only_V6.py` | Modèle style-only V6 (GradientBoosting, 35 features, F1 suspect=0.103) |
 | 24 | `24_Hybrid_Ensemble_V7_SHAP.py` | Ensemble hybride V5+V6 + SHAP explicabilité (F1 suspect=0.127) |
+| 25 | `25_V8_Hybrid_Extended_CamemBERT.py` | V8 meta-learner V5+V6+CamemBERT (F1 suspect +28%) |
+| 26 | `26_V5_Finetune_Bluesky.py` | Self-training sur Bluesky (échec documenté) |
+| 27 | `27_Pipeline_2_Etapes.py` | V9 cascade fait/opinion (FP -67%, Fisher p=0.0005) |
 
 ---
 
@@ -143,6 +149,8 @@ Tous les documents sont disponibles dans [`docs/pdf/`](docs/pdf/) :
 | RoBERTa EN V2 | Avril 2026 | 0.944 (EN) | N/A | 0.874 | +10K EN social, test 16/18 (+4.3% ultra-court) |
 | V6 Style-Only | Avril 2026 | 0.830 | N/A | N/A | GradientBoosting 35 features style, topic-agnostic, F1 suspect gold +18% |
 | V7 Hybride | Avril 2026 | N/A | N/A | N/A | Ensemble V5+V6, meta-learner LOO, F1 suspect gold 0.127 (+46% vs V5), SHAP |
+| V8 Meta | Avril 2026 | N/A | N/A | N/A | Meta-learner V5+V6+CamemBERT, F1 suspect gold 0.163 (+28% vs V7) |
+| **V9 Cascade** | **Mai 2026** | **N/A** | **N/A** | **N/A** | **Pipeline 2 étapes fait/opinion, FP -67%, Fisher p=0.0005** |
 
 ---
 
@@ -165,6 +173,34 @@ pip install -r requirements.txt
 - Docker & Docker Compose
 - MongoDB
 - GPU recommandé pour le fine-tuning des modèles Transformer
+
+---
+
+## Tests
+
+```bash
+# Lancer tous les tests
+python3 -m pytest tests/ -v
+
+# Avec rapport de couverture
+python3 -m pytest tests/ --cov=src --cov=dashboard --cov-report=term-missing
+
+# Benchmark de latence seul
+python3 -m pytest tests/test_benchmark_latence.py -v -s
+```
+
+| Module testé | Tests | Couverture |
+|-------------|:-----:|:----------:|
+| Collecteur Bluesky (validation, langue) | 17 | 25% |
+| Pipeline NLP (features, détecteur) | 16 | 27% |
+| CamemBERT (architecture, dataset) | 13 | 28% |
+| MongoDB (agrégations, requêtes) | 11 | 61% |
+| Monitoring (scoring, rapports) | 11 | 50% |
+| Dashboard (syntaxe, style features) | 6 | 19% |
+| Qualité données | 7 | 79% |
+| Intégration pipeline | 11 | — |
+| Benchmark latence | 3 | — |
+| **Total** | **94** | **26%** |
 
 ---
 
