@@ -18,5 +18,9 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Copie de tout le code source dans le conteneur
 COPY . .
 
+# Creer un utilisateur non-root pour la securite
+RUN useradd -m -r appuser && chown -R appuser:appuser /app
+USER appuser
+
 # Commande par défaut : lancer le script de collecte
 CMD ["python", "src/collection/collect_bluesky.py"]
