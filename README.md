@@ -31,7 +31,7 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 * **RoBERTa EN V2** : F1 0.874 sur textes ultra-courts (+4.3% vs V1)
 * **Latence** : 1.5 ms/texte (728 textes/sec)
 * **67%** des posts Bluesky classés fiables
-* **Empreinte CO2** : 0.55 g (total entraînement)
+* **Empreinte CO2** : 6.14 g (total entraînement, dont 64% Transformers)
 
 ---
 
@@ -201,12 +201,12 @@ python3 -m pytest tests/test_benchmark_latence.py -v -s
 | Intégration pipeline | 11 | — |
 | Benchmark latence | 3 | — |
 | Sécurité / validation entrées | 7 | — |
-| **Total** | **107** | **29%** |
+| **Total** | **107** | **~29%** |
 
 ---
 
 ## Green IT
 
 L'empreinte carbone de l'ensemble des entraînements est suivie via **CodeCarbon** :
-- **Total CO2** : 0.55 g
-- Le choix d'un modèle LogReg (vs Transformer) réduit drastiquement la consommation énergétique
+- **Total CO2** : 6.14 g (6 sessions d'entraînement V1-V9 + CamemBERT + RoBERTa)
+- Equivalent à moins d'une recherche Google (~7 g). Le choix de modèles frugaux (LogReg + fine-tuning court) limite l'empreinte

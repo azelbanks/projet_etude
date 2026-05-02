@@ -17,31 +17,33 @@ Ce rapport présente Thumalien, un système de détection de fake news sur le r�
 
 0. [Résumé](#resume)
 1. [Présentation de l'entreprise et de l'école](#1-presentation-de-lentreprise-et-de-lecole)
-2. [Présentation du projet](#2-presentation-du-projet)
-3. [Architecture technique](#3-architecture-technique)
-4. [Phase 1 — Collecte et stockage des données](#4-phase-1--collecte-et-stockage-des-donnees)
-5. [Phase 2 — Audit qualité et nettoyage](#5-phase-2--audit-qualite-et-nettoyage)
-6. [Phase 3 — Modèle d'émotions bilingue](#6-phase-3--modele-demotions-bilingue)
-7. [Phase 4 — Pipeline expert V1.5](#7-phase-4--pipeline-expert-v15)
-8. [Phase 5 — Analyse du modèle et GridSearch](#8-phase-5--analyse-du-modele-et-gridsearch)
-9. [Phase 6 — Intégration de datasets sociaux (V2)](#9-phase-6--integration-de-datasets-sociaux-v2)
-10. [Le seuil de décision : pourquoi 0.44 ?](#10-le-seuil-de-decision--pourquoi-044-)
-11. [Qu'est-ce que max_iter ?](#11-quest-ce-que-max_iter-)
-12. [Dashboard Streamlit](#12-dashboard-streamlit)
-13. [Bilan carbone (Green IT)](#13-bilan-carbone-green-it)
-14. [État actuel du projet](#14-etat-actuel-du-projet)
-15. [Évaluation sur Gold Test Set](#15-evaluation-sur-gold-test-set-200-posts-bluesky)
-16. [Itérations V3 à V5 — Corrections et améliorations](#16-iterations-v3-a-v5--corrections-et-ameliorations)
-17. [V6 — Modèle Style-Only (topic-agnostic)](#17-v6--modele-style-only-topic-agnostic)
-18. [V7 — Ensemble Hybride + SHAP](#18-v7--ensemble-hybride--shap)
-19. [V8 — Integration de CamemBERT](#19-v8--integration-de-camembert)
-20. [Echec du self-training sur donnees Bluesky](#20-echec-du-self-training-sur-donnees-bluesky)
-21. [Annotation humaine et accord inter-annotateurs](#21-annotation-humaine-et-accord-inter-annotateurs)
-22. [V9 — Pipeline 2 etapes : filtre fait/opinion](#22-v9--pipeline-2-etapes--filtre-faitopinion)
-23. [Audit du corpus et rééquilibrage de la collecte](#23-audit-du-corpus-et-reequilibrage-de-la-collecte)
-24. [Limites et perspectives](#24-limites-et-perspectives)
-25. [Conclusion](#25-conclusion)
-26. [References](#26-references)
+2. [Problématique](#2-problematique)
+3. [État de l'art](#3-etat-de-lart)
+4. [Présentation du projet](#4-presentation-du-projet)
+5. [Architecture technique](#5-architecture-technique)
+6. [Phase 1 — Collecte et stockage des données](#6-phase-1--collecte-et-stockage-des-donnees)
+7. [Phase 2 — Audit qualité et nettoyage](#7-phase-2--audit-qualite-et-nettoyage)
+8. [Phase 3 — Modèle d'émotions bilingue](#8-phase-3--modele-demotions-bilingue)
+9. [Phase 4 — Pipeline expert V1.5](#9-phase-4--pipeline-expert-v15)
+10. [Phase 5 — Analyse du modèle et GridSearch](#10-phase-5--analyse-du-modele-et-gridsearch)
+11. [Phase 6 — Intégration de datasets sociaux (V2)](#11-phase-6--integration-de-datasets-sociaux-v2)
+12. [Le seuil de décision : pourquoi 0.44 ?](#12-le-seuil-de-decision--pourquoi-044-)
+13. [Qu'est-ce que max_iter ?](#13-quest-ce-que-max_iter-)
+14. [Dashboard Streamlit](#14-dashboard-streamlit)
+15. [Bilan carbone (Green IT)](#15-bilan-carbone-green-it)
+16. [État actuel du projet](#16-etat-actuel-du-projet)
+17. [Évaluation sur Gold Test Set](#17-evaluation-sur-gold-test-set-200-posts-bluesky)
+18. [Itérations V3 à V5 — Corrections et améliorations](#18-iterations-v3-a-v5--corrections-et-ameliorations)
+19. [V6 — Modèle Style-Only (topic-agnostic)](#19-v6--modele-style-only-topic-agnostic)
+20. [V7 — Ensemble Hybride + SHAP](#20-v7--ensemble-hybride--shap)
+21. [V8 — Intégration de CamemBERT](#21-v8--integration-de-camembert)
+22. [Échec du self-training sur données Bluesky](#22-echec-du-self-training-sur-donnees-bluesky)
+23. [Annotation humaine et accord inter-annotateurs](#23-annotation-humaine-et-accord-inter-annotateurs)
+24. [V9 — Pipeline 2 étapes : filtre fait/opinion](#24-v9--pipeline-2-etapes--filtre-faitopinion)
+25. [Audit du corpus et rééquilibrage de la collecte](#25-audit-du-corpus-et-reequilibrage-de-la-collecte)
+26. [Limites et perspectives](#26-limites-et-perspectives)
+27. [Conclusion](#27-conclusion)
+28. [Références](#28-references)
 
 ---
 
@@ -62,7 +64,44 @@ Niamato Consulting est une société de conseil spécialisée en data science et
 
 ---
 
-## 2. Présentation du projet
+## 2. Problématique
+
+La prolifération de la désinformation sur les réseaux sociaux constitue un enjeu majeur pour les démocraties contemporaines. Les contenus trompeurs se propagent 6 fois plus vite que les informations vérifiées (Vosoughi et al., 2018) et les plateformes émergentes comme Bluesky — décentralisées et moins modérées — amplifient ce risque. La détection automatique de fake news se heurte à plusieurs défis fondamentaux :
+
+1. **Le domain shift** : les modèles entraînés sur des articles de presse (longs, structurés) généralisent mal aux posts de réseaux sociaux (courts, informels, multilingues).
+2. **Le biais thématique** : les classifieurs TF-IDF apprennent à détecter le *sujet* (politique, santé) plutôt que le *style* de la désinformation, produisant massivement des faux positifs sur les sujets sensibles.
+3. **La frontière fait/opinion** : les posts d'opinion, même agressifs ou sensationnalistes, ne relèvent pas de la désinformation factuelle. Confondre les deux dégrade la précision du système.
+4. **L'évaluation sur données réelles** : les métriques sur datasets académiques (F1 > 0.90) ne reflètent pas la performance en production, où la prévalence des contenus suspects est très faible (~3-5%).
+
+**Question de recherche** : comment concevoir un pipeline NLP bilingue capable de distinguer la désinformation factuelle des opinions sur un réseau social émergent, avec une précision suffisante pour servir d'outil d'aide à la décision ?
+
+---
+
+## 3. État de l'art
+
+### Détection de fake news par NLP
+
+Les approches de détection de fake news se répartissent en trois familles principales :
+
+**Approches lexicales (TF-IDF, BoW)** : les travaux fondateurs d'Ahmed et al. (2017) avec le dataset ISOT montrent qu'un classifieur TF-IDF + LogisticRegression atteint des F1 > 0.99 sur des articles de presse. Cependant, ces performances sont mécaniquement gonflées par des biais de corpus (marqueurs Reuters, style journalistique) et ne transfèrent pas aux textes courts des réseaux sociaux.
+
+**Approches par features stylistiques** : Pérez-Rosas et al. (2018) et Zhou & Zafarani (2020) montrent que des features linguistiques (ponctuation, majuscules, diversité lexicale, marqueurs émotionnels) capturent des signaux de désinformation indépendants du sujet. Cette approche *topic-agnostic* est plus robuste au domain shift mais moins performante en valeur absolue.
+
+**Approches par Transformers** : les modèles pré-entraînés (BERT, RoBERTa, CamemBERT) apportent une compréhension sémantique profonde. Liu et al. (2019) introduisent RoBERTa, et Martin et al. (2020) proposent CamemBERT pour le français. Le fine-tuning sur des données spécifiques produit des classifieurs performants sur les textes courts, mais au prix d'un coût computationnel et d'une opacité accrus.
+
+**Approches hybrides et ensembles** : Zellers et al. (2019) démontrent avec Grover que les modèles génératifs peuvent à la fois produire et détecter de la désinformation. Wang et al. (2025) montrent que les approches multi-signaux (lexicales + stylistiques + sémantiques) surpassent les modèles individuels pour la détection en conditions réelles.
+
+### Accord inter-annotateurs et évaluation
+
+L'évaluation de la détection de fake news sur données réelles pose des défis spécifiques. Le kappa de Cohen (1960) est la métrique standard d'accord inter-annotateurs, mais Gwet (2008) et Cicchetti & Feinstein (1990) montrent qu'il est biaisé lorsque la prévalence d'une classe est très faible (paradoxe kappa-prévalence). Le Gwet's AC1 corrige ce biais et constitue une alternative robuste.
+
+### Positionnement de Thumalien
+
+Thumalien se positionne dans la lignée des approches hybrides, en combinant un pipeline TF-IDF (V5), un modèle style-only topic-agnostic (V6), et des Transformers fine-tunés (CamemBERT, RoBERTa) dans un méta-learner. L'originalité réside dans le pipeline cascade V9 qui sépare explicitement les faits des opinions avant l'analyse de crédibilité — une approche motivée par l'observation empirique (Fisher p=0.0005) que les opinions ne sont presque jamais de la désinformation.
+
+---
+
+## 4. Présentation du projet
 
 ### Objectif
 
@@ -83,7 +122,7 @@ Le projet Thumalien est composé de 4 briques :
 
 ---
 
-## 3. Architecture technique
+## 5. Architecture technique
 
 ### Stack technologique
 
@@ -94,7 +133,7 @@ Le projet Thumalien est composé de 4 briques :
 | ML/NLP | scikit-learn, PyTorch | scikit-learn pour le pipeline classique, PyTorch pour le modèle d'émotions |
 | Vectorisation | TF-IDF | Approche éprouvée, interprétable, rapide à entraîner |
 | Dashboard | Streamlit + Plotly | Framework Python natif, idéal pour le prototypage rapide |
-| Conteneurisation | Docker Compose | 4 services isolés (MongoDB, Collector, Jupyter, Dashboard) |
+| Conteneurisation | Docker Compose | 5 services isolés (MongoDB, Collector, Jupyter, Dashboard, Backup) |
 | Monitoring CO2 | CodeCarbon | Suivi de l'empreinte carbone des entraînements |
 
 ### Diagramme de composants
@@ -108,16 +147,20 @@ graph TD
         C -->|Read| E[Jupyter Lab<br>:8888]
     end
 
-    subgraph Pipeline NLP
-        F[Texte brut] --> G[TF-IDF 30K]
-        F --> H[15 Features Ling.]
-        F --> I[7 Emotions MLP]
+    subgraph Pipeline NLP V9
+        F[Texte brut] --> S1[Stage 1: Fait/Opinion]
+        S1 -->|opinion| BYPASS[Fiable - bypass]
+        S1 -->|factuel| G[TF-IDF 30K]
+        S1 -->|factuel| H[15 Features Ling.]
+        S1 -->|factuel| I[7 Emotions MLP]
         G & H & I --> J[V5 LogReg]
-        F --> K[28 Features Style]
-        F --> L[7 Emotions]
+        S1 -->|factuel| K[28 Features Style]
+        S1 -->|factuel| L[7 Emotions]
         K & L --> M[V6 GradientBoosting]
-        J -->|score_v5| N[V7 Meta-Learner]
+        S1 -->|factuel FR| CAM[CamemBERT]
+        J -->|score_v5| N[V8 Meta-Learner]
         M -->|score_v6| N
+        CAM -->|score_cam| N
         N -->|SHAP| O[Prediction + Explication]
     end
 
@@ -130,20 +173,30 @@ graph TD
 sequenceDiagram
     actor U as Utilisateur
     participant D as Dashboard Streamlit
+    participant S1 as Stage 1 (Fait/Opinion)
     participant V5 as Pipeline V5 (TF-IDF)
     participant V6 as Pipeline V6 (Style)
-    participant V7 as Meta-Learner V7
+    participant CAM as CamemBERT/RoBERTa
+    participant V8 as Meta-Learner V8
     participant S as SHAP Explainer
 
     U->>D: Saisit un texte
-    D->>V5: predict(texte)
-    V5-->>D: score_v5, label, emotions
-    D->>V6: extract_features(texte)
-    V6-->>D: 35 features style
-    D->>V7: predict_meta(score_v5, score_v6)
-    V7-->>D: score_v7, label_final
-    D->>S: explain(features_v6)
-    S-->>D: SHAP values (35 features)
+    D->>S1: classify(texte)
+    alt Opinion pure
+        S1-->>D: opinion → fiable (bypass)
+    else Factuel/mixte
+        S1-->>D: factuel
+        D->>V5: predict(texte)
+        V5-->>D: score_v5, label, emotions
+        D->>V6: extract_features(texte)
+        V6-->>D: 35 features style
+        D->>CAM: predict(texte, lang)
+        CAM-->>D: score_cam
+        D->>V8: predict_meta(score_v5, score_v6, score_cam)
+        V8-->>D: score_v8, label_final
+        D->>S: explain(features_v6)
+        S-->>D: SHAP values (35 features)
+    end
     D-->>U: Verdict + Scores + Graphique SHAP
 ```
 
@@ -196,7 +249,7 @@ Cependant, les pipelines avancés V8 et V9 intègrent **CamemBERT** (modèle Tra
 
 ---
 
-## 4. Phase 1 — Collecte et stockage des données
+## 6. Phase 1 — Collecte et stockage des données
 
 ### Notebooks concernés : 01, 03
 
@@ -218,7 +271,7 @@ Le fichier `src/collection/collect_bluesky.py` réalise une collecte continue :
 
 ---
 
-## 5. Phase 2 — Audit qualité et nettoyage
+## 7. Phase 2 — Audit qualité et nettoyage
 
 ### Notebooks concernés : 00, 05
 
@@ -250,7 +303,7 @@ Plutôt que de changer de dataset, nous avons préféré nettoyer celui-ci car :
 
 ---
 
-## 6. Phase 3 — Modèle d'émotions bilingue
+## 8. Phase 3 — Modèle d'émotions bilingue
 
 ### Notebook concerné : 02
 
@@ -317,7 +370,7 @@ Les probabilités de sortie (vecteur de 7 valeurs) sont utilisées comme feature
 
 ---
 
-## 7. Phase 4 — Pipeline expert V1.5
+## 9. Phase 4 — Pipeline expert V1.5
 
 ### Notebooks concernés : 05, 06
 
@@ -414,7 +467,7 @@ LogisticRegression(
 
 ---
 
-## 8. Phase 5 — Analyse du modèle et GridSearch
+## 10. Phase 5 — Analyse du modèle et GridSearch
 
 ### Notebook concerné : 07
 
@@ -459,7 +512,7 @@ Le notebook 07 a comparé 3 stratégies :
 
 ---
 
-## 9. Phase 6 — Intégration de datasets sociaux (V2)
+## 11. Phase 6 — Intégration de datasets sociaux (V2)
 
 ### Notebook concerné : 08
 
@@ -519,7 +572,7 @@ Les textes sociaux sont dupliqués 2 fois (`social_oversample=2`) pour équilibr
 
 ---
 
-## 10. Le seuil de décision : pourquoi 0.44 ?
+## 12. Le seuil de décision : pourquoi 0.44 ?
 
 ### Comment fonctionne la prédiction
 
@@ -575,7 +628,7 @@ Baisser le seuil augmente le risque de **faux négatifs** (classer un texte susp
 
 ---
 
-## 11. Qu'est-ce que max_iter ?
+## 13. Qu'est-ce que max_iter ?
 
 ### Définition simple
 
@@ -620,7 +673,7 @@ Plus d'itérations = plus de temps de calcul. Mais sur un Apple M4 Pro, le passa
 
 ---
 
-## 12. Dashboard Streamlit
+## 14. Dashboard Streamlit
 
 ### Technologies
 
@@ -648,7 +701,7 @@ detector.load(suffix='expert_v2' if v2_exists else 'expert')
 
 ---
 
-## 13. Bilan carbone (Green IT)
+## 15. Bilan carbone (Green IT)
 
 ### Outil : CodeCarbon
 
@@ -676,7 +729,7 @@ Le pipeline de production (V5 LogReg) ne consomme que 0.73 g. Les modèles Trans
 
 ---
 
-## 14. État actuel du projet
+## 16. État actuel du projet
 
 ### Ce qui fonctionne
 
@@ -707,11 +760,11 @@ Le pipeline de production (V5 LogReg) ne consomme que 0.73 g. Les modèles Trans
 | Gold F1 suspect V8 | 0.163 (+28% vs V7) |
 | V9 Cascade FP (consensus 473) | 62 (-67% vs V5 seul) |
 | V9 Cascade kappa / AC1 | κ=0.199, AC1=0.802 |
-| Annotation humaine | 200 posts gold (2 annotateurs, κ=0.808, AC1=0.978) + 500 posts (1 annotateur) |
+| Annotation humaine | 200 posts gold (2 annotateurs, κ=0.808, AC1=0.978) + 500 posts (2 annotateurs, κ=0.498) |
 | Bluesky % fiable | 67% |
 | Notebooks | 28 (00 à 27) |
 | Temps d'inference (V5) | 1.5 ms/texte (~728 textes/sec) |
-| Tests unitaires | 107 tests, 26% coverage |
+| Tests unitaires | 107 tests, 29% coverage |
 
 ### Benchmark de latence
 
@@ -749,7 +802,7 @@ L'architecture actuelle (Docker Compose 4 services) est concue pour etre deploye
 | V2 | Fév 2026 | 0.90 | — | 3 datasets sociaux + seuil 0.44 |
 | V3 | Mar 2026 | 0.90 | — | Correction features linguistiques |
 | V4 | Mar 2026 | 0.935 FR | — | Amélioration FR court + augmentation |
-| V5 | Mar 2026 | 0.90 | 0.087 | +10K FR social synthétique, FR ultra-court F1=0.90 |
+| V5 | Avr 2026 | 0.90 | 0.087 | +10K FR social synthétique, FR ultra-court F1=0.90 |
 | V6 | Avr 2026 | 0.830 | 0.103 (+18%) | Style-only GradientBoosting, topic-agnostic |
 | V7 | Avr 2026 | — | 0.127 (+46%) | Ensemble hybride V5+V6 + SHAP |
 | V8 | Avr 2026 | — | 0.163 (+28%) | Méta-learner V5+V6+CamemBERT |
@@ -757,7 +810,7 @@ L'architecture actuelle (Docker Compose 4 services) est concue pour etre deploye
 
 ---
 
-## 15. Évaluation sur Gold Test Set (200 posts Bluesky)
+## 17. Évaluation sur Gold Test Set (200 posts Bluesky)
 
 ### Protocole
 
@@ -799,11 +852,11 @@ La distribution des scores le confirme : le score moyen des posts fiables (0.615
 
 ---
 
-## 16. Itérations V3 à V5 — Corrections et améliorations
+## 18. Itérations V3 à V5 — Corrections et améliorations
 
 ### Notebooks concernés : 09 à 15
 
-Après l'évaluation sur le gold test set (section 14), plusieurs itérations ont été menées pour améliorer le pipeline :
+Après l'évaluation sur le gold test set (section 17), plusieurs itérations ont été menées pour améliorer le pipeline :
 
 ### V3 — Correction des features linguistiques
 
@@ -833,7 +886,7 @@ Après l'évaluation sur le gold test set (section 14), plusieurs itérations on
 
 ---
 
-## 17. V6 — Modèle Style-Only (topic-agnostic)
+## 19. V6 — Modèle Style-Only (topic-agnostic)
 
 ### Notebook concerné : 23
 
@@ -876,7 +929,7 @@ Le modèle V6 supprime totalement le TF-IDF et utilise uniquement 28 features st
 
 ---
 
-## 18. V7 — Ensemble Hybride + SHAP
+## 20. V7 — Ensemble Hybride + SHAP
 
 ### Notebook concerné : 24
 
@@ -947,7 +1000,7 @@ Le dashboard V7 affiche pour chaque analyse en temps réel :
 
 ---
 
-## 19. V8 — Intégration de CamemBERT
+## 21. V8 — Intégration de CamemBERT
 
 ### Hypothèse
 
@@ -978,7 +1031,7 @@ Le méta-learner V7 combine V5 (TF-IDF lexical) et V6 (style-only). Pour le fran
 
 ---
 
-## 20. Échec du self-training sur données Bluesky
+## 22. Échec du self-training sur données Bluesky
 
 ### Hypothèse
 
@@ -1023,7 +1076,7 @@ Cette impasse a motivé la création d'un dataset annoté manuellement par des h
 
 ---
 
-## 21. Annotation humaine et accord inter-annotateurs
+## 23. Annotation humaine et accord inter-annotateurs
 
 ### Motivation
 
@@ -1095,7 +1148,7 @@ V5 produit 186 faux positifs sur 458 fiables (40.6%). Le modèle sur-détecte ma
 
 ---
 
-## 22. V9 — Pipeline 2 étapes : filtre fait/opinion
+## 24. V9 — Pipeline 2 étapes : filtre fait/opinion
 
 ### Hypothèse fondatrice
 
@@ -1141,7 +1194,8 @@ Post Bluesky
 | Méthode | Acc | F1 macro | F1 suspect | Précision | Recall | FP | FN | Kappa |
 |---------|-----|---------|-----------|-----------|--------|-----|-----|-------|
 | V5 seul (baseline) | 0.603 | 0.432 | 0.121 | 0.065 | 0.867 | **186** | 2 | 0.066 |
-| Cascade (seuil=0.40) | 0.858 | 0.576 | 0.230 | 0.139 | 0.667 | **62** | 5 | 0.187 |
+| Cascade (seuil=0.40, full) | 0.858 | 0.576 | 0.230 | 0.139 | 0.667 | **62** | 5 | 0.187 |
+| Cascade (seuil=0.45, eval split) | 0.870 | 0.588 | 0.240 | 0.148 | 0.667 | **56** | 5 | 0.199 |
 | Cascade oracle | 0.958 | 0.762 | 0.545 | 0.414 | 0.800 | **17** | 3 | 0.526 |
 
 ### Interprétation
@@ -1200,9 +1254,9 @@ Les notations "test 9/10" ou "test 16/18" dans les tableaux de versions désigne
 
 ---
 
-## 23. Audit du corpus et rééquilibrage de la collecte
+## 25. Audit du corpus et rééquilibrage de la collecte
 
-### 22.1 Constat : biais d'échantillonnage dans le corpus Bluesky
+### 25.1 Constat : biais d'échantillonnage dans le corpus Bluesky
 
 L'analyse du corpus de 245 000+ posts collectés a révélé deux biais structurels liés aux **termes de recherche** utilisés par le collecteur :
 
@@ -1231,7 +1285,7 @@ Sur les 22 071 posts initialement annotés en émotion (9.7% du corpus), la dist
 
 **Cause** : les termes "happy" (33K posts) et "joie" (2.1K) attirent des posts intrinsèquement joyeux (félicitations, humour, célébrations). Le profil émotionnel affiché dans le dashboard reflétait les termes de recherche, pas les émotions réelles de Bluesky. Ce biais est un **biais d'échantillonnage** (sampling bias) : le modèle d'émotions détecte correctement la joie dans "happy birthday", mais ce post n'a aucune pertinence pour la détection de fake news.
 
-### 22.2 Réflexion méthodologique
+### 25.2 Réflexion méthodologique
 
 La découverte de ces biais a motivé une réflexion sur la **représentativité du corpus** par rapport à la tâche de détection de fake news :
 
@@ -1243,7 +1297,7 @@ La découverte de ces biais a motivé une réflexion sur la **représentativité
 
 4. **L'inférence émotionnelle n'était pas systématique** : seuls 9.7% des posts avaient une émotion annotée, rendant le profil émotionnel du dashboard non représentatif.
 
-### 22.3 Actions correctives
+### 25.3 Actions correctives
 
 #### Rééquilibrage des termes de recherche (Collecteur V3)
 
@@ -1290,7 +1344,7 @@ Le collecteur V3 intègre désormais l'inférence IA après chaque cycle de coll
 
 Chaque nouveau post est analysé dans les 5 minutes suivant sa collecte, contre un délai indéterminé auparavant (inférence manuelle via notebook).
 
-### 22.4 Refactoring de l'architecture Docker
+### 25.4 Refactoring de l'architecture Docker
 
 L'architecture Docker Compose a été professionnalisée :
 
@@ -1304,7 +1358,7 @@ L'architecture Docker Compose a été professionnalisée :
 | `version: '3.8'` | Présent | Supprimé (obsolète depuis Docker Compose v2) |
 | Restart policy | Manquant sur certains services | `restart: always` (collector, MongoDB) / `unless-stopped` (dashboard, notebook) |
 
-### 22.5 Plus-value et maturité de la démarche
+### 25.5 Plus-value et maturité de la démarche
 
 Cette phase d'audit et de correction démontre une **maturité dans la gestion d'un projet Data/IA** :
 
@@ -1320,7 +1374,7 @@ Cette phase d'audit et de correction démontre une **maturité dans la gestion d
 
 ---
 
-## 24. Limites et perspectives (mise à jour)
+## 26. Limites et perspectives
 
 ### Limites actuelles
 
@@ -1355,7 +1409,7 @@ Cette phase d'audit et de correction démontre une **maturité dans la gestion d
 
 ---
 
-## 25. Conclusion
+## 27. Conclusion
 
 Ce projet a permis de concevoir et déployer un pipeline NLP complet de détection de fake news sur Bluesky, de la collecte des données à la visualisation des résultats. L'approche itérative — de la V1.0 biaisée par les marqueurs Reuters à la V9 (pipeline 2 étapes fait/opinion) — illustre les défis concrets du Machine Learning appliqué : le data leakage, le domain shift, le biais thématique, la circularité du self-training, et la distinction fondamentale entre opinion et désinformation.
 
@@ -1374,7 +1428,7 @@ Le résultat clé de ce projet n'est pas un score F1 élevé, mais une compréhe
 
 ---
 
-## 26. References
+## 28. Références
 
 1. Ahmed, H., Traore, I., & Saad, S. (2017). *Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques*. ISOT Fake News Dataset. University of Victoria.
 
@@ -1407,3 +1461,15 @@ Le résultat clé de ce projet n'est pas un score F1 élevé, mais une compréhe
 15. Cicchetti, D. V. & Feinstein, A. R. (1990). *High agreement but low kappa: II. Resolving the paradoxes*. Journal of Clinical Epidemiology, 43(6), 551-558.
 
 16. Landis, J. R. & Koch, G. G. (1977). *The measurement of observer agreement for categorical data*. Biometrics, 33(1), 159-174.
+
+17. Zellers, R., Holtzman, A., Rashkin, H., Bisk, Y., Farhadi, A., Roesner, F., & Choi, Y. (2019). *Defending Against Neural Fake News*. NeurIPS.
+
+18. Liu, Y., Ott, M., Goyal, N., et al. (2019). *RoBERTa: A Robustly Optimized BERT Pretraining Approach*. arXiv:1907.11692.
+
+19. Wang, Y., et al. (2025). *Multi-Signal Approaches for Fake News Detection in Social Media*. Information Processing & Management.
+
+20. Vosoughi, S., Roy, D., & Aral, S. (2018). *The spread of true and false news online*. Science, 359(6380), 1146-1151.
+
+21. Pérez-Rosas, V., Kleinberg, B., Lefevre, A., & Mihalcea, R. (2018). *Automatic Detection of Fake News*. COLING.
+
+22. Zhou, X. & Zafarani, R. (2020). *A Survey of Fake News: Fundamental Theories, Detection Methods, and Opportunities*. ACM Computing Surveys, 53(5), 1-40.
