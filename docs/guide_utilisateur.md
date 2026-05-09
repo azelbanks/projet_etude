@@ -108,33 +108,44 @@ Le dashboard s'ouvre automatiquement dans le navigateur à l'adresse `http://loc
 
 ### 6. Pages du dashboard
 
-#### 6.1. Vue Globale
+#### 6.1. Vue Globale (Dashboard)
 
-La page d'accueil présente une vision synthétique de l'ensemble des posts analysés :
+La page d'accueil présente une vision synthétique de l'ensemble des posts analysés.
 
-- **Métriques clés** : nombre total de posts, pourcentage de posts fiables, score de crédibilité moyen, répartition FR/EN.
-- **Profil émotionnel** : radar chart des 7 émotions moyennes sur l'ensemble du corpus (colère, dégoût, joie, neutre, peur, surprise, tristesse).
-- **Fiabilité par langue** : diagramme en barres horizontales comparant les posts fiables et suspects pour le français et l'anglais.
-- **Tableau des posts** : liste des derniers posts analysés avec leur texte (tronqué), langue, label et score de crédibilité.
+**Capture d'écran** : `docs/figures/screenshots/page_dashboard.png`
 
-#### 6.2. Analyse en temps réel
+- **Métriques clés** (en-tête) : nombre total de posts, pourcentage de posts fiables, score de crédibilité moyen, répartition FR/EN — affichés en cartes glassmorphism avec gradient cyan.
+- **Profil émotionnel** : radar chart (Plotly) des 7 émotions moyennes sur l'ensemble du corpus (colère, dégoût, joie, neutre, peur, surprise, tristesse). Chaque axe va de 0 à 1.
+- **Fiabilité par langue** : diagramme en barres horizontales comparant les posts fiables (vert) et suspects (rouge) pour le français et l'anglais.
+- **Tableau des posts** : liste des derniers posts analysés avec leur texte (tronqué à 200 car.), langue, label et score de crédibilité. Triable par colonne.
 
-Cette page permet d'analyser un texte en temps réel :
+#### 6.2. Analyse en temps réel (Analyse IA)
+
+Cette page permet d'analyser un texte libre en temps réel.
+
+**Capture d'écran** : `docs/figures/screenshots/page_analyse_ia.png`
 
 1. Collez un texte (article, post Bluesky, tweet, ou tout texte FR/EN) dans la zone de saisie.
 2. Cliquez sur le bouton **Analyser**.
 3. Le système retourne :
    - Un **score de crédibilité** (jauge 0 à 1) : 0 = probablement faux, 1 = probablement fiable.
-   - Un **verdict** : FIABLE (vert) ou SUSPECT (rouge).
+   - Un **verdict** : FIABLE (vert) ou SUSPECT (rouge), avec icône et couleur.
    - L'**émotion dominante** détectée avec sa probabilité.
    - Un **radar chart** détaillé des 7 probabilités émotionnelles.
    - La **langue détectée** automatiquement (FR ou EN).
 
 4. La section **V8 Hybride** affiche :
    - Le type de post détecté (factuel ou opinion) par le filtre Stage 1
-   - 5 métriques : score V5 (TF-IDF), score V6 (Style), score CamemBERT (FR), score V8 (Hybride), désaccord V5/V6.
-   - Un graphique SHAP montrant la contribution de chaque feature stylistique.
-   - Le détail des 35 features avec leur valeur SHAP.
+   - 5 métriques : score V5 (TF-IDF), score V6 (Style), score CamemBERT (FR), score V8 (Hybride), désaccord V5/V6
+   - Un graphique SHAP (waterfall) montrant la contribution de chaque feature stylistique
+   - Le détail des 35 features avec leur valeur SHAP
+
+5. La section **Décomposition du méta-learner V8** (nouveau) affiche :
+   - Un bar plot Plotly montrant la contribution exacte de chaque composant (V5, V6, CamemBERT, désaccords, interaction) au logit final
+   - Le logit z, la probabilité σ(z), et la décision FIABLE/SUSPECT
+   - Les 3 principaux contributeurs avec leur direction (rouge = SUSPECT, vert = FIABLE)
+
+**Capture d'écran** : `docs/figures/screenshots/page_analyse_shap.png`
 
 **Interprétation du score** :
 - Score > 0.7 : le texte présente des caractéristiques de contenu fiable.
@@ -143,14 +154,26 @@ Cette page permet d'analyser un texte en temps réel :
 
 > **Avertissement** : le score est un indicateur probabiliste basé sur des patterns statistiques. Il ne constitue pas une vérification factuelle et ne doit pas être utilisé comme seul critère de décision.
 
-#### 6.3. Métriques & Transparence
+#### 6.3. Explorateur de posts
 
-Cette page fournit les indicateurs de performance et de conformité :
+Cette page permet de parcourir les posts collectés depuis Bluesky, avec filtrage par langue, score et émotion.
+
+**Capture d'écran** : `docs/figures/screenshots/page_explorateur.png`
+
+#### 6.4. Métriques & Transparence (Performance)
+
+Cette page fournit les indicateurs de performance et de conformité.
+
+**Capture d'écran** : `docs/figures/screenshots/page_performance.png`
 
 - **Ablation study** : tableau et graphique des F1-scores pour les 7 conditions expérimentales testées (EN seul, FR seul, bilingue, bilingue + émotions, etc.).
 - **Bilan carbone** : émissions CO2 totales du projet mesurées par CodeCarbon.
 - **Roadmap** : les versions du pipeline (V1 à V9) avec leurs objectifs et résultats.
 - **Conformité** : fiches RGPD et IA Act résumant les mesures de conformité.
+
+#### 6.5. À propos
+
+Informations sur le projet, l'équipe, les technologies utilisées et les références.
 
 ---
 
