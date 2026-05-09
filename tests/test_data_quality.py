@@ -102,3 +102,30 @@ class TestPrintReport:
         captured = capsys.readouterr()
         assert "1000" in captured.out
         assert "fr" in captured.out
+
+    def test_prints_with_missing_fields(self, capsys):
+        report = {
+            "total_documents": 500,
+            "missing_required_fields": {"text": 3, "uri": 1},
+            "empty_text_count": 2,
+            "documents_by_ai_language": {None: 10, "fr": 490},
+            "documents_by_prediction_label": {None: 5, "FIABLE": 495},
+            "duplicate_uri_groups": 1,
+        }
+        print_report(report)
+        captured = capsys.readouterr()
+        assert "text" in captured.out
+        assert "(not set)" in captured.out
+
+    def test_prints_with_empty_distributions(self, capsys):
+        report = {
+            "total_documents": 100,
+            "missing_required_fields": "none",
+            "empty_text_count": 0,
+            "documents_by_ai_language": {},
+            "documents_by_prediction_label": {},
+            "duplicate_uri_groups": 0,
+        }
+        print_report(report)
+        captured = capsys.readouterr()
+        assert "(no data)" in captured.out

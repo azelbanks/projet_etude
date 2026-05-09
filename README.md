@@ -27,7 +27,7 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
     * Reproductible en 1 commande : `python scripts/run_xai_pipeline.py`
 * **Dashboard Interactif :** 5 pages Streamlit (Dashboard, Analyse IA, Explorateur, Performance, À propos).
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon.
-* **Tests :** 342 tests unitaires et d'intégration (pytest, 49% couverture), benchmark latence automatisé.
+* **Tests :** 501 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
 
 ### Métriques clés (V9)
 * **245 000+ posts** collectés depuis décembre 2025 (collecte continue)
@@ -202,17 +202,19 @@ python3 -m pytest tests/test_benchmark_latence.py -v -s
 
 | Module testé | Tests | Couverture |
 |-------------|:-----:|:----------:|
-| Collecteur Bluesky (validation, langue) | 17 | 25% |
-| Pipeline NLP (features, détecteur) | 16 | 27% |
-| CamemBERT (architecture, dataset) | 13 | 28% |
-| MongoDB (agrégations, requêtes) | 11 | 61% |
-| Monitoring (scoring, rapports) | 11 | 50% |
-| Dashboard (syntaxe, style features) | 6 | 19% |
-| Qualité données | 7 | 79% |
+| Pipeline NLP (features, détecteur) | 53 | 81% |
+| CamemBERT (architecture, dataset) | 13 | 97% |
+| Dashboard (logique métier, helpers) | 42 | 73% |
+| Collecteur Bluesky (validation, langue, indexes) | 28 | 92% |
+| MongoDB (agrégations, requêtes) | 24 | 96% |
+| Monitoring (scoring, rapports, main) | 17 | 100% |
+| Explicabilité (SHAP, IG, attention, meta, faithfulness) | 29 | 79% |
+| Qualité données | 10 | 92% |
+| API FastAPI | 11 | 91% |
 | Intégration pipeline | 11 | — |
 | Benchmark latence | 3 | — |
 | Sécurité / validation entrées | 7 | — |
-| **Total** | **342** | **49%** |
+| **Total** | **501** | **80%** |
 
 ---
 
