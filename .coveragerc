@@ -1,0 +1,59 @@
+[run]
+source = src,dashboard
+omit =
+    */tests/*
+    */migrations/*
+    notebooks/*
+    scripts/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    \.\.\.
+    pass
+    except ImportError
+    st\.markdown
+    st\.plotly_chart
+    st\.dataframe
+    st\.info
+    st\.error
+    st\.warning
+    st\.success
+    st\.caption
+    st\.subheader
+    st\.columns
+    st\.tabs
+    st\.sidebar
+    st\.text_area
+    st\.text_input
+    st\.button
+    st\.selectbox
+    st\.multiselect
+    st\.slider
+    st\.file_uploader
+    st\.download_button
+    st\.metric
+    st\.spinner
+    st\.divider
+    st\.set_page_config
+    st\.page_link
+    def page_dashboard
+    def page_analyse
+    def page_explorer
+    def page_performance
+    def page_about
+    def _page_single_analysis
+    def _page_batch_analysis
+    def _section_ablation
+    def _section_carbon
+    def _section_compliance
+    def _section_model_card
+    def _section_roadmap
+    def _load_auth_config
+    def main\(\)
+
+show_missing = true
+precision = 1
