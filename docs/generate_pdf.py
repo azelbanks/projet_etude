@@ -57,7 +57,68 @@ class ThumalienPDF(FPDF):
         self.doc_title = title
         self.set_auto_page_break(auto=True, margin=20)
 
+    def cover_page(self, doc_title, subtitle=""):
+        """Generate a professional cover page."""
+        self.add_page()
+        # Top line
+        self.set_draw_color(*NAVY)
+        self.set_line_width(1.5)
+        self.line(10, 30, 200, 30)
+
+        # Project name
+        self.set_y(50)
+        self.set_font("Helvetica", "B", 28)
+        self.set_text_color(*NAVY)
+        self.cell(0, 15, "THUMALIEN", align="C")
+        self.ln(18)
+
+        # Subtitle
+        self.set_font("Helvetica", "", 14)
+        self.set_text_color(*BLUE)
+        self.cell(0, 8, "Pipeline NLP de detection de fake news sur Bluesky", align="C")
+        self.ln(25)
+
+        # Document title
+        self.set_font("Helvetica", "B", 18)
+        self.set_text_color(*NAVY)
+        self.multi_cell(0, 10, doc_title, align="C")
+        self.ln(10)
+
+        if subtitle:
+            self.set_font("Helvetica", "I", 12)
+            self.set_text_color(*GRAY)
+            self.multi_cell(0, 7, subtitle, align="C")
+            self.ln(10)
+
+        # Separator
+        self.set_draw_color(*LIGHT_BLUE)
+        self.set_line_width(0.5)
+        self.line(60, self.get_y(), 150, self.get_y())
+        self.ln(20)
+
+        # Info block
+        self.set_font("Helvetica", "", 11)
+        self.set_text_color(*BLACK)
+        info_lines = [
+            "Formation : Mastere Big Data & IA - Sup de Vinci",
+            "Equipe : Azelie Bernard, Sebastien Lazcanotegui",
+            "Annee : 2025-2026",
+            "Version : Mai 2026",
+        ]
+        for line in info_lines:
+            self.cell(0, 7, line, align="C")
+            self.ln(7)
+
+        # Bottom line
+        self.set_draw_color(*NAVY)
+        self.set_line_width(1.5)
+        self.line(10, 270, 200, 270)
+
+        self.set_line_width(0.2)
+
     def header(self):
+        if self.page_no() == 1:
+            return  # No header on cover page
         self.set_font("Helvetica", "I", 8)
         self.set_text_color(*GRAY)
         self.cell(0, 5, f"Thumalien - {self.doc_title}", align="L")
@@ -70,7 +131,10 @@ class ThumalienPDF(FPDF):
         self.set_y(-15)
         self.set_font("Helvetica", "I", 8)
         self.set_text_color(*GRAY)
-        self.cell(0, 10, f"Page {self.page_no()}/{{nb}}", align="C")
+        if self.page_no() == 1:
+            self.cell(0, 10, "Projet d'etude - Mastere Big Data & IA - Sup de Vinci", align="C")
+        else:
+            self.cell(0, 10, f"Thumalien - {self.doc_title}  |  Page {self.page_no()}/{{nb}}", align="C")
 
     def chapter_title(self, text, level=1):
         text = self._strip_markdown_inline(text)
@@ -362,6 +426,7 @@ def convert_md_to_pdf(md_path: Path, pdf_path: Path):
 
     pdf = ThumalienPDF(title=title)
     pdf.alias_nb_pages()
+    pdf.cover_page(title)
     pdf.add_page()
 
     blocks = parse_markdown(md_text)

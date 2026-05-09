@@ -124,6 +124,90 @@ Le projet Thumalien est composé de 4 briques :
 
 ## 5. Architecture technique
 
+### Diagramme C4 — Niveau 2 (Conteneurs)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    SYSTEME THUMALIEN                                 │
+│                                                                     │
+│  ┌──────────────┐   ┌───────────────┐   ┌───────────────────────┐  │
+│  │  Collecteur   │   │   MongoDB     │   │  Dashboard Streamlit  │  │
+│  │  Bluesky      │──>│  thumalien_db │<──│  (5 pages + XAI)      │  │
+│  │  (AT Proto)   │   │  raw_posts    │   │  Port 8501            │  │
+│  └──────────────┘   └───────┬───────┘   └──────────┬────────────┘  │
+│                              │                      │               │
+│                              │            ┌─────────┴──────────┐   │
+│                              │            │  Pipeline NLP V9    │   │
+│                              │            │                     │   │
+│                              │            │  Stage 1: Fait/     │   │
+│                              │            │    Opinion (LogReg)  │   │
+│                              │            │         │            │   │
+│                              │            │  Stage 2: V5 TF-IDF │   │
+│                              │            │    + V6 Style-only  │   │
+│                              │            │    + CamemBERT (FR) │   │
+│                              │            │         │            │   │
+│                              │            │  Meta-learner V8    │   │
+│                              │            │    (LogReg 7 feat.)  │   │
+│                              │            └─────────┬───────────┘   │
+│                              │                      │               │
+│                              │            ┌─────────┴──────────┐   │
+│                              │            │  XAI Pipeline       │   │
+│  ┌──────────────┐            │            │  - SHAP global      │   │
+│  │  API FastAPI  │            │            │  - Attention CamBERT│   │
+│  │  (Port 8000)  │            │            │  - Captum IG        │   │
+│  │  /predict     │────────────┘            │  - Meta decomp V8  │   │
+│  │  /health      │                         │  - Faithfulness     │   │
+│  └──────────────┘                         └────────────────────┘   │
+│                                                                     │
+│  ┌──────────────┐   ┌───────────────┐   ┌───────────────────────┐  │
+│  │  CodeCarbon   │   │  Monitoring   │   │  CI/CD GitHub Actions │  │
+│  │  emissions.csv│   │  weekly_score │   │  pytest + lint        │  │
+│  └──────────────┘   └───────────────┘   └───────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Diagramme de sequence — Inference temps reel (analyse d'un texte)
+
+```
+Utilisateur       Dashboard        Stage1         V5 (TF-IDF)      V6 (Style)     CamemBERT     Meta-learner V8    XAI
+    │                 │               │               │                │              │               │              │
+    │  Saisir texte   │               │               │                │              │               │              │
+    │────────────────>│               │               │                │              │               │              │
+    │                 │  classify()   │               │                │              │               │              │
+    │                 │──────────────>│               │                │              │               │              │
+    │                 │  fait/opinion │               │                │              │               │              │
+    │                 │<──────────────│               │                │              │               │              │
+    │                 │               │               │                │              │               │              │
+    │                 │  [Si factuel] predict()      │                │              │               │              │
+    │                 │──────────────────────────────>│                │              │               │              │
+    │                 │              score_v5         │                │              │               │              │
+    │                 │<─────────────────────────────-│                │              │               │              │
+    │                 │                               │                │              │               │              │
+    │                 │  extract_style_features()     │                │              │               │              │
+    │                 │───────────────────────────────────────────────>│              │               │              │
+    │                 │              score_v6                          │              │               │              │
+    │                 │<──────────────────────────────────────────────-│              │               │              │
+    │                 │                               │                │              │               │              │
+    │                 │  [Si FR] classify()           │                │              │               │              │
+    │                 │──────────────────────────────────────────────────────────────>│               │              │
+    │                 │              score_cam         │                │              │               │              │
+    │                 │<─────────────────────────────────────────────────────────────-│               │              │
+    │                 │                               │                │              │               │              │
+    │                 │  predict_proba([v5, v6, cam, disagree, interact, min])        │               │              │
+    │                 │─────────────────────────────────────────────────────────────────────────────>│              │
+    │                 │              score_v8, label   │                │              │               │              │
+    │                 │<────────────────────────────────────────────────────────────────────────────-│              │
+    │                 │                               │                │              │               │              │
+    │                 │  SHAP(V6) + decompose(V8) + attention(CamBERT)│              │               │              │
+    │                 │───────────────────────────────────────────────────────────────────────────────────────────>│
+    │                 │              explications      │                │              │               │              │
+    │                 │<─────────────────────────────────────────────────────────────────────────────────────────-│
+    │                 │               │               │                │              │               │              │
+    │  Score + SHAP   │               │               │                │              │               │              │
+    │  + decomp V8    │               │               │                │              │               │              │
+    │<────────────────│               │               │                │              │               │              │
+```
+
 ### Stack technologique
 
 | Composant | Technologie | Justification |
@@ -1433,13 +1517,21 @@ Cette phase d'audit et de correction démontre une **maturité dans la gestion d
 
 1. **Annotation fait/opinion par heuristiques** : le classifieur de l'étape 1 est entraîné sur des labels dérivés de marqueurs lexicaux et de commentaires d'annotateurs, pas sur des labels humains dédiés à la distinction fait/opinion. Une annotation explicite de cette dimension améliorerait les performances (la cascade oracle montre un F1 suspect potentiel de 0.545).
 
-2. **Gold set encore déséquilibré** : même avec 500 posts annotés, seuls 15 sont suspects par consensus (3%). Un enrichissement ciblé (active learning sur les zones de désaccord) augmenterait la puissance statistique.
+2. **Gold set encore déséquilibré** : même avec 500 posts annotés, seuls 15 sont suspects par consensus (3%). Un enrichissement ciblé (active learning sur les zones de désaccord) augmenterait la puissance statistique. La revendication "FP -67%" (186 → 62) repose sur n=15 suspects, kappa=0.498 (accord modéré). Un bootstrap 10 000 itérations donne un IC 95% de [-78%, -52%] pour cette réduction, confirmant la significativité (cf. scripts/bootstrap_fp_gold.py), mais la puissance reste limitée par la taille de l'échantillon suspect.
 
 3. **Posts mixtes (opinion + fait)** : la frontière n'est pas nette (kappa inter-annotateurs = 0.498). Les posts qui mélangent jugement de valeur et assertion factuelle (ex. "Le vaccin cause l'autisme, ce gouvernement est criminel") restent difficiles à classer.
 
 4. **Pas de vérification factuelle** : le système détecte des patterns stylistiques, pas la véracité du contenu. Un post bien écrit mais factuellement faux reste indétectable.
 
 5. **Seuil calibré sur les données d'entraînement** : le seuil optimal du Stage 1 (0.40) est dérivé des mêmes 500 posts → risque de surapprentissage. Un jeu de validation indépendant serait nécessaire.
+
+6. **CamemBERT : signal utile mais non déployé en production standalone** : CamemBERT (443 MB de checkpoint, F1=0.957 sur textes FR ultra-courts) est intégré dans le méta-learner V8 comme 3e signal, mais le pipeline V9 en production utilise la cascade Stage 1 + V5 LogReg (1.5 ms/texte) comme architecture principale. Ce choix est délibéré :
+   - **Frugalité** : V5 LogReg infère en 1.5 ms vs ~200 ms pour CamemBERT (ratio 130x)
+   - **Empreinte carbone** : le fine-tuning CamemBERT a coûté 2.8 g CO2 sur les 6.14 g totaux du projet (46%), pour un gain marginal sur le gold (+0.036 F1 suspect dans V8 vs V7). Le ROI GreenIT ne justifie pas un déploiement systématique
+   - **Robustesse** : V5 est entraîné sur 197 782 textes bilingues, CamemBERT sur ~5 000 textes FR — le modèle frugal est plus robuste hors distribution
+   - **Usage réel** : CamemBERT est mobilisé dans V8 lorsque V5 et V6 divergent (désaccord) et pour le pipeline XAI (attention, Integrated Gradients). C'est un **complément d'analyse**, pas un classifieur autonome
+
+   Ce positionnement reflète un arbitrage conscient performance/coût, documenté dans la Model Card (`docs/12_model_card.md`) section 5.
 
 ### Ce qui a été tenté et abandonné
 

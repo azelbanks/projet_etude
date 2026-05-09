@@ -213,18 +213,20 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 
 ### 4.1 Registre des risques
 
-| ID | Risque | Probabilite | Impact | Criticite | Mitigation |
-|----|--------|:-----------:|:------:|:---------:|-----------|
-| R01 | Changement de l'API Bluesky (breaking change) | Moyenne | Eleve | Haute | Veille sur les releases AT Protocol. Version pinee de la librairie atproto |
-| R02 | Derive du modele (concept drift) | Elevee | Moyen | Haute | Monitoring mensuel de la distribution des scores. Retraining planifie |
-| R03 | Biais non detecte dans les predictions | Moyenne | Eleve | Haute | Audit de biais trimestriel. Diversification continue des datasets |
-| R04 | Panne infrastructure (MongoDB, Docker) | Faible | Eleve | Moyenne | Volumes persistants, restart: always dans Docker Compose |
-| R05 | Depassement de la capacite de stockage | Faible | Moyen | Faible | Monitoring de l'espace disque. Politique de retention 12 mois |
-| R06 | Demande d'effacement RGPD massive | Tres faible | Moyen | Faible | Procedure d'effacement automatisee et documentee |
-| R07 | Performance insuffisante sur nouvelle thematique | Moyenne | Moyen | Moyenne | Datasets complementaires thematiques. Retraining cible |
-| R08 | Indisponibilite d'un membre du binome | Faible | Eleve | Moyenne | Documentation exhaustive. Partage de connaissances regulier entre les deux membres |
-| R09 | Non-conformite reglementaire (evolution RGPD/AI Act) | Moyenne | Eleve | Haute | Veille reglementaire trimestrielle. Audit de conformite |
-| R10 | Mauvaise interpretation des scores par les utilisateurs | Moyenne | Eleve | Haute | Formation utilisateurs. Mentions explicites des limites dans le dashboard |
+| ID | Risque | Probabilite | Impact | Criticite | Mitigation | Statut |
+|----|--------|:-----------:|:------:|:---------:|-----------|:------:|
+| R01 | Changement de l'API Bluesky (breaking change) | Moyenne (30%) | Eleve | Haute | Veille sur les releases AT Protocol. Version pinee de la librairie atproto. Abstraction dans `collect_bluesky.py` pour isoler les appels API | Ouvert — surveille |
+| R02 | Derive du modele (concept drift) | Elevee (60%) | Moyen | Haute | Monitoring hebdomadaire (`weekly_score_check.py`) : alerte si delta score moyen > 5%. Retraining planifie semestriel | Mitige — monitoring actif |
+| R03 | Biais non detecte dans les predictions | Moyenne (40%) | Eleve | Haute | Audit de biais via gold set (kappa mesure). Analyse F1 par segment (FR/EN, court/long). Diversification continue des datasets | Mitige — gold set V2 |
+| R04 | Panne infrastructure (MongoDB, Docker) | Faible (10%) | Eleve | Moyenne | Volumes persistants Docker, `restart: always`, healthchecks Mongo (`mongosh --eval`). PCA documente dans `09_PRA_PCA.md` | Mitige — healthchecks |
+| R05 | Depassement de la capacite de stockage | Faible (15%) | Moyen | Faible | Monitoring de l'espace disque. Politique de retention 12 mois. 245K posts = ~200 MB | Accepte |
+| R06 | Demande d'effacement RGPD massive | Tres faible (5%) | Moyen | Faible | Procedure d'effacement automatisee documentee dans `02_conformite_RGPD_AI_Act.md` §3.2. Index MongoDB sur `author_handle` | Mitige |
+| R07 | Performance insuffisante sur nouvelle thematique (ex: elections, pandemie) | Moyenne (35%) | Moyen | Moyenne | V6 style-only est topic-agnostic par conception. Datasets complementaires thematiques pre-identifies. Active learning sur les FP | Mitige — V6 topic-agnostic |
+| R08 | Indisponibilite d'un membre du binome | Faible (10%) | Eleve | Moyenne | Documentation exhaustive (12 documents). Code commente. Tous les modeles et scripts reproductibles | Mitige — documentation |
+| R09 | Non-conformite reglementaire (evolution RGPD/AI Act) | Moyenne (30%) | Eleve | Haute | Veille reglementaire (section 10). AIPD complete. Model Card conforme Mitchell 2019. Classification AI Act explicite | Mitige — conformite |
+| R10 | Mauvaise interpretation des scores par les utilisateurs | Moyenne (40%) | Eleve | Haute | Explicabilite XAI multi-niveaux (SHAP, decomposition, attention). Avertissement explicite dans le dashboard. Guide utilisateur | Mitige — XAI pipeline |
+| R11 | Sur-ajustement du seuil Stage 1 sur le gold set | Moyenne (45%) | Moyen | Moyenne | Seuil 0.40 derive des memes 500 posts que l'evaluation. Un jeu de calibration independant eliminerait le biais. Documente en §26 | Ouvert — risque accepte |
+| R12 | Circularite du self-training (domain adaptation) | Realisee (100%) | Moyen | N/A | Self-training V5 sur Bluesky = echec documente (§22). Alternative : annotation humaine (§23). Le risque s'est materialise et a ete traite | Ferme — echec documente |
 
 ### 4.2 Plan de continuite d'activite (PCA)
 
