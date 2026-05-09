@@ -37,3 +37,10 @@ logs/
 
 # Exception : garder emissions CodeCarbon pour le bilan carbone
 !emissions.csv
+
+# Backups et fichiers temporaires
+*.bak
+backups/
+.coverage*
+.Trash-0/
+.Rhistory
