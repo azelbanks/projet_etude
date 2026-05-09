@@ -87,15 +87,41 @@ THUMALIEN - Projet Etude M1
 |   |-- T11.2 : Dashboard V5 (5 pages, accents, Performance)
 |
 |-- WP12 : Tests & Qualite (Mai 2026)
-|   |-- T12.1 : Tests unitaires (107 tests, 26% coverage)
+|   |-- T12.1 : Tests unitaires (342 tests, 49% coverage)
 |   |-- T12.2 : Benchmark latence (1.5ms/texte)
 |   |-- T12.3 : Tests d'integration pipeline
+|   |-- T12.4 : Tests explicabilite (test_explainability.py)
 |
 |-- WP13 : Video MVP (Mai 2026)
 |   |-- T13.1 : Script et storyboard
 |   |-- T13.2 : Tournage demo live
 |   |-- T13.3 : Montage et post-production
 |   |-- T13.4 : Livraison finale
+|
+|-- WP14 : Pipeline XAI complet (Mai 2026)
+|   |-- T14.1 : SHAP global (beeswarm + dependence) sur V6
+|   |-- T14.2 : Attention CamemBERT (CLS + heatmap par couche)
+|   |-- T14.3 : Layer Integrated Gradients via Captum
+|   |-- T14.4 : Decomposition exacte meta-learner V8 (beta*x)
+|   |-- T14.5 : Validation faithfulness (AOPC, Comprehensiveness, Sufficiency)
+|   |-- T14.6 : Model Card formelle (Google Model Card, Mitchell 2019)
+|   |-- T14.7 : Integration decomposition V8 dans dashboard
+|
+|-- WP15 : Refactoring Docker & CI (Mai 2026)
+|   |-- T15.1 : Healthchecks MongoDB + depends_on conditionnel
+|   |-- T15.2 : Utilisateur non-root + PYTHONPATH unifie
+|   |-- T15.3 : API FastAPI (/predict, /health)
+|   |-- T15.4 : Authentification dashboard
+|
+|-- WP16 : Corrections audit & packaging (Mai 2026)
+|   |-- T16.1 : Bootstrap IC 95% sur FP -67%
+|   |-- T16.2 : Justification CamemBERT non-prod (rapport §26)
+|   |-- T16.3 : Tableau risques enrichi (12 risques, proba, statut)
+|   |-- T16.4 : Diagrammes C4 + sequence inference
+|   |-- T16.5 : Etoffement rendu individuel Sebastien
+|   |-- T16.6 : Page de garde + footer pagine PDF
+|   |-- T16.7 : Script packaging nomenclature PE_2526_M1BDIA
+|   |-- T16.8 : Regeneration 17 PDF depuis MD
 ```
 
 ---
@@ -205,17 +231,46 @@ gantt
     J22 Dashboard V5                        :milestone, j22, 2026-05-05, 0d
 
     section WP12 Tests & Qualite
-    T12.1 Tests unitaires (107 tests)       :done, t121, 2026-05-02, 2026-05-10
+    T12.1 Tests unitaires (342 tests)       :done, t121, 2026-05-02, 2026-05-10
     T12.2 Benchmark latence (1.5ms)         :done, t122, 2026-05-02, 2026-05-08
     T12.3 Tests integration pipeline        :done, t123, 2026-05-08, 2026-05-14
-    J23 Tests & Benchmark                   :milestone, j23, 2026-05-08, 0d
+    T12.4 Tests explicabilite               :done, t124, 2026-05-06, 2026-05-09
+    J23 Tests (342 tests, 49% cov)          :milestone, j23, 2026-05-09, 0d
+
+    section WP14 Pipeline XAI
+    T14.1 SHAP global (beeswarm+dep.)       :done, t141, 2026-05-02, 2026-05-05
+    T14.2 Attention CamemBERT               :done, t142, 2026-05-03, 2026-05-05
+    T14.3 Integrated Gradients (Captum)     :done, t143, 2026-05-03, 2026-05-06
+    T14.4 Decomposition meta-learner V8     :done, t144, 2026-05-04, 2026-05-06
+    T14.5 Faithfulness (AOPC, Compr.)       :done, t145, 2026-05-05, 2026-05-07
+    T14.6 Model Card (Mitchell 2019)        :done, t146, 2026-05-06, 2026-05-08
+    T14.7 Integration dashboard V8 decomp   :done, t147, 2026-05-07, 2026-05-09
+    J26 Pipeline XAI complet                :milestone, j26, 2026-05-08, 0d
+
+    section WP15 Docker & CI
+    T15.1 Healthchecks + depends_on         :done, t151, 2026-04-28, 2026-05-02
+    T15.2 Non-root + PYTHONPATH             :done, t152, 2026-05-01, 2026-05-03
+    T15.3 API FastAPI                       :done, t153, 2026-05-02, 2026-05-05
+    T15.4 Auth dashboard                    :done, t154, 2026-05-04, 2026-05-06
+    J27 Docker pro + API                    :milestone, j27, 2026-05-05, 0d
+
+    section WP16 Corrections audit
+    T16.1 Bootstrap IC 95% FP               :done, t161, 2026-05-09, 2026-05-09
+    T16.2 Justif. CamemBERT non-prod        :done, t162, 2026-05-09, 2026-05-09
+    T16.3 Risques enrichis (12 risques)     :done, t163, 2026-05-09, 2026-05-09
+    T16.4 Diagrammes C4 + sequence          :done, t164, 2026-05-09, 2026-05-09
+    T16.5 Rendu Sebastien etoffe            :done, t165, 2026-05-09, 2026-05-09
+    T16.6 Page de garde PDF                 :done, t166, 2026-05-09, 2026-05-09
+    T16.7 Script packaging nomenclature     :done, t167, 2026-05-09, 2026-05-09
+    T16.8 Regeneration 17 PDF               :done, t168, 2026-05-09, 2026-05-09
+    J28 Corrections audit completes         :milestone, j28, 2026-05-09, 0d
 
     section WP13 Video MVP
-    T13.1 Script et storyboard              :done, t131, 2026-05-08, 2026-05-13
-    T13.2 Tournage demo live                :done, t132, 2026-05-13, 2026-05-16
-    T13.3 Montage et post-production        :done, t133, 2026-05-15, 2026-05-18
-    T13.4 Livraison finale                  :done, t134, 2026-05-18, 2026-05-19
-    J25 Video MVP                           :milestone, j25, 2026-05-15, 0d
+    T13.1 Script et storyboard              :active, t131, 2026-05-10, 2026-05-13
+    T13.2 Tournage demo live                :t132, 2026-05-13, 2026-05-16
+    T13.3 Montage et post-production        :t133, 2026-05-15, 2026-05-18
+    T13.4 Livraison finale                  :t134, 2026-05-18, 2026-05-19
+    J25 Video MVP                           :milestone, j25, 2026-05-18, 0d
     DEADLINE                                :milestone, crit, deadline, 2026-05-19, 0d
 ```
 
@@ -254,8 +309,11 @@ gantt
 | 28/04/2026 | J20 - Collecteur V3 | Reeequilibrage FR/EN + inference auto | Azelie |
 | 02/05/2026 | J21 - V9 Cascade fait/opinion | FP -67%, Fisher p=0.0005 | Azelie |
 | 05/05/2026 | J22 - Dashboard V5 | 5 pages, accents FR, page Performance | Azelie |
-| 08/05/2026 | J23 - Tests & Benchmark | 107 tests, 1.5ms/texte, 728 textes/sec | Azelie |
+| 08/05/2026 | J23 - Tests & Benchmark | 342 tests, 49% cov, 1.5ms/texte | Azelie |
 | 12/05/2026 | J24 - Documentation finale | Rapport, planification, rendus individuels | Azelie |
+| 08/05/2026 | J26 - Pipeline XAI complet | SHAP, Captum IG, attention, faithfulness AOPC | Azelie |
+| 05/05/2026 | J27 - Docker pro + API | Healthchecks, non-root, FastAPI, auth | Azelie |
+| 09/05/2026 | J28 - Corrections audit | Bootstrap IC, C4, risques, packaging | Azelie |
 | 15/05/2026 | J25 - Video MVP | Video 15-20 min face-cam + dossier | Azelie + Sebastien |
 | **19/05/2026** | **DEADLINE** | **Livraison finale — dossier + video + code** | **Equipe** |
 
@@ -369,6 +427,9 @@ Toute tache sur le chemin critique qui prend du retard retarde la livraison fina
 | WP11 Dashboard V4-V5 | R/A | C (tests fonctionnels) |
 | WP12 Tests & Qualite | R | C (validation resultats) |
 | WP13 Video MVP | R | R (co-production) |
+| WP14 Pipeline XAI | R/A | I |
+| WP15 Docker & CI | R/A | I |
+| WP16 Corrections audit | R/A | C (relecture rendu individuel) |
 
 **Legende RACI** : R = Responsable, A = Approbateur, C = Consulte, I = Informe
 
@@ -389,7 +450,10 @@ Toute tache sur le chemin critique qui prend du retard retarde la livraison fina
 | WP11 Dashboard V4-V5 | 20 | 3 | 23 |
 | WP12 Tests & Qualite | 15 | 5 | 20 |
 | WP13 Video MVP | 10 | 10 | 20 |
-| **Total** | **380** | **71** | **451** |
+| WP14 Pipeline XAI | 25 | 0 | 25 |
+| WP15 Docker & CI | 15 | 0 | 15 |
+| WP16 Corrections audit | 12 | 3 | 15 |
+| **Total** | **432** | **74** | **506** |
 
 ---
 
@@ -452,6 +516,9 @@ Toute tache sur le chemin critique qui prend du retard retarde la livraison fina
 | J14 | V8 Meta-learner CamemBERT | Non prevu | Avr 2026 | -- | Emergent |
 | J15 | V9 Pipeline Cascade fait/opinion | Mai 2026 | Mai 2026 | 0 | A l'heure |
 | J16 | Documentation finale | Mai 2026 | Mai 2026 | 0 | A l'heure |
+| J17 | Pipeline XAI complet | Non prevu | Mai 2026 | -- | Emergent |
+| J18 | Docker pro + API FastAPI | Non prevu | Mai 2026 | -- | Emergent |
+| J19 | Corrections audit evaluateur | Non prevu | Mai 2026 | -- | Emergent |
 
 ### 9.2 Diagramme Gantt previsionnel vs reel
 
@@ -521,11 +588,20 @@ gantt
     section J16 Documentation
     Prevu                          :done, j16p, 2026-05-01, 2026-05-31
     Reel                           :done, j16r, 2026-05-01, 2026-05-15
+
+    section J17 Pipeline XAI
+    Reel (emergent)                :done, crit, j17r, 2026-05-02, 2026-05-09
+
+    section J18 Docker & API
+    Reel (emergent)                :done, crit, j18r, 2026-04-28, 2026-05-06
+
+    section J19 Corrections audit
+    Reel (emergent)                :done, crit, j19r, 2026-05-09, 2026-05-09
 ```
 
 ### 9.3 Analyse des ecarts
 
-**Synthese globale** : sur 16 jalons identifies a posteriori, 10 ont ete livres a l'heure, 2 en avance et 4 sont des jalons emergents non prevus dans la planification initiale. Aucun retard significatif n'a ete constate sur l'ensemble du projet.
+**Synthese globale** : sur 19 jalons identifies a posteriori, 10 ont ete livres a l'heure, 2 en avance et 7 sont des jalons emergents non prevus dans la planification initiale. Aucun retard significatif n'a ete constate sur l'ensemble du projet.
 
 **Jalons en avance :**
 
@@ -538,6 +614,9 @@ gantt
 - **J10 - V7/V8 Meta-learners** : combinaisons ensemblistes des modeles V5, V6 et CamemBERT, motivees par la complementarite observee entre les approches lexicale, stylistique et transformer.
 - **J13 - RoBERTa EN** : ajout d'un modele anglophone pour completer CamemBERT, en reponse au besoin bilingue identifie dans le gold test set.
 - **J14 - V8 Meta CamemBERT** : meta-learner integrant CamemBERT, consequence directe de la disponibilite anticipee de ce modele.
+- **J17 - Pipeline XAI** : pipeline complet d'explicabilite (SHAP global, attention CamemBERT, Integrated Gradients, decomposition V8, validation faithfulness AOPC), emergee des exigences de conformite AI Act et du retour evaluateur.
+- **J18 - Docker pro + API** : refactoring Docker (healthchecks, non-root, PYTHONPATH) et ajout d'une API FastAPI avec authentification dashboard, motivee par les standards de production identifies lors de l'audit.
+- **J19 - Corrections audit** : bootstrap IC 95%, justification CamemBERT non-prod, enrichissement risques, diagrammes C4, page de garde PDF et packaging nomenclature, en reponse directe au retour evaluateur.
 
 **Facteurs explicatifs :**
 
