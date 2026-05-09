@@ -162,9 +162,14 @@ jobs:
           print('All dashboard imports and syntax checks passed')
           "
 
-      - name: Run pytest suite
+      - name: Run pytest suite with coverage
         run: |
-          pytest tests/ -v --tb=short
+          pip install pytest-cov
+          pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
+
+      - name: Coverage gate (fail if under 75%)
+        run: |
+          coverage report --fail-under=75
 
       - name: Benchmark inference time
         run: |
