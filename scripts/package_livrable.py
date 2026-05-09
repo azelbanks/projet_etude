@@ -41,6 +41,7 @@ PDF_INDIV_2 = f"PE-{ANNEE}_{CODE_PROMO}_{ETUDIANT_2}.pdf"
 
 # PDF qui constituent le rendu groupe (dans l'ordre)
 GROUPE_PDFS = [
+    "00_executive_summary.pdf",
     "rapport_projet_thumalien.pdf",
     "01_cahier_des_charges_techniques.pdf",
     "02_conformite_RGPD_AI_Act.pdf",

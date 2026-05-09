@@ -17,6 +17,7 @@ DOCS_DIR = Path(__file__).parent
 OUTPUT_DIR = DOCS_DIR / "pdf"
 
 DOCUMENTS = [
+    "00_executive_summary.md",
     "01_cahier_des_charges_techniques.md",
     "02_conformite_RGPD_AI_Act.md",
     "03_methodologie_projet.md",
