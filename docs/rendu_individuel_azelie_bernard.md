@@ -108,7 +108,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 | MongoDB | Débutant | Intermédiaire | Schéma, index, agrégations |
 | Streamlit | Débutant | Avancé | Dashboard interactif 5 pages, Plotly avancé |
 | Git / GitHub | Intermédiaire | Avancé | Versioning, merge, collaboration |
-| Explicabilité IA (SHAP) | Débutant | Intermédiaire | TreeExplainer, feature importance, intégration dashboard |
+| Explicabilité IA (SHAP / Captum / faithfulness) | Débutant | **Avancé** | SHAP TreeExplainer (beeswarm, dependence, bar global), Layer Integrated Gradients via Captum, attention visualization sur transformers, faithfulness AOPC/Comprehensiveness/Sufficiency vs random baseline (DeYoung 2020 ERASER). Module `src/explainability/` 1 450 LoC + Model Card formelle |
 | Feature Engineering avancé | Intermédiaire | Avancé | 28 features stylistiques, meta-features, stacking |
 | Ensemble Learning | Débutant | Intermédiaire | Meta-learner, stacking, GradientBoosting |
 | Tests / CI | Débutant | Intermédiaire | pytest, mocking, benchmarking, coverage |
@@ -148,6 +148,7 @@ J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'
 - Le gold test set a révélé des faiblesses invisibles en cross-validation
 - L'approche V6 style-only a prouvé qu'on peut détecter des patterns de désinformation sans analyser le contenu
 - SHAP apporte une transparence complète sur les raisons de chaque prédiction
+- Le pipeline XAI complet (SHAP global, Layer Integrated Gradients via Captum, attention CamemBERT, décomposition exacte du méta-learner V8, faithfulness test AOPC) m'a permis de valider quantitativement la fidélité des explications : **uplift AOPC = +0.21 vs baseline aléatoire** ⇒ explications 5.6× plus prédictives. C'est un niveau de rigueur méthodologique que je ne maîtrisais pas en début de projet
 
 ### Ce que j'aurais fait différemment
 - **Tests unitaires dès le début** : le bug des 5 features nulles (V2→V3) aurait été détecté immédiatement avec des tests de non-régression. La suite de tests (107 tests, 26% coverage) a été ajoutée tardivement mais reste un acquis méthodologique important.
@@ -172,7 +173,7 @@ Les apprentissages clés :
 - **L'évaluation est plus importante que l'entraînement** : un F1=0.99 en cross-validation masquait un biais Reuters. Le gold test set a été un tournant dans ma compréhension de l'évaluation des modèles.
 - **L'itération constante est la seule voie** : chaque version (V1→V9) a corrigé une faiblesse identifiée en production. Les "échecs" (self-training, seuil adaptatif) sont aussi riches d'enseignements que les succès.
 - **Les solutions simples dominent** : TF-IDF + features linguistiques (V5, 1.5ms/texte) reste plus robuste en production qu'un Transformer seul. L'architecture hybride (V8/V9) combine le meilleur des deux approches.
-- **L'éthique n'est pas optionnelle** : la conformité RGPD, l'AI Act, le bilan carbone (CodeCarbon) et l'explicabilité (SHAP) m'ont appris que la responsabilité d'un ingénieur IA dépasse la performance technique.
+- **L'éthique n'est pas optionnelle** : la conformité RGPD, l'AI Act, le bilan carbone (CodeCarbon) et l'explicabilité (SHAP, Captum, faithfulness validation) m'ont appris que la responsabilité d'un ingénieur IA dépasse la performance technique. La Model Card formelle (`docs/12_model_card.md`) avec sa section dédiée XAI documentant les méthodes, l'audience, les limites et les niveaux de Completeness Captum constitue, à mon sens, le livrable le plus mature du projet.
 
 Ce projet m'a fait passer de débutante à un niveau intermédiaire-avancé en NLP/Deep Learning. La rigueur scientifique acquise (tests de significativité, kappa inter-annotateurs, validation sur données réelles) sera un atout déterminant pour ma carrière professionnelle en data science.
 

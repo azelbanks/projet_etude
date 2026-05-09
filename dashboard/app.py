@@ -293,6 +293,9 @@ def predict_v7_hybrid(text_input, detector, emo, v6_data, v7_data, cam_classifie
         result['score_v7'] = score_v7
         result['label_v7'] = 'SUSPECT' if score_v7 >= 0.5 else 'FIABLE'
         result['version'] = v7_data.get('version', 'v7_hybrid')
+        # Persist for explainability decomposition (XAI section ci-dessous)
+        result['X_meta'] = X_meta
+        result['v7_data'] = v7_data
     else:
         combined = score_v5 * (1 - score_v6)
         result['score_v7'] = 1 - combined
@@ -950,6 +953,48 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
                 st.plotly_chart(fig_shap, use_container_width=True)
                 st.caption("SHAP décompose la prédiction V6 en contributions par feature. "
                            "Seul le STYLE est analysé, indépendamment du sujet.")
+
+            # ----------------------------------------------------------
+            # Décomposition exacte du méta-learner V7/V8 (LogReg)
+            # ----------------------------------------------------------
+            if v7_result.get('X_meta') is not None and v7_result.get('v7_data') is not None:
+                try:
+                    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+                    from explainability.meta_decomposition import MetaLearnerDecomposer
+
+                    decomposer = MetaLearnerDecomposer(v7_result['v7_data'])
+                    decomp = decomposer.decompose(v7_result['X_meta'][0])
+
+                    st.subheader("Décomposition de l'ensemble (méta-learner V8)")
+                    fig_meta = MetaLearnerDecomposer.to_plotly_bar(decomp)
+                    st.plotly_chart(fig_meta, use_container_width=True)
+
+                    drivers = decomp.top_drivers(3)
+                    driver_strs = [
+                        f"<b>{d['feature']}</b> "
+                        f"(<span style='color:{'#FF1744' if d['direction']=='SUSPECT' else '#00E676'}'>"
+                        f"{d['direction']} {d['contribution']:+.3f}</span>)"
+                        for d in drivers
+                    ]
+                    st.markdown(
+                        f"**logit z = {decomp.logit:+.3f}** → "
+                        f"σ(z) = P(suspect) = **{decomp.proba_suspect:.3f}** → "
+                        f"décision **{decomp.label}** (seuil {decomp.threshold:.2f})",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        "Top 3 contributeurs : " + " · ".join(driver_strs),
+                        unsafe_allow_html=True,
+                    )
+                    st.caption(
+                        "Décomposition exacte d'un modèle linéaire : z = β₀ + Σ βᵢ·xᵢ. "
+                        "Chaque barre = contribution d'une feature au logit. "
+                        "Rouge = pousse vers SUSPECT, vert = pousse vers FIABLE. "
+                        "Cette décomposition complète SHAP : SHAP explique V6 (style), "
+                        "celle-ci explique l'agrégation V5+V6+CamemBERT."
+                    )
+                except Exception as e:
+                    logging.warning("Décomposition méta-learner échouée: %s", e)
 
 
 def _page_batch_analysis(detector, emo):

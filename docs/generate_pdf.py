@@ -33,6 +33,7 @@ DOCUMENTS = [
     "guide_utilisateur.md",
     "rendu_individuel_azelie_bernard.md",
     "rendu_individuel_sebastien_lazcanotegui.md",
+    "12_model_card.md",
 ]
 
 # Colors

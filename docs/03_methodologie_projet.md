@@ -384,6 +384,7 @@ Tout changement significatif (nouveau dataset, modification d'architecture, chan
 | Mai 2026 | V9 pipeline 2 etapes fait/opinion | Distinction fait/opinion comme facteur discriminant | FP -67%, kappa 3x |
 | Mai 2026 | Reequilibrage collecte (V3 collecteur) | Biais emotionnel (75% joie) et desequilibre FR/EN (87.5% EN) | 28 termes FR + 16 EN, inference auto |
 | Mai 2026 | Refactoring Docker professionnel | Architecture non robuste (pas de healthcheck, demarrage non ordonne) | Healthchecks, depends_on conditionnel, PYTHONPATH unifie |
+| Mai 2026 | Pipeline XAI complet (`src/explainability/`) | Challenge "explicabilite pourrait aller plus loin" identifie en revue equipe | 6 modules (1 450 LoC) : SHAP global beeswarm/dependence, attention CamemBERT, IG via Captum, decomposition exacte meta-learner V8, faithfulness AOPC. **Uplift AOPC = +0.21 vs random** (cible >+0.10). Model Card formelle MC-THUM-2026-001 |
 
 ---
 

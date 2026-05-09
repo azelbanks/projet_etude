@@ -122,6 +122,12 @@ La proliferation de la desinformation sur les reseaux sociaux constitue un enjeu
 | DASH-04 | La page Analyse Temps Reel doit permettre l'analyse d'un texte libre avec affichage du score, du verdict et de l'emotion dominante | Critique | Prediction en < 3s apres soumission |
 | DASH-05 | Le dashboard doit fonctionner en mode demo si MongoDB est indisponible | Haute | 15 posts de demonstration charges |
 | DASH-06 | L'explicabilite doit etre affichee : top mots, features linguistiques, mots sensationnalistes detectes | Haute | Section explicabilite visible pour chaque analyse |
+| DASH-06b | La decomposition exacte du meta-learner V8 (β·x) doit etre affichee pour chaque prediction | Haute | Bar plot Plotly + top 3 contributeurs avec direction SUSPECT/FIABLE |
+| XAI-01 | Le pipeline doit produire SHAP global (beeswarm + dependence) sur V6 | Haute | Figures dans `docs/figures/xai/` |
+| XAI-02 | La fidelite des explications (faithfulness) doit etre quantifiee : AOPC, Comprehensiveness@k, Sufficiency@k vs baseline aleatoire | Haute | AOPC uplift > +0.10 sur le gold set |
+| XAI-03 | L'attribution causale au niveau token doit etre disponible sur CamemBERT (Layer Integrated Gradients via Captum) | Moyenne | Heatmap par token + Δ_convergence < 0.15 (niveau indicatif minimum) |
+| XAI-04 | L'attention CamemBERT doit etre visualisable (CLS dernière couche + heatmap par couche) sur TP, FP, FN | Moyenne | 1 figure par classe d'erreur, pour analyse qualitative |
+| XAI-05 | Les explications doivent etre validees par audience : utilisateur, modérateur, régulateur, chercheur | Haute | Model card `docs/12_model_card.md` section 7.4 |
 | DASH-07 | Le theme doit etre dark avec accents cyan et effet glassmorphism | Moyenne | Conformite visuelle validee |
 | DASH-08 | Les graphiques doivent etre interactifs (zoom, hover, export) via Plotly | Moyenne | Interactions fonctionnelles |
 | DASH-09 | Le contraste texte/fond doit respecter WCAG 2.1 AA (ratio >= 4.5:1) | Haute | Valide par outil d'audit accessibilite |

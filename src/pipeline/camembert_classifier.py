@@ -466,8 +466,15 @@ class CamemBERTClassifier:
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.MODEL_NAME)
         self.base_model = AutoModel.from_pretrained(self.MODEL_NAME).to(self.device)
+
+        # Les checkpoints intermédiaires (`camembert_best.pt`) sauvegardés via
+        # _save_checkpoint() ne contiennent pas la clé 'config'. Dans ce cas,
+        # on déduit hidden_size depuis le base_model HuggingFace fraîchement
+        # chargé (= taille standard pour camembert-base).
+        cfg = checkpoint.get('config') or {}
+        hidden_size = cfg.get('hidden_size', self.base_model.config.hidden_size)
         self.head = CamemBERTHead(
-            hidden_size=checkpoint['config']['hidden_size'],
+            hidden_size=hidden_size,
             num_classes=2,
         ).to(self.device)
 

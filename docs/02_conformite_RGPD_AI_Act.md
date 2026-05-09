@@ -191,11 +191,11 @@ Bien que non obligatoires pour un systeme a risque limite, nous appliquons volon
 
 | Bonne pratique | Implementation | Motivation |
 |----------------|---------------|------------|
-| **Explicabilite** | Fonction `explain_prediction()` : top mots, features linguistiques, mots sensationnalistes | Permettre a l'utilisateur de comprendre et contester une prediction |
+| **Explicabilite** | Pipeline XAI complet : (1) `explain_prediction()` LogReg V5 = decomposition exacte par coefficients ; (2) SHAP TreeExplainer sur V6 (35 features) avec beeswarm + dependence + bar global ; (3) Decomposition exacte du meta-learner V8 (β·x) ; (4) Attention CamemBERT (CLS, dernière couche, par couche) ; (5) Layer Integrated Gradients via Captum (axiome de Completeness verifie) ; (6) Validation faithfulness AOPC sur baseline aleatoire (uplift +0.21 mesuré). Voir `docs/12_model_card.md` section 7 et `src/explainability/`. | Permettre a l'utilisateur de comprendre et contester une prediction (RGPD art. 22) ; alimenter art. 13 et 14 AI Act |
 | **Audit de biais** | Ecart F1 FR/EN < 2 points. Biais Reuters identifie et corrige. Documentation des limites | Prevenir la discrimination algorithmique |
 | **Supervision humaine** | Le score est un indicateur — aucune action automatisee n'est declenchee | Maintenir le controle humain |
 | **Empreinte carbone** | CodeCarbon mesure chaque entrainement. Choix delibere de modeles frugaux | Responsabilite environnementale |
-| **Model card** | Documentation du modele : architecture, donnees d'entrainement, performances, limites | Transparence pour les pairs et les regulateurs |
+| **Model card** | Documentation Google Model Card formelle (`docs/12_model_card.md`, MC-THUM-2026-001) avec section dediee XAI (7 methodes, audience par persona, validation faithfulness, limites des methodes gradient-based sur transformers) | Transparence pour les pairs et les regulateurs |
 | **Droit de contestation** | Mecanisme de feedback prevu : si un utilisateur juge une prediction erronee, l'information est enregistree | Recours humain contre les erreurs de l'IA |
 
 ### 4.4 Model Card — Fiche d'identite du modele

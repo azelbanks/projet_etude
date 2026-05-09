@@ -271,9 +271,13 @@ Le seuil de 0.44 cree une frontiere nette la ou le phenomene est continu. Les te
    - Integration de plus de datasets sociaux (Twitter/X, Reddit, Bluesky)
    - Augmentation de donnees par paraphrase pour les classes sous-representees
 
-7. **Explicabilite enrichie** :
-   - Pour chaque prediction en zone grise, fournir un indice de confiance et les raisons du doute
-   - Signaler explicitement quand le texte est trop court pour une prediction fiable
+7. **Explicabilite enrichie** ✓ REALISE (mai 2026) :
+   - SHAP global (beeswarm + dependence) sur V6 documente les patterns d'erreurs sur l'ensemble du gold (cf. `docs/figures/xai/shap_beeswarm_v6.png`)
+   - Decomposition exacte du meta-learner V8 expose la contribution de V5 / V6 / CamemBERT au logit final pour chaque prediction (`src/explainability/meta_decomposition.py`)
+   - Attention CamemBERT et Layer Integrated Gradients (Captum) attribuent au niveau token sur les FP/FN representatifs — utile pour debugger l'origine des erreurs (token sensationnaliste, citation entre guillemets, etc.)
+   - Validation par faithfulness test : AOPC uplift = +0.21 sur le gold ⇒ les explications SHAP sont **5.6× plus predictives** qu'une attribution aleatoire (cf. `docs/12_model_card.md` section 7.2)
+   - Pour les predictions en zone grise (FP/FN à confiance moyenne), le pipeline expose simultanement le score, la decomposition meta-learner et l'attribution token-level — l'utilisateur a tout ce qu'il faut pour comprendre et contester
+   - Signaler explicitement quand le texte est trop court pour une prediction fiable (déjà en place via le seuil adaptatif court_15 / court_30)
 
 ### 7.3 Priorites par impact attendu
 

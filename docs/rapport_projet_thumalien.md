@@ -998,6 +998,59 @@ Le dashboard V7 affiche pour chaque analyse en temps réel :
 2. Un graphique SHAP montrant la contribution de chaque feature de style
 3. Le détail complet des 35 features avec leur valeur SHAP et direction
 
+### Pipeline XAI complet (mai 2026)
+
+Au-delà de l'explicabilité SHAP de V6 ci-dessus, le projet inclut un module
+XAI complet (`src/explainability/`, 1 450 LoC) qui couvre les 4 niveaux de
+l'IA explicable :
+
+**Niveau global / modèle**
+- `GlobalShapExplainer` : beeswarm + dependence plots sur V6 (cf. `docs/figures/xai/`)
+- Analyse stratifiée par classe d'erreur (TP/FP/FN)
+
+**Niveau local / instance**
+- Coefficients LogReg V5 : `expert_detector.explain_prediction`
+- SHAP TreeExplainer V6 : intégré dashboard (existant)
+- Attention CamemBERT (CLS dernière couche + heatmap par couche)
+- Layer Integrated Gradients via Captum sur CamemBERT (axiome de
+  Completeness vérifié, Sundararajan et al. 2017)
+
+**Niveau méta-learner V8**
+- `MetaLearnerDecomposer` : décomposition exacte `z = β₀ + Σ βᵢ·xᵢ` du
+  LogReg V8 sur 7 features (V5 + V6 + CamemBERT + désaccords + interaction
+  + min_fiable). Affichée dans le dashboard sous le bloc SHAP
+
+**Niveau validation / faithfulness**
+- `FaithfulnessEvaluator` : AOPC, Comprehensiveness@k, Sufficiency@k
+  (DeYoung et al. 2020, ERASER benchmark)
+- **Mesure sur le gold set** : AOPC attribution = 0.253, AOPC random =
+  0.045, **uplift = +0.208** (cible > +0.10) ⇒ explications **5.6× plus
+  prédictives** qu'une attribution aléatoire
+- Comprehensiveness@5 = 0.232 / Sufficiency@5 = 0.058
+
+**Coefficients V8 — observation clé**
+
+```
+score_v5_fiable           : β=+0.393
+score_v6_suspect          : β=+0.580
+score_camembert_fiable    : β=−1.116    ← signal le plus fort en valeur absolue
+disagreement_v5_v6        : β=−2.939    ← coefficient dominant
+disagreement_v5_cam       : β=+0.948
+interaction_v5_v6         : β=+1.053
+min_fiable                : β=−0.836
+intercept                 : β₀=+0.492
+```
+
+Le coefficient `disagreement_v5_v6` (β=-2.94) est le **plus important en
+magnitude** : quand les deux modèles divergent, V8 penche fortement vers
+FIABLE. **Comportement conservateur sur consensus** — on ne classe SUSPECT
+que lorsque V5 et V6 convergent, ce qui réduit drastiquement les FP.
+
+**Production** : pipeline reproductible via `python scripts/run_xai_pipeline.py`,
+qui régénère toutes les figures + un `INDEX.md` Markdown + un `results.json`
+sérialisé. Documentation auditeur : `docs/12_model_card.md` (Google Model
+Card format) section 7.
+
 ---
 
 ## 21. V8 — Intégration de CamemBERT
