@@ -21,6 +21,8 @@
 | D06 | Rapport de Projet | — | 1.0 | En vigueur | `docs/rapport_projet_thumalien.md` |
 | D07 | Guide Utilisateur | — | 1.0 | En vigueur | `docs/guide_utilisateur.md` |
 | D08 | Index Général (ce document) | IDX-THUM-2026-001 | 2.0 | En vigueur | `docs/00_INDEX.md` |
+| D12 | Model Card V9 (XAI) | MC-THUM-2026-001 | 1.0 | En vigueur | `docs/12_model_card.md` |
+| D13 | Index figures XAI | — | 1.0 | Auto-généré | `docs/figures/xai/INDEX.md` |
 
 ---
 

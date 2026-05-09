@@ -131,6 +131,12 @@ La veille technologique permet de maintenir le projet Thumalien à l'état de l'
 | Avril 2026 | Technique de stacking pour NLP hybride | Pipeline hybride V5+CamemBERT | F1 FR +0.52% |
 | Avril 2026 | SHAP TreeExplainer pour GradientBoosting (papier Lundberg 2017) | Intégration dans dashboard V7 | Explicabilité locale et globale des prédictions |
 | Avril 2026 | Meta-learner stacking pour combiner modèles hétérogènes (technique Kaggle) | Architecture V7 hybride V5+V6 | Réduction FP de 57 à 25 sur gold set |
+| Mai 2026 | Captum 0.9 (Meta) : Layer Integrated Gradients pour transformers | Module `src/explainability/integrated_gradients.py` avec LIG sur CamemBERT | Attribution causale par token, axiome de Completeness vérifié |
+| Mai 2026 | Bug Captum/MPS sur Apple Silicon (issue PyTorch #128043) | Workaround : bascule CPU automatique pour les attributions IG | Δ_convergence divisé par 3 (de +0.35 à +0.04) |
+| Mai 2026 | ERASER benchmark (DeYoung et al., ACL 2020) | Implémentation FaithfulnessEvaluator (AOPC, Comprehensiveness@k, Sufficiency@k vs random) | Validation quantitative des explications : uplift +0.21 vs baseline aléatoire |
+| Mai 2026 | Mudrakarta et al. (2018) sur les baselines IG | Stratégie de baseline auto (`<unk>` → `<pad>`) avec retry n_steps escalade | Baseline `<unk>` préserve [CLS]/[SEP] = meilleure convergence Captum |
+| Mai 2026 | Recommandation Captum : expliquer la classe prédite, pas la classe théorique | Patch step_integrated_gradients pour passer `target_class=preds[i]` | FN id=9 passe de Δ=0.47 (rejet) à Δ=0.04 (✓ pratique) |
+| Mai 2026 | Google Model Card framework (Mitchell et al. 2019, FAT*) | Création `docs/12_model_card.md` avec section dédiée XAI (audience par persona, validation, limites) | Document auditeur conforme aux attentes AI Act art. 13 |
 
 ---
 

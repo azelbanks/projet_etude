@@ -17,7 +17,14 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 * **Détection de Fake News (V9) :** Pipeline cascade 2 étapes : filtre fait/opinion puis analyse V8 (meta-learner V5+V6+CamemBERT). Bilingue FR/EN, 15 features linguistiques + 28 features stylistiques.
 * **Analyse Émotionnelle (Deep Learning) :** Réseau de neurones MLP (PyTorch) classifiant les textes selon 7 émotions (Colère, Dégoût, Joie, Neutre, Peur, Surprise, Tristesse).
 * **Modèles avancés :** CamemBERT (FR, F1 0.957) et RoBERTa (EN, F1 0.874) fine-tunés pour les textes ultra-courts type réseaux sociaux.
-* **Explicabilité SHAP :** Chaque prédiction est accompagnée d'une explication visuelle des facteurs de décision.
+* **Explicabilité IA (XAI) complète :** Pipeline 6 modules dans `src/explainability/` couvrant les 4 niveaux de l'IA explicable :
+    * SHAP global (beeswarm + dependence) sur V6
+    * Attention CamemBERT (CLS dernière couche + heatmap par couche)
+    * Layer Integrated Gradients (Captum) avec axiome de Completeness vérifié
+    * Décomposition exacte du méta-learner V8 (β·x) intégrée au dashboard
+    * Validation faithfulness (AOPC, Comprehensiveness@k, Sufficiency@k vs random) — **uplift +0.21** sur le gold set
+    * Model Card formelle (`docs/12_model_card.md`) avec section dédiée XAI
+    * Reproductible en 1 commande : `python scripts/run_xai_pipeline.py`
 * **Dashboard Interactif :** 5 pages Streamlit (Dashboard, Analyse IA, Explorateur, Performance, À propos).
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon.
 * **Tests :** 107 tests unitaires et d'intégration (pytest), benchmark latence automatisé.
@@ -64,8 +71,11 @@ projet_etude/
 ├── src/
 │   ├── app/                # Point d'entrée application
 │   ├── collection/         # Collecteur Bluesky + qualité des données
+│   ├── explainability/     # Pipeline XAI : SHAP global, attention, IG, decomposition meta-learner, faithfulness
 │   ├── monitoring/         # Monitoring hebdomadaire (drift detection)
 │   └── pipeline/           # Pipeline NLP expert + CamemBERT + agrégations
+├── scripts/
+│   └── run_xai_pipeline.py # Pipeline XAI complet en 1 commande (figures + INDEX.md + results.json)
 ├── docker-compose.yml
 └── requirements.txt
 ```
