@@ -27,7 +27,7 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
     * Reproductible en 1 commande : `python scripts/run_xai_pipeline.py`
 * **Dashboard Interactif :** 5 pages Streamlit (Dashboard, Analyse IA, Explorateur, Performance, À propos).
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon.
-* **Tests :** 107 tests unitaires et d'intégration (pytest), benchmark latence automatisé.
+* **Tests :** 342 tests unitaires et d'intégration (pytest, 49% couverture), benchmark latence automatisé.
 
 ### Métriques clés (V9)
 * **245 000+ posts** collectés depuis décembre 2025 (collecte continue)
@@ -123,6 +123,7 @@ Tous les documents sont disponibles dans [`docs/pdf/`](docs/pdf/) :
 
 | Document | Description |
 |----------|-------------|
+| [**Executive Summary**](docs/pdf/00_executive_summary.pdf) | **Synthèse 1 page : problème, solution, KPI, livrables, impact** |
 | [Cahier des charges techniques](docs/pdf/01_cahier_des_charges_techniques.pdf) | Spécifications techniques détaillées du projet |
 | [Conformité RGPD & AI Act](docs/pdf/02_conformite_RGPD_AI_Act.pdf) | Analyse de conformité réglementaire |
 | [Méthodologie projet](docs/pdf/03_methodologie_projet.pdf) | Méthodologie et organisation du projet |
@@ -211,7 +212,7 @@ python3 -m pytest tests/test_benchmark_latence.py -v -s
 | Intégration pipeline | 11 | — |
 | Benchmark latence | 3 | — |
 | Sécurité / validation entrées | 7 | — |
-| **Total** | **107** | **~29%** |
+| **Total** | **342** | **49%** |
 
 ---
 
