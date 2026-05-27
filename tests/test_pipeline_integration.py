@@ -126,7 +126,7 @@ class TestLinguisticFeaturesEdgeCases:
         """Purely numeric text should return valid features."""
         texts = pd.Series(["12345 67890"])
         result = LinguisticFeatureExtractor.extract(texts)
-        assert result.shape == (1, 15)
+        assert result.shape == (1, 17)
         assert not np.isnan(result).any()
 
     def test_all_caps_text(self):
@@ -140,11 +140,11 @@ class TestLinguisticFeaturesEdgeCases:
         """Feature extraction on a 5000-word text should not crash."""
         texts = pd.Series(["word " * 5000])
         result = LinguisticFeatureExtractor.extract(texts)
-        assert result.shape == (1, 15)
+        assert result.shape == (1, 17)
 
     def test_multilingual_text(self):
         """Mixed FR/EN text should produce valid features."""
         texts = pd.Series(["This is English. Ceci est du français. Dies ist Deutsch."])
         result = LinguisticFeatureExtractor.extract(texts)
-        assert result.shape == (1, 15)
+        assert result.shape == (1, 17)
         assert not np.isnan(result).any()

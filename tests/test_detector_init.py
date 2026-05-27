@@ -83,7 +83,7 @@ class TestLanguageRouter:
 
 class TestLinguisticFeatureExtractorExtended:
     def test_feature_count(self):
-        assert len(LinguisticFeatureExtractor.FEATURE_NAMES) == 15
+        assert len(LinguisticFeatureExtractor.FEATURE_NAMES) == 17
 
     def test_sensationalism_detection(self):
         texts = pd.Series(["BREAKING: Shocking conspiracy exposed by deep state!"])
@@ -134,7 +134,7 @@ class TestLinguisticFeatureExtractorExtended:
     def test_batch_processing(self):
         texts = pd.Series(["Text one", "Text two", "Text three"])
         features = LinguisticFeatureExtractor.extract(texts)
-        assert features.shape == (3, 15)
+        assert features.shape == (3, 17)
 
     def test_french_sensationalism(self):
         texts = pd.Series(["SCANDALE: le gouvernement cache la vérité sur ce complot!"])

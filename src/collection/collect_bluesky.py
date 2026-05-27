@@ -250,6 +250,23 @@ def run_collection_cycle(collection, client, monitor=None):
                     'Pause de %ds avant reprise.',
                     consecutive_failures, CIRCUIT_BREAKER_TIMEOUT,
                 )
+                # Write alert file for external monitoring / webhook integration
+                alert_path = Path(__file__).resolve().parent.parent.parent / 'logs' / 'circuit_breaker_alert.jsonl'
+                alert_path.parent.mkdir(parents=True, exist_ok=True)
+                import json as _json
+                alert_data = {
+                    'timestamp': datetime.now().isoformat(),
+                    'event': 'circuit_breaker_open',
+                    'consecutive_failures': consecutive_failures,
+                    'timeout_seconds': CIRCUIT_BREAKER_TIMEOUT,
+                    'lang': lang,
+                    'last_keyword': kw,
+                }
+                with open(alert_path, 'a', encoding='utf-8') as af:
+                    af.write(_json.dumps(alert_data, ensure_ascii=False) + '\n')
+                logger.critical(
+                    'ALERT written to %s — circuit breaker opened', alert_path
+                )
                 time.sleep(CIRCUIT_BREAKER_TIMEOUT)
                 consecutive_failures = 0
 

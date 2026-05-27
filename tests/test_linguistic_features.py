@@ -19,7 +19,7 @@ class TestLinguisticFeatureExtractor:
         """extract() on 5 texts should return a (5, 15) array."""
         result = LinguisticFeatureExtractor.extract(sample_texts)
         assert result.shape == (5, len(LinguisticFeatureExtractor.FEATURE_NAMES))
-        assert result.shape == (5, 15)
+        assert result.shape == (5, 17)
 
     def test_caps_ratio_high_for_all_caps(self):
         """A fully capitalised text should have caps_ratio > 0.5."""

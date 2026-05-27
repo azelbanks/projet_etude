@@ -37,7 +37,7 @@ def trained_detector():
     d.model = MagicMock()
     d.model.predict_proba.return_value = np.array([[0.7, 0.3], [0.3, 0.7]])
     d.model.predict.return_value = np.array([0, 1])
-    d.model.coef_ = np.random.randn(1, 20015)  # TF-IDF features + 15 linguistic
+    d.model.coef_ = np.random.randn(1, 20017)  # TF-IDF features + 17 linguistic
     d.vectorizer = MagicMock()
     d.vectorizer.transform.return_value = csr_matrix(np.random.rand(2, 20000))
     d.vectorizer.get_feature_names_out.return_value = np.array(
@@ -50,6 +50,7 @@ def trained_detector():
     d.use_emotions = False
     d.emotion_extractor = None
     d.training_metrics = {}
+    d._roberta_en = None
     return d
 
 
@@ -664,7 +665,7 @@ class TestLinguisticFeatureExtractor:
         assert result.shape == (2, len(LinguisticFeatureExtractor.FEATURE_NAMES))
 
     def test_feature_names_count(self):
-        assert len(LinguisticFeatureExtractor.FEATURE_NAMES) == 15
+        assert len(LinguisticFeatureExtractor.FEATURE_NAMES) == 17
 
     def test_sensationalist_detection(self):
         texts = pd.Series(["SHOCKING scandal exposed conspiracy!"])

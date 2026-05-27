@@ -5,17 +5,26 @@ Lancement :
     uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 """
 
+import json
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from typing import Dict, Optional
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
+
+try:
+    from codecarbon import EmissionsTracker
+    CODECARBON_AVAILABLE = True
+except ImportError:
+    CODECARBON_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +32,37 @@ logger = logging.getLogger(__name__)
 EMOTION_LABELS = ['colere', 'degout', 'joie', 'neutre', 'peur', 'surprise', 'tristesse']
 
 # ---------------------------------------------------------------------------
-#  Global detector + emotion instances
+#  Global detector + emotion + energy instances
 # ---------------------------------------------------------------------------
 detector: Optional[ExpertFakeNewsDetector] = None
 emotion_extractor: Optional[EmotionFeatureExtractor] = None
+
+# Cumulative energy metrics for the API session
+_energy_metrics = {
+    'total_requests': 0,
+    'total_predict_requests': 0,
+    'total_inference_time_s': 0.0,
+    'co2_emissions_kg': 0.0,
+    'energy_kwh': 0.0,
+    'tracker_active': False,
+}
+_energy_tracker: Optional[object] = None
+
+
+class EnergyTrackingMiddleware(BaseHTTPMiddleware):
+    """Middleware that tracks inference time per request for energy accounting."""
+
+    async def dispatch(self, request: Request, call_next):
+        _energy_metrics['total_requests'] += 1
+        start = time.monotonic()
+        response = await call_next(request)
+        elapsed = time.monotonic() - start
+
+        if request.url.path == '/predict':
+            _energy_metrics['total_predict_requests'] += 1
+            _energy_metrics['total_inference_time_s'] += elapsed
+
+        return response
 
 
 def _load_detector() -> Optional[ExpertFakeNewsDetector]:
@@ -74,10 +110,39 @@ def _load_emotion_extractor() -> Optional[EmotionFeatureExtractor]:
 # ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global detector, emotion_extractor
+    global detector, emotion_extractor, _energy_tracker
     detector = _load_detector()
     emotion_extractor = _load_emotion_extractor()
+
+    # Start continuous energy tracker for the API session
+    if CODECARBON_AVAILABLE:
+        try:
+            logs_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'logs')
+            os.makedirs(logs_dir, exist_ok=True)
+            _energy_tracker = EmissionsTracker(
+                project_name='ThumaCheck_API',
+                output_dir=logs_dir,
+                output_file='api_emissions.csv',
+                log_level='error',
+            )
+            _energy_tracker.start()
+            _energy_metrics['tracker_active'] = True
+            logger.info("CodeCarbon API tracker started")
+        except Exception:
+            logger.warning("CodeCarbon tracker failed to start")
+            _energy_tracker = None
+
     yield
+
+    # Stop energy tracker on shutdown
+    if _energy_tracker is not None:
+        try:
+            emissions = _energy_tracker.stop()
+            if emissions is not None:
+                _energy_metrics['co2_emissions_kg'] = float(emissions)
+            logger.info("CodeCarbon API tracker stopped: %.6f kg CO2", emissions or 0)
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -92,6 +157,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(EnergyTrackingMiddleware)
 
 
 # ---------------------------------------------------------------------------
@@ -109,10 +175,19 @@ class PredictResponse(BaseModel):
     emotions: Dict[str, float]
 
 
+class EnergyResponse(BaseModel):
+    total_requests: int
+    total_predict_requests: int
+    total_inference_time_s: float
+    co2_emissions_kg: float
+    tracker_active: bool
+
+
 class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
     emotions_loaded: bool
+    energy_tracking: bool
 
 
 # ---------------------------------------------------------------------------
@@ -124,6 +199,27 @@ def health():
         status="ok",
         model_loaded=detector is not None,
         emotions_loaded=emotion_extractor is not None,
+        energy_tracking=_energy_metrics['tracker_active'],
+    )
+
+
+@app.get("/energy", response_model=EnergyResponse)
+def energy():
+    """Return cumulative energy metrics for the API session."""
+    # Update CO2 from tracker if available
+    if _energy_tracker is not None:
+        try:
+            interim = getattr(_energy_tracker, '_total_energy', None)
+            if interim is not None:
+                _energy_metrics['energy_kwh'] = float(interim)
+        except Exception:
+            pass
+    return EnergyResponse(
+        total_requests=_energy_metrics['total_requests'],
+        total_predict_requests=_energy_metrics['total_predict_requests'],
+        total_inference_time_s=round(_energy_metrics['total_inference_time_s'], 4),
+        co2_emissions_kg=round(_energy_metrics['co2_emissions_kg'], 8),
+        tracker_active=_energy_metrics['tracker_active'],
     )
 
 

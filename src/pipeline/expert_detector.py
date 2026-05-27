@@ -764,7 +764,30 @@ class LinguisticFeatureExtractor:
         'all_caps_words_ratio',
         'interpellation_score',
         'is_short_text',
+        # V5 : features emoji
+        'emoji_count',
+        'emoji_sentiment',
     ]
+
+    # Regex pour détecter les emojis (plages Unicode communes)
+    _EMOJI_PATTERN = re.compile(
+        r'[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF'
+        r'\U0001F1E0-\U0001F1FF\U00002702-\U000027B0\U0000FE00-\U0000FE0F'
+        r'\U0001F900-\U0001F9FF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF]'
+    )
+    # Emojis positifs (smileys, coeurs, pouces levés)
+    _EMOJI_POSITIVE = re.compile(
+        r'[\U0001F600-\U0001F60F\U0001F617-\U0001F61C\U0001F31F'
+        r'\U0001F44D\U0001F44F\U0001F495-\U0001F49F\U00002764'
+        r'\U0001F970-\U0001F975\U0001F60D\U0001F618\U0001F60A'
+        r'\U0001F389\U0001F38A\U0001F381\U00002728]'
+    )
+    # Emojis négatifs (crâne, colère, peur)
+    _EMOJI_NEGATIVE = re.compile(
+        r'[\U0001F620-\U0001F62D\U0001F4A2\U0001F480\U00002620'
+        r'\U0001F621\U0001F624\U0001F616\U0001F628-\U0001F630'
+        r'\U0001F47F\U0001F44E\U0001F5E1]'
+    )
 
     # Patterns d'interpellation directe (manipulation sociale FR+EN)
     INTERPELLATION_PATTERNS_FR = [
@@ -855,6 +878,19 @@ class LinguisticFeatureExtractor:
             # V4 : Indicateur texte court (< 20 mots) — permet au modèle d'apprendre
             # des patterns spécifiques aux textes courts
             results[i, 14] = 1.0 if n_words < 20 else 0.0
+
+            # V5 : Emoji count
+            emojis = cls._EMOJI_PATTERN.findall(text)
+            n_emojis = len(emojis)
+            results[i, 15] = n_emojis
+
+            # V5 : Emoji sentiment (positive - negative) / total
+            if n_emojis > 0:
+                n_pos = len(cls._EMOJI_POSITIVE.findall(text))
+                n_neg = len(cls._EMOJI_NEGATIVE.findall(text))
+                results[i, 16] = (n_pos - n_neg) / n_emojis
+            else:
+                results[i, 16] = 0.0
 
         return results
 
@@ -983,6 +1019,74 @@ class EmotionFeatureExtractor:
 
         return probas
 
+    def explain_emotions(self, texts, n_background: int = 50) -> Optional[Dict]:
+        """
+        SHAP explainability pour le modele emotion.
+
+        Utilise KernelExplainer (model-agnostic) pour expliquer pourquoi
+        une emotion est predite.
+
+        Parameters
+        ----------
+        texts : list of str — textes a expliquer
+        n_background : int — nombre de samples background pour SHAP
+
+        Returns
+        -------
+        Dict avec shap_values (n_texts, 7), feature_words, emotion_names
+        ou None si SHAP non disponible
+        """
+        if not self._loaded:
+            raise RuntimeError("Modele emotions non charge.")
+
+        try:
+            import shap
+        except ImportError:
+            logger.warning("shap non installe, explain_emotions indisponible")
+            return None
+
+        oov_idx = self.vocab.get('<OOV>', self.vocab.get('<UNK>', 1))
+
+        def _texts_to_matrix(text_list):
+            sequences = []
+            for text in text_list:
+                tokens = str(text).lower().split()
+                seq = [self.vocab.get(t, oov_idx) for t in tokens[:self.MAX_LENGTH]]
+                seq = seq + [0] * (self.MAX_LENGTH - len(seq))
+                sequences.append(seq)
+            return np.array(sequences, dtype=np.int64)
+
+        def _predict_fn(X_np):
+            X_t = torch.tensor(X_np, dtype=torch.long, device=self.device)
+            with torch.no_grad():
+                logits = self.model(X_t)
+                return torch.softmax(logits, dim=1).cpu().numpy()
+
+        # Build background from input texts (or subset)
+        X_input = _texts_to_matrix(texts)
+        bg_size = min(n_background, len(texts))
+        background = X_input[:bg_size]
+
+        explainer = shap.KernelExplainer(_predict_fn, background)
+        shap_values = explainer.shap_values(X_input, nsamples=100)
+
+        # shap_values is list of 7 arrays, each (n_texts, MAX_LENGTH)
+        # Aggregate per-text: sum abs SHAP across token positions per emotion
+        emotion_names = self.FEATURE_NAMES
+
+        # Extract word tokens for each text for readability
+        feature_words = []
+        for text in texts:
+            tokens = str(text).lower().split()[:self.MAX_LENGTH]
+            tokens += ['[PAD]'] * (self.MAX_LENGTH - len(tokens))
+            feature_words.append(tokens)
+
+        return {
+            'shap_values': shap_values,  # list of 7 arrays (n, MAX_LENGTH)
+            'feature_words': feature_words,
+            'emotion_names': emotion_names,
+        }
+
 
 # ================================================================
 #  3. DÉTECTION DE LANGUE
@@ -1060,12 +1164,32 @@ class ExpertFakeNewsDetector:
         self.threshold_fr = threshold_fr
         self.threshold_en = threshold_en
 
+        # V9 cascade: optional RoBERTa EN for short English texts
+        self._roberta_en = None
+
         if use_emotions:
             self.emotion_extractor = EmotionFeatureExtractor(model_dir)
             if not self.emotion_extractor.load():
                 logger.warning("Modèle émotions indisponible, use_emotions désactivé")
                 self.use_emotions = False
                 self.emotion_extractor = None
+
+    def _trim_ling_features(self, X_ling: np.ndarray, n_tfidf: int) -> np.ndarray:
+        """Trim linguistic features if model was trained with fewer (backward compat)."""
+        if getattr(self, 'model', None) is None:
+            return X_ling
+        try:
+            expected = getattr(self.model, 'n_features_in_', None)
+            if not isinstance(expected, int):
+                return X_ling
+            n_ling_expected = expected - n_tfidf
+            if self.use_emotions and self.emotion_extractor is not None:
+                n_ling_expected -= len(EmotionFeatureExtractor.FEATURE_NAMES)
+            if X_ling.shape[1] > n_ling_expected > 0:
+                return X_ling[:, :n_ling_expected]
+        except (TypeError, ValueError):
+            pass
+        return X_ling
 
     # ---- Construction des features ----
 
@@ -1095,6 +1219,8 @@ class ExpertFakeNewsDetector:
         # Linguistic features need ORIGINAL text (caps, punctuation, sentence boundaries)
         ling_texts = texts_original if texts_original is not None else texts_clean
         X_ling = LinguisticFeatureExtractor.extract(pd.Series(ling_texts))
+
+        X_ling = self._trim_ling_features(X_ling, X_tfidf.shape[1])
 
         parts = [X_tfidf, X_ling]
 
@@ -1553,6 +1679,21 @@ class ExpertFakeNewsDetector:
                 lambda n: 0.54 if n < 15 else (0.49 if n <= 30 else 0.44)
             )
 
+            # V9 cascade: blend RoBERTa EN scores for short English texts
+            if getattr(self, '_roberta_en', None) is not None:
+                en_short_mask = (
+                    (results['language'] == 'en') & (word_counts < 30)
+                ).values
+                if en_short_mask.any():
+                    en_short_texts = texts[en_short_mask].tolist()
+                    try:
+                        roberta_scores = self._roberta_en.predict_credibility_scores(en_short_texts)
+                        # Blend: 60% RoBERTa + 40% TF-IDF for short EN
+                        scores[en_short_mask] = 0.6 * roberta_scores + 0.4 * scores[en_short_mask]
+                        logger.info("V9 cascade: blended %d short EN texts with RoBERTa", en_short_mask.sum())
+                    except Exception as e:
+                        logger.warning("V9 cascade RoBERTa EN failed: %s", e)
+
             y_pred = (scores < thresholds.values).astype(int)
 
             results['prediction_label'] = y_pred
@@ -1611,6 +1752,7 @@ class ExpertFakeNewsDetector:
         X_tfidf = self.vectorizer.transform([text_clean])
         # Use original text for linguistic features (caps, punctuation, sentences)
         X_ling = LinguisticFeatureExtractor.extract(pd.Series([text]))
+        X_ling = self._trim_ling_features(X_ling, X_tfidf.shape[1])
 
         parts = [X_tfidf, X_ling]
         X_emo = None
@@ -1633,7 +1775,7 @@ class ExpertFakeNewsDetector:
         # --- Contributions exactes : coef_i * feature_value_i ---
         coef = self.model.coef_[0]
         n_tfidf = X_tfidf.shape[1]
-        n_ling = len(LinguisticFeatureExtractor.FEATURE_NAMES)
+        n_ling = X_ling.shape[1]  # May be trimmed for backward compat
 
         # TF-IDF : itérer uniquement les indices non-zero (sparse-efficient)
         tfidf_coef = coef[:n_tfidf]
@@ -1653,8 +1795,8 @@ class ExpertFakeNewsDetector:
         top_fiable_words.sort(key=lambda x: x[1])
         top_fiable_words = top_fiable_words[:top_n]
 
-        # Linguistique : 12 features nommées
-        ling_names = LinguisticFeatureExtractor.FEATURE_NAMES
+        # Linguistique features (may be trimmed for backward compat)
+        ling_names = LinguisticFeatureExtractor.FEATURE_NAMES[:n_ling]
         ling_vals = X_ling[0]
         ling_coef = coef[n_tfidf:n_tfidf + n_ling]
         ling_detail = []
@@ -1772,6 +1914,18 @@ class ExpertFakeNewsDetector:
             self.use_emotions = False
         self.is_trained = True
         logger.info("Modèle chargé depuis %s (suffix=%s)", self.model_dir, suffix)
+
+        # V9 cascade: try loading RoBERTa EN for short English texts
+        try:
+            from pipeline.roberta_en_classifier import RoBERTaENClassifier
+            roberta = RoBERTaENClassifier(model_dir=self.model_dir)
+            if roberta.load():
+                self._roberta_en = roberta
+                logger.info("V9 cascade: RoBERTa EN chargé pour textes courts EN")
+            else:
+                self._roberta_en = None
+        except Exception:
+            self._roberta_en = None
 
     # ---- Health check ----
 

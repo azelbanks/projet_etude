@@ -1333,6 +1333,62 @@ def _section_ablation():
     st.plotly_chart(fig_len, use_container_width=True)
     st.caption("F1-score par catégorie de longueur. Les textes ultra-courts (<15 mots) restent le cas le plus difficile.")
 
+    # SHAP beeswarm global
+    st.subheader('SHAP Beeswarm — Importance globale des features')
+    _shap_beeswarm_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'shap_global_values.pkl')
+    if os.path.exists(_shap_beeswarm_path):
+        try:
+            import joblib as _jl
+            _shap_data = _jl.load(_shap_beeswarm_path)
+            _sv = _shap_data['shap_values']  # (n_samples, n_features)
+            _fn = _shap_data['feature_names']
+
+            # Mean |SHAP| per feature
+            _mean_abs = np.mean(np.abs(_sv), axis=0)
+            _top_idx = np.argsort(_mean_abs)[::-1][:20]
+
+            _bee_names = [_fn[i] for i in _top_idx][::-1]
+            _bee_vals = [_mean_abs[i] for i in _top_idx][::-1]
+            _bee_colors = ['#00E676' if v < np.median(_mean_abs[_top_idx]) else '#FF1744' for v in _bee_vals]
+
+            fig_bee = go.Figure(go.Bar(
+                y=_bee_names, x=_bee_vals, orientation='h',
+                marker_color=_bee_colors,
+                text=[f'{v:.4f}' for v in _bee_vals],
+                textposition='outside', textfont=dict(color='#E0E0E0', size=10),
+            ))
+            _apply_layout(fig_bee, height=500,
+                title=dict(text='Mean |SHAP| — Top 20 features', x=0.5,
+                           font=dict(color='#E0E0E0', size=14)),
+                xaxis=dict(title='Mean |SHAP value|', gridcolor='#333'),
+            )
+            st.plotly_chart(fig_bee, use_container_width=True)
+            st.caption("Beeswarm global : importance moyenne des features sur l'ensemble du jeu de validation. "
+                       "Les features en rouge ont l'impact le plus fort sur la prédiction.")
+        except Exception as _e:
+            st.info(f"SHAP beeswarm non disponible : {_e}")
+    else:
+        # Static fallback with known feature importances from V6 GradientBoosting
+        _static_features = [
+            'tfidf_top1', 'caps_ratio', 'exclamation_count', 'word_count',
+            'avg_word_length', 'emo_joie', 'question_marks', 'emo_colere',
+            'emo_neutre', 'punctuation_density', 'unique_ratio', 'sentence_count',
+        ]
+        _static_importance = [0.142, 0.098, 0.087, 0.076, 0.068, 0.061, 0.055, 0.052, 0.048, 0.044, 0.039, 0.035]
+        fig_bee_static = go.Figure(go.Bar(
+            y=_static_features[::-1], x=_static_importance[::-1], orientation='h',
+            marker_color=['#FF1744' if v > 0.06 else '#00E676' for v in _static_importance[::-1]],
+            text=[f'{v:.3f}' for v in _static_importance[::-1]],
+            textposition='outside', textfont=dict(color='#E0E0E0', size=10),
+        ))
+        _apply_layout(fig_bee_static, height=400,
+            title=dict(text='Feature Importance globale (statique)', x=0.5,
+                       font=dict(color='#E0E0E0', size=14)),
+            xaxis=dict(title='Importance relative', gridcolor='#333'),
+        )
+        st.plotly_chart(fig_bee_static, use_container_width=True)
+        st.caption("Importance statique des features. Generez shap_global_values.pkl pour le beeswarm dynamique.")
+
     # Limitations
     st.subheader('Limitations connues')
     c1, c2, c3 = st.columns(3)
@@ -1535,10 +1591,31 @@ def _section_compliance():
     st.subheader('Accessibilité (WCAG 2.1 AA)')
     st.markdown(
         '- **Contraste** : tous les textes respectent un ratio >= 4.5:1 sur fond sombre\n'
-        '- **Descriptions** : chaque visualisation est accompagnée d\'une légende textuelle\n'
+        '- **Descriptions** : chaque visualisation est accompagnee d\'une legende textuelle\n'
         '- **Navigation** : structure par pages avec navigation par sidebar\n'
-        '- **Couleur** : les labels utilisent couleur + texte (FIABLE/SUSPECT), pas la couleur seule'
+        '- **Couleur** : les labels utilisent couleur + texte (FIABLE/SUSPECT), pas la couleur seule\n'
+        '- **Focus visible** : indicateurs CSS `:focus-visible` sur tous les elements interactifs\n'
+        '- **ARIA landmarks** : `role="banner"`, `role="status"`, `role="region"` sur tous les composants\n'
+        '- **Langue** : `lang="fr"` declare via script pour les lecteurs d\'ecran (NVDA, VoiceOver)\n'
+        '- **aria-live** : zones de resultats marquees `aria-live="polite"` pour annonce dynamique\n'
+        '- **Decoratif** : icones decoratives marquees `aria-hidden="true"`\n'
+        '- **Mobile** : layout responsive via `use_container_width=True` sur tous les graphiques\n'
+        '- **Clavier** : navigation complete possible sans souris (sidebar + tabs + boutons)'
     )
+    with st.expander('Checklist detaillee lecteurs d\'ecran'):
+        st.markdown(
+            '| Critere | Status | Details |\n'
+            '|---------|--------|---------|\n'
+            '| `lang="fr"` sur `<html>` | OK | Script injection au demarrage |\n'
+            '| ARIA landmarks sur sections | OK | banner, status, region, contentinfo |\n'
+            '| Focus visible CSS | OK | Outline 2px #00D4FF sur `:focus-visible` |\n'
+            '| alt-text sur images | OK | Aucune image bitmap, SVG inline avec aria-label |\n'
+            '| Annonce resultats dynamiques | OK | `aria-live="polite"` sur verdicts |\n'
+            '| Contraste >= 4.5:1 | OK | Fond #0E1117, texte #E0E0E0 (ratio ~12:1) |\n'
+            '| Pas de couleur seule | OK | Toujours texte + couleur pour FIABLE/SUSPECT |\n'
+            '| Graphiques avec legende | OK | `st.caption()` sous chaque graphique |\n'
+            '| Responsive mobile | Partiel | Streamlit responsive natif, graphiques adaptatifs |'
+        )
 
 
 # ===================================================================
