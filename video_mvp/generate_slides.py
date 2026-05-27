@@ -58,7 +58,7 @@ def set_notes(slide, text):
     tf.text = text
 
 
-def add_footer(slide, text="Thumalien V9  ·  M1 BDIA 2026"):
+def add_footer(slide, text="Niamato Consulting  ·  Thumalien V9  ·  M1 BDIA 2026"):
     tb = slide.shapes.add_textbox(Inches(9.0), Inches(7.0), Inches(4.0), Inches(0.35))
     p = tb.text_frame.paragraphs[0]
     p.text = text
@@ -68,7 +68,7 @@ def add_footer(slide, text="Thumalien V9  ·  M1 BDIA 2026"):
     p.alignment = PP_ALIGN.RIGHT
 
 
-def add_slide_number(slide, num, total=16):
+def add_slide_number(slide, num, total=17):
     tb = slide.shapes.add_textbox(Inches(0.4), Inches(7.0), Inches(1.2), Inches(0.35))
     p = tb.text_frame.paragraphs[0]
     p.text = f"{num} / {total}"
@@ -229,10 +229,12 @@ def create_presentation():
 
     add_line_h(slide, 3.5, 3.95, 6.3, CYAN, 2)
 
+    add_text(slide, "NIAMATO CONSULTING",
+             1.0, 4.2, 11.3, 0.45, size=22, color=GREEN, bold=True, align=PP_ALIGN.CENTER)
     add_text(slide, "Azélie Bernard  ·  Sébastien Lazcanotegui",
-             1.0, 4.4, 11.3, 0.55, size=26, color=WHITE, align=PP_ALIGN.CENTER)
+             1.0, 4.7, 11.3, 0.55, size=26, color=WHITE, align=PP_ALIGN.CENTER)
     add_text(slide, "Master 1 Big Data & Intelligence Artificielle — 2025 / 2026",
-             1.0, 5.1, 11.3, 0.4, size=18, color=GRAY, align=PP_ALIGN.CENTER)
+             1.0, 5.3, 11.3, 0.4, size=18, color=GRAY, align=PP_ALIGN.CENTER)
 
     # Filet décoratif bas
     add_line_h(slide, 2.5, 6.3, 8.3, CYAN_DIM, 1)
@@ -267,7 +269,7 @@ Points clés :
     n += 1
     slide = prs.slides.add_slide(blank)
     set_bg(slide)
-    add_title(slide, "L'ÉQUIPE THUMALIEN")
+    add_title(slide, "NIAMATO CONSULTING — L'ÉQUIPE")
 
     # Carte Azélie
     add_card(slide, 0.8, 1.5, 5.5, 4.8, CARD_BG, CYAN, 1.5)
@@ -538,7 +540,7 @@ C'est LE moment clé de la présentation — le ton doit devenir grave.""")
         add_text(slide, "↓", x, y, 0.5, 0.4, size=22, color=CYAN,
                  align=PP_ALIGN.CENTER)
 
-    add_text(slide, "C4 Model — Niveau 2 (Container)  |  Docker Compose  |  FastAPI",
+    add_text(slide, "Données → IA → Décision  |  C4 Model  |  Docker Compose  |  FastAPI",
              7.0, 7.0, 6.0, 0.3,
              size=13, color=DARK_GRAY, align=PP_ALIGN.RIGHT, italic=True)
     add_footer(slide)
@@ -1032,7 +1034,60 @@ FastAPI pour l'API REST, et CodeCarbon pour le suivi carbone.
 Le tout versionné et reproductible. \u00bb""")
 
     # ═════════════════════════════════════════════════════════════════
-    # SLIDE 14 — ROADMAP V10-V12                                16:30
+    # SLIDE 14 — ROI ET VALEUR BUSINESS                         15:45
+    # ═════════════════════════════════════════════════════════════════
+    n += 1
+    slide = prs.slides.add_slide(blank)
+    set_bg(slide)
+    add_title(slide, "ROI — VALEUR BUSINESS", YELLOW)
+
+    # 4 cartes ROI
+    roi_items = [
+        ("TEMPS",
+         "3-5 min/post (humain)\n1,5 ms + 30s validation\n= x10 productivité",
+         CYAN, "10x"),
+        ("VOLUME",
+         "60 000 posts/jour traités\nvs 200-300/jour (humain)\n= couverture totale",
+         GREEN, "200x"),
+        ("RISQUE",
+         "AI Act + RGPD intégrés\nFP réduits de 67 %\n= confiance préservée",
+         YELLOW, "-67%"),
+        ("COÛT",
+         "Machine 22W, 6,9 g CO₂\nCoût marginal/post ≈ 0\nAucune GPU cloud requise",
+         RED, "≈ 0"),
+    ]
+
+    for j, (label, desc, col, big) in enumerate(roi_items):
+        x = 0.5 + j * 3.15
+        add_card(slide, x, 1.5, 2.95, 4.8, CARD_BG, col, 1.5)
+        add_text(slide, label, x + 0.1, 1.7, 2.75, 0.35,
+                 size=16, color=col, bold=True, align=PP_ALIGN.CENTER)
+        add_line_h(slide, x + 0.3, 2.15, 2.35, BORDER, 1)
+        add_text(slide, big, x + 0.1, 2.3, 2.75, 1.2,
+                 size=56, color=col, bold=True, align=PP_ALIGN.CENTER)
+        add_text(slide, desc, x + 0.2, 3.6, 2.55, 2.5,
+                 size=15, color=GRAY, align=PP_ALIGN.CENTER)
+
+    add_text(slide, "Niamato Consulting — Thumalien V9 : de l'analyse à la décision en 1,5 ms",
+             0.5, 6.85, 12.3, 0.3, size=15, color=DARK_GRAY, italic=True,
+             align=PP_ALIGN.CENTER)
+
+    add_footer(slide)
+    add_slide_number(slide, n)
+
+    set_notes(slide, """SLIDE 14 — ROI (15:45 → 16:30)
+Speaker : SÉBASTIEN
+Timing : 45 secondes
+
+Texte voix-off (Sébastien) :
+« Voici le retour sur investissement concret.
+En temps : un modérateur passe de 5 minutes à 30 secondes par post.
+En volume : 60 000 posts par jour traités automatiquement.
+En risque : conformité AI Act intégrée, faux positifs réduits de 67 %.
+En coût : hébergé sur une machine à 22 watts, coût marginal quasi nul. »""")
+
+    # ═════════════════════════════════════════════════════════════════
+    # SLIDE 15 — ROADMAP V10-V12                                16:30
     # ═════════════════════════════════════════════════════════════════
     n += 1
     slide = prs.slides.add_slide(blank)
