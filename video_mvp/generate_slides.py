@@ -1039,52 +1039,95 @@ Le tout versionné et reproductible. \u00bb""")
     n += 1
     slide = prs.slides.add_slide(blank)
     set_bg(slide)
-    add_title(slide, "ROI — VALEUR BUSINESS", YELLOW)
+    add_title(slide, "ROI & BUDGET — NIAMATO CONSULTING", YELLOW)
 
-    # 4 cartes ROI
-    roi_items = [
-        ("TEMPS",
-         "3-5 min/post (humain)\n1,5 ms + 30s validation\n= x10 productivité",
-         CYAN, "10x"),
-        ("VOLUME",
-         "60 000 posts/jour traités\nvs 200-300/jour (humain)\n= couverture totale",
-         GREEN, "200x"),
-        ("RISQUE",
-         "AI Act + RGPD intégrés\nFP réduits de 67 %\n= confiance préservée",
-         YELLOW, "-67%"),
-        ("COÛT",
-         "Machine 22W, 6,9 g CO₂\nCoût marginal/post ≈ 0\nAucune GPU cloud requise",
-         RED, "≈ 0"),
+    # ── Panneau gauche : ROI (4 mini-cartes) ──
+    add_card(slide, 0.4, 1.4, 6.4, 5.4, CARD_BG, YELLOW, 1.5)
+    add_text(slide, "RETOUR SUR INVESTISSEMENT", 0.6, 1.55, 6.0, 0.35,
+             size=16, color=YELLOW, bold=True, align=PP_ALIGN.CENTER)
+    add_line_h(slide, 0.8, 2.0, 5.6, BORDER, 1)
+
+    roi_mini = [
+        ("TEMPS",   "x10",  "5 min → 30s / post",      CYAN),
+        ("VOLUME",  "x200", "60K posts/jour auto.",      GREEN),
+        ("RISQUE",  "-67%", "faux positifs éliminés",    YELLOW),
+        ("COÛT",    "≈ 0",  "0,0005 ct / post analysé",  RED),
     ]
+    for j, (label, big, desc, col) in enumerate(roi_mini):
+        y = 2.15 + j * 1.15
+        add_text(slide, label, 0.7, y, 1.2, 0.3, size=14, color=col, bold=True)
+        add_text(slide, big, 2.0, y - 0.1, 1.8, 0.5, size=36, color=col, bold=True,
+                 align=PP_ALIGN.CENTER)
+        add_text(slide, desc, 3.9, y + 0.02, 2.7, 0.3, size=14, color=GRAY)
 
-    for j, (label, desc, col, big) in enumerate(roi_items):
-        x = 0.5 + j * 3.15
-        add_card(slide, x, 1.5, 2.95, 4.8, CARD_BG, col, 1.5)
-        add_text(slide, label, x + 0.1, 1.7, 2.75, 0.35,
-                 size=16, color=col, bold=True, align=PP_ALIGN.CENTER)
-        add_line_h(slide, x + 0.3, 2.15, 2.35, BORDER, 1)
-        add_text(slide, big, x + 0.1, 2.3, 2.75, 1.2,
-                 size=56, color=col, bold=True, align=PP_ALIGN.CENTER)
-        add_text(slide, desc, x + 0.2, 3.6, 2.55, 2.5,
-                 size=15, color=GRAY, align=PP_ALIGN.CENTER)
+    # ── Panneau droit : Budget ──
+    add_card(slide, 7.2, 1.4, 5.3, 5.4, CARD_BG, CYAN, 1.5)
+    add_text(slide, "BUDGET PROJET", 7.4, 1.55, 4.9, 0.35,
+             size=16, color=CYAN, bold=True, align=PP_ALIGN.CENTER)
+    add_line_h(slide, 7.5, 2.0, 4.7, BORDER, 1)
 
-    add_text(slide, "Niamato Consulting — Thumalien V9 : de l'analyse à la décision en 1,5 ms",
-             0.5, 6.85, 12.3, 0.3, size=15, color=DARK_GRAY, italic=True,
+    budget_lines = [
+        ("Ressources humaines",  "49 500 €", WHITE),
+        ("  Lead Technique (65 j)", "29 250 €", GRAY),
+        ("  Validation ML (45 j)",  "20 250 €", GRAY),
+        ("Infrastructure",       "0 €",      WHITE),
+        ("Licences / outils",    "0 €",      WHITE),
+        ("Annotation gold set",  "750 €",    WHITE),
+    ]
+    y = 2.2
+    for label, val, col in budget_lines:
+        indent = 0.2 if label.startswith("  ") else 0.0
+        sz = 13 if label.startswith("  ") else 15
+        add_text(slide, label, 7.6 + indent, y, 3.0, 0.3, size=sz, color=col)
+        add_text(slide, val, 10.5, y, 1.8, 0.3, size=sz, color=col, bold=True,
+                 align=PP_ALIGN.RIGHT)
+        y += 0.35
+
+    add_line_h(slide, 7.6, y + 0.05, 4.5, CYAN, 2)
+    y += 0.2
+    add_text(slide, "TOTAL PROJET", 7.6, y, 3.0, 0.35, size=17, color=CYAN, bold=True)
+    add_text(slide, "50 250 €", 10.5, y, 1.8, 0.35, size=17, color=CYAN, bold=True,
+             align=PP_ALIGN.RIGHT)
+
+    y += 0.55
+    add_line_h(slide, 7.6, y, 4.5, BORDER, 1)
+    y += 0.15
+    add_text(slide, "Exploitation mensuelle", 7.6, y, 3.0, 0.3, size=14, color=GREEN)
+    add_text(slide, "~930 €/mois", 10.5, y, 1.8, 0.3, size=14, color=GREEN, bold=True,
+             align=PP_ALIGN.RIGHT)
+    y += 0.35
+    add_text(slide, "100% open source\nAucun coût de licence", 7.6, y, 4.5, 0.5,
+             size=12, color=DARK_GRAY, italic=True)
+
+    add_text(slide, "TJM consultant junior : 450 €  |  Stack : Python, PyTorch, Streamlit, Docker (OSS)",
+             0.4, 6.85, 12.3, 0.3, size=12, color=DARK_GRAY, italic=True,
              align=PP_ALIGN.CENTER)
 
     add_footer(slide)
     add_slide_number(slide, n)
 
-    set_notes(slide, """SLIDE 14 — ROI (15:45 → 16:30)
+    set_notes(slide, """SLIDE 14 — ROI & BUDGET (15:45 → 16:30)
 Speaker : SÉBASTIEN
 Timing : 45 secondes
 
 Texte voix-off (Sébastien) :
-« Voici le retour sur investissement concret.
-En temps : un modérateur passe de 5 minutes à 30 secondes par post.
-En volume : 60 000 posts par jour traités automatiquement.
-En risque : conformité AI Act intégrée, faux positifs réduits de 67 %.
-En coût : hébergé sur une machine à 22 watts, coût marginal quasi nul. »""")
+« Parlons chiffres. Le projet Thumalien a coûté environ 50 000 euros,
+essentiellement en ressources humaines — 110 jours-homme répartis
+entre le développement technique et la validation.
+
+Zéro euro de licence : notre stack est 100 % open source.
+Zéro euro de cloud : tout tourne en local sur Docker.
+Le seul coût additionnel : 750 euros pour l'annotation manuelle
+du gold set de validation.
+
+En exploitation, le coût mensuel est d'environ 930 euros :
+un petit serveur à 30 euros et 2 jours de maintenance.
+Pour 1,8 million de posts analysés par mois,
+ça revient à 0,0005 centime par post.
+
+En retour : un gain de productivité x10 pour les modérateurs,
+une couverture de 60 000 posts par jour — 200 fois plus qu'un humain —
+et une réduction de 67 % des faux positifs. »""")
 
     # ═════════════════════════════════════════════════════════════════
     # SLIDE 15 — ROADMAP V10-V12                                16:30

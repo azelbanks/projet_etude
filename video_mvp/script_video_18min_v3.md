@@ -330,28 +330,27 @@
 
 ---
 
-### 15:45 - 16:30 — ROI et valeur business (Sebastien)
+### 15:45 - 16:30 — ROI, budget et valeur business (Sebastien)
 
-`[SLIDE 14 : ROI]`
+`[SLIDE 14 : ROI & Budget]`
 
-> *"Pour conclure la partie valeur, voici le retour sur investissement
-> concret pour un client.
+> *"Parlons chiffres. Le projet Thumalien a coute environ 50 000 euros,
+> essentiellement en ressources humaines — 110 jours-homme repartis
+> entre le developpement technique et la validation.
 >
-> En temps : un moderateur met 3 a 5 minutes par post.
-> Thumalien analyse en 1,5 milliseconde et fournit l'explication
-> en 2 secondes — le moderateur n'a plus qu'a valider ou contester.
-> On passe de 5 minutes a 30 secondes par post.
+> Zero euro de licence : notre stack est 100 % open source.
+> Zero euro de cloud : tout tourne en local sur Docker.
+> Le seul cout additionnel : 750 euros pour l'annotation manuelle
+> du gold set de validation.
 >
-> En volume : 60 000 posts par jour traites automatiquement,
-> contre 200 a 300 par jour pour un moderateur humain.
+> En exploitation, le cout mensuel est d'environ 930 euros :
+> un petit serveur a 30 euros et 2 jours de maintenance.
+> Pour 1,8 million de posts analyses par mois,
+> ca revient a 0,0005 centime par post.
 >
-> En risque : conformite AI Act et RGPD integree des la conception,
-> pas en retrofit. Les faux positifs reduits de 67 % signifient
-> moins de contenus censures a tort — c'est la confiance utilisateur.
->
-> En cout d'exploitation : heberge sur une machine a 22 watts,
-> 6,9 grammes de CO2 pour tout l'entrainement.
-> Le cout marginal par post est quasi nul."*
+> En retour : un gain de productivite x10 pour les moderateurs,
+> une couverture de 60 000 posts par jour — 200 fois plus qu'un humain —
+> et une reduction de 67 % des faux positifs."*
 
 ---
 
