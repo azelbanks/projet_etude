@@ -835,6 +835,16 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
         with c1:
             st.plotly_chart(make_gauge(score), use_container_width=True)
             st.caption("Score entre 0 (probablement faux) et 1 (probablement fiable). Seuil : 0.44")
+            # Uncertainty band when score is near threshold
+            if 0.34 <= score <= 0.54:
+                st.markdown(
+                    '<div role="alert" style="background:rgba(255,214,0,0.10);border:1px solid rgba(255,214,0,0.4);'
+                    'border-radius:8px;padding:8px 12px;margin-top:4px;text-align:center;">'
+                    '<span style="color:#FFD600;font-weight:600;">⚠ ZONE D\'INCERTITUDE</span><br>'
+                    '<span style="color:#B0B0B0;font-size:0.85rem;">Le score est proche du seuil (0.44). '
+                    'Le verdict pourrait basculer avec des informations complémentaires.</span></div>',
+                    unsafe_allow_html=True,
+                )
 
         with c2:
             is_fiable = (label == 0) or (str(label).upper() == 'FIABLE') or (isinstance(label, (int, np.integer)) and label == 0)
@@ -866,9 +876,31 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
                 unsafe_allow_html=True,
             )
 
-        # Radar
-        st.plotly_chart(make_radar(probas.tolist(), 'Profil émotionnel', fill_opacity=0.25),
-                        use_container_width=True)
+        # Full 7-emotion distribution + Radar side by side
+        emo_col1, emo_col2 = st.columns(2)
+        with emo_col1:
+            emo_display_names = [EMOTION_DISPLAY[e] for e in EMOTION_LABELS]
+            emo_pct = [float(probas[i]) * 100 for i in range(len(EMOTION_LABELS))]
+            emo_colors = [EMOTION_COLORS[e] for e in EMOTION_LABELS]
+            sorted_emo = sorted(zip(emo_display_names, emo_pct, emo_colors), key=lambda x: x[1])
+            names_s, pcts_s, colors_s = zip(*sorted_emo)
+            fig_emo_dist = go.Figure(go.Bar(
+                y=list(names_s), x=list(pcts_s), orientation='h',
+                marker_color=list(colors_s),
+                text=[f'{p:.1f}%' for p in pcts_s],
+                textposition='outside',
+            ))
+            _apply_layout(fig_emo_dist,
+                height=280,
+                title=dict(text='Distribution des 7 émotions', x=0.5,
+                           font=dict(color='#E0E0E0', size=14)),
+                xaxis=dict(title='Probabilité (%)', range=[0, max(emo_pct) * 1.25]),
+                margin=dict(t=45, b=35, l=90, r=40),
+            )
+            st.plotly_chart(fig_emo_dist, use_container_width=True)
+        with emo_col2:
+            st.plotly_chart(make_radar(probas.tolist(), 'Profil émotionnel', fill_opacity=0.25),
+                            use_container_width=True)
 
         # Explainability
         if explanation.get('explainable'):
@@ -1132,6 +1164,22 @@ def _page_batch_analysis(detector, emo):
                 csv_output, 'thumalien_resultats.csv', 'text/csv',
                 use_container_width=True,
             )
+
+    # --- Glossaire pédagogique ---
+    st.markdown('---')
+    with st.expander('Glossaire pédagogique — Comprendre les concepts clés', expanded=False):
+        st.markdown("""
+| Concept | Explication |
+|---|---|
+| **TF-IDF** | *Term Frequency – Inverse Document Frequency.* Mesure l'importance d'un mot dans un texte par rapport à un corpus. Plus un mot est rare dans le corpus mais fréquent dans le texte, plus son score TF-IDF est élevé. C'est la base de notre modèle de détection. |
+| **SHAP** | *SHapley Additive exPlanations.* Méthode d'explicabilité IA issue de la théorie des jeux. Chaque mot reçoit une valeur SHAP qui mesure sa contribution au verdict final (positif = pousse vers « suspect », négatif = pousse vers « fiable »). |
+| **Seuil 0.44** | Notre modèle produit un score de crédibilité entre 0 et 1. En dessous de 0.44, le texte est classé **SUSPECT** ; au-dessus, **FIABLE**. Ce seuil a été optimisé par validation croisée pour maximiser le F1-score. |
+| **Stage 1 (Fait/Opinion)** | Premier filtre du pipeline : un classifieur sépare les textes factuels des opinions. Seuls les textes factuels passent par la détection de désinformation complète, car les opinions ne sont pas vérifiables de la même manière. |
+| **Score de crédibilité** | Probabilité estimée qu'un texte soit fiable (0 = probablement faux, 1 = probablement vrai). Combine les features TF-IDF, linguistiques et émotionnelles. |
+| **Émotions (7 classes)** | Notre modèle MLP bilingue détecte 7 émotions : colère, dégoût, joie, neutre, peur, surprise, tristesse. Les fake news exploitent souvent la peur et la colère pour maximiser l'engagement. |
+| **CamemBERT / RoBERTa** | Modèles de langage pré-entraînés (Transformer). CamemBERT pour le français, RoBERTa pour l'anglais. Utilisés pour capter le sens contextuel des textes courts (< 30 mots). |
+| **Régression logistique** | Modèle de classification simple et interprétable. Chaque mot a un coefficient : positif = contribue au verdict « suspect », négatif = contribue au verdict « fiable ». |
+""")
 
 
 # ===================================================================

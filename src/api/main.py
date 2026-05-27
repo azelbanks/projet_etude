@@ -5,6 +5,7 @@ Lancement :
     uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 """
 
+import collections
 import json
 import logging
 import os
@@ -15,6 +16,7 @@ from typing import Dict, Optional
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -47,6 +49,37 @@ _energy_metrics = {
     'tracker_active': False,
 }
 _energy_tracker: Optional[object] = None
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Simple in-memory rate limiter per client IP (sliding window)."""
+
+    def __init__(self, app, max_requests: int = 60, window_seconds: int = 60):
+        super().__init__(app)
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._requests: Dict[str, collections.deque] = {}
+
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host if request.client else 'unknown'
+        now = time.monotonic()
+
+        if client_ip not in self._requests:
+            self._requests[client_ip] = collections.deque()
+
+        dq = self._requests[client_ip]
+        # Purge old entries
+        while dq and dq[0] < now - self.window_seconds:
+            dq.popleft()
+
+        if len(dq) >= self.max_requests:
+            return JSONResponse(
+                status_code=429,
+                content={'detail': f'Rate limit exceeded ({self.max_requests} req/{self.window_seconds}s)'},
+            )
+
+        dq.append(now)
+        return await call_next(request)
 
 
 class EnergyTrackingMiddleware(BaseHTTPMiddleware):
@@ -158,6 +191,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(EnergyTrackingMiddleware)
+app.add_middleware(
+    RateLimitMiddleware,
+    max_requests=int(os.environ.get('THUMACHECK_RATE_LIMIT', '60')),
+    window_seconds=60,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -256,4 +294,56 @@ def predict(req: PredictRequest):
         label="fiable" if pred_label == 0 else "suspect",
         language=language,
         emotions=emotions,
+    )
+
+
+class ExplainRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=10000)
+
+
+class WordContribution(BaseModel):
+    word: str
+    contribution: float
+
+
+class ExplainResponse(BaseModel):
+    explainable: bool
+    score: float
+    label: str
+    top_suspect_words: list[WordContribution]
+    top_fiable_words: list[WordContribution]
+    sensationalist_words: list[str]
+
+
+@app.post("/explain", response_model=ExplainResponse)
+def explain(req: ExplainRequest):
+    """Return word-level explainability for a given text."""
+    if detector is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text must be non-empty")
+
+    explanation = detector.explain_prediction(text)
+
+    top_suspect = [
+        WordContribution(word=w['word'], contribution=round(w['contribution'], 6))
+        for w in explanation.get('top_suspect_words', [])[:10]
+    ]
+    top_fiable = [
+        WordContribution(word=w['word'], contribution=round(w['contribution'], 6))
+        for w in explanation.get('top_fiable_words', [])[:10]
+    ]
+    sensationalist = [
+        w['word'] for w in explanation.get('sensationalist_words', [])
+    ]
+
+    return ExplainResponse(
+        explainable=explanation.get('explainable', False),
+        score=round(explanation.get('score', 0.0), 4),
+        label=explanation.get('label', 'unknown'),
+        top_suspect_words=top_suspect,
+        top_fiable_words=top_fiable,
+        sensationalist_words=sensationalist,
     )
