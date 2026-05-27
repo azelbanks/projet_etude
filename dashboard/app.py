@@ -1285,45 +1285,116 @@ def _section_roadmap():
             st.markdown(desc)
 
 
+def _load_all_emissions():
+    """Load emissions from all CSV files (main + backups) and deduplicate by run_id."""
+    base = os.path.join(os.path.dirname(__file__), '..')
+    csv_files = [
+        os.path.join(base, 'emissions.csv'),
+        os.path.join(base, 'emissions.csv.bak'),
+        os.path.join(base, 'emissions.csv_0.bak'),
+        os.path.join(base, 'emissions.csv_1.bak'),
+        os.path.join(base, 'emissions.csv_2.bak'),
+    ]
+    frames = []
+    for f in csv_files:
+        try:
+            if os.path.exists(f):
+                frames.append(pd.read_csv(f))
+        except Exception:
+            pass
+    if not frames:
+        return None
+    df = pd.concat(frames, ignore_index=True)
+    if 'run_id' in df.columns:
+        df = df.drop_duplicates(subset='run_id')
+    return df
+
+
+# Runs selected for the rapport (matching the 6 documented trainings)
+_RAPPORT_RUN_IDS = {
+    'b747dcc0-8836-4fdc-95b8-f0e4127be5a5',  # V1.5 LogReg (fév.)
+    '81b9cc2c-03fa-452f-a963-8f5dde71d16a',  # V5 LogReg
+    'a75d296a-47e1-4a73-9b1d-863b6203cbfa',  # V5 LogReg retrain
+    'ad76e332-0e49-41ba-b0c9-be3306c70e74',  # CamemBERT
+    '9a310be3-e72e-4a61-baca-b7a63bbe19d0',  # RoBERTa EN V1
+    '5981e174-9b93-41a3-8b16-a8bcc57cc215',  # RoBERTa EN V2
+}
+
+# Estimated emissions for components not tracked by CodeCarbon
+# Rate: 7.55e-7 kg CO2/s (Apple M4 Pro, France grid, stable across all runs)
+_ESTIMATED_ITEMS = pd.DataFrame([
+    {'project_name': 'V6 GradientBoost (estimé)', 'duration': 480.0,
+     'emissions': 0.000362, 'energy_consumed': 0.00648},
+    {'project_name': 'Pipeline XAI (estimé)', 'duration': 300.0,
+     'emissions': 0.000227, 'energy_consumed': 0.00405},
+    {'project_name': 'Inférence cumulée (estimé)', 'duration': 200.0,
+     'emissions': 0.000151, 'energy_consumed': 0.00270},
+])
+
+
 def _section_carbon():
     st.subheader('Bilan Carbone (Green IT)')
 
-    emissions_path = os.path.join(os.path.dirname(__file__), '..', 'emissions.csv')
-    try:
-        if os.path.exists(emissions_path):
-            em_df = pd.read_csv(emissions_path)
-        else:
-            em_df = None
-    except Exception:
+    all_df = _load_all_emissions()
+
+    # Filter to the 6 documented runs
+    if all_df is not None and 'run_id' in all_df.columns:
+        em_df = all_df[all_df['run_id'].isin(_RAPPORT_RUN_IDS)].copy()
+    elif all_df is not None and 'emissions' in all_df.columns:
+        em_df = all_df
+    else:
         em_df = None
 
     if em_df is not None and 'emissions' in em_df.columns and len(em_df) > 0:
-        total_co2_g = em_df['emissions'].sum() * 1000
-        total_energy = em_df['energy_consumed'].sum() if 'energy_consumed' in em_df.columns else 0
-        total_duration = em_df['duration'].sum() if 'duration' in em_df.columns else 0
-        n_runs = len(em_df)
+        measured_co2_g = em_df['emissions'].sum() * 1000
+        estimated_co2_g = _ESTIMATED_ITEMS['emissions'].sum() * 1000
+        total_co2_g = measured_co2_g + estimated_co2_g
+        total_energy = (em_df['energy_consumed'].sum() if 'energy_consumed' in em_df.columns else 0) + _ESTIMATED_ITEMS['energy_consumed'].sum()
+        total_duration = (em_df['duration'].sum() if 'duration' in em_df.columns else 0) + _ESTIMATED_ITEMS['duration'].sum()
+        n_runs = len(em_df) + len(_ESTIMATED_ITEMS)
 
         c1, c2, c3, c4 = st.columns(4)
-        c1.markdown(metric_card('', 'CO2 total', f'{total_co2_g:.2f} g', '#00E676'), unsafe_allow_html=True)
+        c1.markdown(metric_card('', 'CO2 total', f'≈ {total_co2_g:.2f} g', '#00E676'), unsafe_allow_html=True)
         c2.markdown(metric_card('', 'Énergie', f'{total_energy*1000:.1f} Wh', '#FFD600'), unsafe_allow_html=True)
         c3.markdown(metric_card('', 'Durée totale', f'{total_duration/60:.1f} min', '#00D4FF'), unsafe_allow_html=True)
-        c4.markdown(metric_card('', 'Runs', f'{n_runs}', '#E0E0E0'), unsafe_allow_html=True)
+        c4.markdown(metric_card('', 'Runs', f'{len(em_df)} mesurés + 3 estimés', '#E0E0E0'), unsafe_allow_html=True)
 
-        km_voiture = em_df['emissions'].sum() / 0.12
+        km_voiture = total_co2_g / 120  # 120g CO2/km
         smartphones = total_energy * 1000 / 12
         st.markdown(
             '<div class="glass-card" role="region" aria-label="Equivalences ecologiques">'
             '<div style="font-size:1rem;font-weight:600;color:#00D4FF;margin-bottom:10px;">'
             'Équivalences écologiques</div>'
             '<div style="display:flex;gap:30px;flex-wrap:wrap;font-size:0.9rem;line-height:1.8;">'
-            f'<div><strong>{km_voiture:.4f} km</strong> en voiture</div>'
+            f'<div><strong>{km_voiture:.4f} km</strong> en voiture (≈ {km_voiture*1000:.0f} m)</div>'
             f'<div><strong>{smartphones:.2f}</strong> charges smartphone</div>'
             f'<div>Mix électrique France : <strong>56 g CO2/kWh</strong></div>'
             '</div></div>',
             unsafe_allow_html=True,
         )
 
-        with st.expander('Détail par run CodeCarbon'):
+        # Pie chart of emissions breakdown
+        labels = ['RoBERTa EN (V1+V2)', 'V5 LogReg (3 runs)', 'CamemBERT',
+                  'V6 GradientBoost*', 'Pipeline XAI*', 'Inférence*']
+        values = [3.47, 2.18, 0.48, 0.36, 0.23, 0.15]
+        import plotly.graph_objects as go
+        fig = go.Figure(data=[go.Pie(
+            labels=labels, values=values,
+            marker=dict(colors=['#00D4FF', '#00B8D4', '#FFD600', '#00E676', '#9E9E9E', '#757575']),
+            textinfo='label+percent', textfont_size=13,
+            hole=0.4,
+        )])
+        fig.update_layout(
+            title='Répartition des émissions CO₂ (≈ 6,88 g total)',
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white'), height=400,
+            legend=dict(font=dict(size=11)),
+            annotations=[dict(text='6,88 g', x=0.5, y=0.5, font_size=18, showarrow=False, font_color='white')],
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption('\\* Estimé via le taux CodeCarbon moyen (7,55×10⁻⁷ kg CO₂/s, Apple M4 Pro, mix FR)')
+
+        with st.expander('Détail par run CodeCarbon (6 mesurés)'):
             detail_cols = ['project_name', 'duration', 'emissions', 'energy_consumed']
             available = [c for c in detail_cols if c in em_df.columns]
             detail = em_df[available].copy()
@@ -1336,6 +1407,16 @@ def _section_carbon():
             detail.rename(columns={'project_name': 'Projet', 'duration': 'Durée',
                                    'emissions': 'CO2', 'energy_consumed': 'Énergie'}, inplace=True)
             st.dataframe(detail, hide_index=True, use_container_width=True)
+
+        with st.expander('Estimations (3 composants non instrumentés)'):
+            est = _ESTIMATED_ITEMS.copy()
+            est['duration'] = est['duration'].apply(lambda x: f'{x:.0f}s (~{x/60:.0f} min)')
+            est['emissions'] = est['emissions'].apply(lambda x: f'~{x*1000:.2f} g')
+            est['energy_consumed'] = est['energy_consumed'].apply(lambda x: f'~{x*1000:.2f} Wh')
+            est.rename(columns={'project_name': 'Composant', 'duration': 'Durée estimée',
+                                'emissions': 'CO2 estimé', 'energy_consumed': 'Énergie estimée'}, inplace=True)
+            st.dataframe(est, hide_index=True, use_container_width=True)
+            st.caption('Méthode : durée estimée × taux d\'émission moyen CodeCarbon (constant sur Apple M4 Pro)')
     else:
         st.info('Aucune donnée CodeCarbon disponible. Lancez un entraînement pour mesurer les émissions.')
 
