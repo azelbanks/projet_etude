@@ -1,5 +1,5 @@
 # Plan de Reprise et de Continuite d'Activite (PRA/PCA)
-## Projet Thumalien - Strategie de resilience
+## Projet ThumaCheck (client : Thumalien) - Strategie de resilience
 
 **Reference** : PRA-THUM-2026-001
 **Version** : 1.0
@@ -10,7 +10,7 @@
 
 ## 1. Objectif du document
 
-Ce document definit les procedures de reprise et de continuite d'activite du systeme Thumalien. Il garantit la disponibilite du service de detection de fake news et la protection des donnees en cas d'incident.
+Ce document definit les procedures de reprise et de continuite d'activite du systeme ThumaCheck. Il garantit la disponibilite du service de detection de fake news et la protection des donnees en cas d'incident.
 
 ---
 

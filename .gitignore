@@ -20,6 +20,7 @@ data/*
 !models/*.pkl
 !models/*.joblib
 !models/config.json
+!config/search_config.json
 
 # Large model files (> 100MB, GitHub limit)
 models/camembert_best.pt

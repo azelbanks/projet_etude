@@ -1,5 +1,5 @@
 """
-data_quality_check.py — Periodic data quality report for the Thumalien raw_posts collection.
+data_quality_check.py — Periodic data quality report for the ThumaCheck raw_posts collection.
 
 Usage:
     python3 src/collection/data_quality_check.py

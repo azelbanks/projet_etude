@@ -1,5 +1,5 @@
 """
-Thumalien — CamemBERT Fine-tuned Classifier pour textes courts FR
+ThumaCheck — CamemBERT Fine-tuned Classifier pour textes courts FR
 =================================================================
 
 Module complementaire au pipeline TF-IDF+LogReg pour ameliorer la
@@ -8,7 +8,7 @@ detection de fake news sur les textes courts en francais (< 30 mots).
 Architecture :
     CamemBERT-base -> Linear(768, 256) -> ReLU -> Dropout -> Linear(256, 2)
 
-Le modele est fine-tune sur les donnees FR du dataset Thumalien
+Le modele est fine-tune sur les donnees FR du dataset Thumalien (client)
 avec un focus sur les textes courts (< 30 mots).
 
 Usage :
@@ -20,7 +20,7 @@ Usage :
     classifier.load()
     results = classifier.predict(["SCANDALE ! On nous ment !"])
 
-Auteur : Thumalien Team
+Auteur : Niamato Consulting (pour Thumalien)
 """
 
 import os
@@ -188,7 +188,7 @@ class CamemBERTClassifier:
         tracker = None
         if track_emissions and CODECARBON_AVAILABLE:
             tracker = EmissionsTracker(
-                project_name="Thumalien_CamemBERT",
+                project_name="ThumaCheck_CamemBERT",
                 output_dir=os.path.dirname(self.model_dir) or '.',
             )
             tracker.start()
@@ -487,3 +487,62 @@ class CamemBERTClassifier:
 
         logger.info("CamemBERT charge : %s (F1=%.4f)", path, self.training_metrics.get('best_val_f1', 0))
         return True
+
+    def extract_attention(self, text: str) -> dict:
+        """
+        Extrait les poids d'attention de la derniere couche CamemBERT pour un texte.
+
+        Retourne un dict avec :
+            - tokens: liste des tokens (str)
+            - attention_weights: liste de floats (poids moyens sur toutes les tetes)
+            - prediction: 'FIABLE' ou 'SUSPECT'
+            - score: float (P(fiable))
+        """
+        if not self._loaded:
+            raise RuntimeError("Modele non charge.")
+
+        self.base_model.eval()
+        self.head.eval()
+
+        encoding = self.tokenizer(
+            text, truncation=True, padding='max_length',
+            max_length=self.MAX_LENGTH, return_tensors='pt',
+        )
+        input_ids = encoding['input_ids'].to(self.device)
+        attention_mask = encoding['attention_mask'].to(self.device)
+
+        with torch.no_grad():
+            outputs = self.base_model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                output_attentions=True,
+            )
+            cls_output = outputs.last_hidden_state[:, 0, :]
+            logits = self.head(cls_output)
+            probas = torch.softmax(logits, dim=1).cpu().numpy()[0]
+
+        # Derniere couche d'attention, moyenne sur toutes les tetes
+        # Shape: (batch, num_heads, seq_len, seq_len)
+        last_layer_attn = outputs.attentions[-1]
+        # Moyenne sur les tetes -> (batch, seq_len, seq_len)
+        avg_attn = last_layer_attn.mean(dim=1)[0]
+        # Attention du token [CLS] vers tous les autres
+        cls_attn = avg_attn[0].cpu().numpy()
+
+        # Tokens et masquage du padding
+        tokens = self.tokenizer.convert_ids_to_tokens(input_ids[0].cpu().tolist())
+        mask = attention_mask[0].cpu().numpy()
+        real_len = int(mask.sum())
+        tokens = tokens[:real_len]
+        weights = cls_attn[:real_len]
+
+        # Normaliser les poids (0-1)
+        if weights.max() > 0:
+            weights = weights / weights.max()
+
+        return {
+            'tokens': tokens,
+            'attention_weights': weights.tolist(),
+            'prediction': 'FIABLE' if probas[0] > 0.5 else 'SUSPECT',
+            'score': float(probas[0]),
+        }

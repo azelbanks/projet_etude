@@ -1,4 +1,4 @@
-# Script vidéo MVP — Thumalien V9
+# Script vidéo MVP — ThumaCheck (client : Thumalien)
 **Durée cible** : 18 min (15-20 min couverts par la grille MASTERE)
 **Format** : screencast + voix off + 3 inserts caméra (intro, transition centrale, conclusion)
 **Audience** : jury MASTERE M1 BDIA — exigeant, technique, sensible à la rigueur méthodologique
@@ -43,7 +43,7 @@ Plutôt qu'une démo linéaire "voici notre projet, voici nos features, voici no
 
 `[CUT]` `[SLIDE 1: Titre projet]`
 
-> *"Bonjour, je suis Azélie Bernard. Avec Sébastien Lazcanotegui, on a passé six mois sur Thumalien — un système de détection de désinformation bilingue sur Bluesky.*
+> *"Bonjour, je suis Azélie Bernard. Avec Sébastien Lazcanotegui, on a passé six mois sur ThumaCheck — un système de détection de désinformation bilingue sur Bluesky.*
 > *En 18 minutes, je vais vous raconter pourquoi ce 0,99 était un piège, et comment on a construit un système qui, lui, est défendable devant un régulateur, devant un utilisateur, et devant vous."*
 
 **Intention** : ouvrir avec une affirmation contre-intuitive qui crée une attente. Pas de "bonjour je vais vous présenter mon projet". Direct au sujet.
@@ -79,7 +79,7 @@ Plutôt qu'une démo linéaire "voici notre projet, voici nos features, voici no
 
 > *"Et c'est là qu'on a vu le problème. Le modèle n'apprenait pas à détecter de la désinformation. Il apprenait à détecter le **style d'agence de presse**. Si un post commençait par 'Reuters', le modèle disait 'fiable'. Si un post avait un style emphatique typique de réseau social, il disait 'suspect'.*
 >
-> *Cette découverte n'a été possible que parce qu'on a appliqué de l'**explicabilité** dès la version 1. Sans XAI, on aurait livré un modèle à 0,99 de F1 qui aurait collapsé en production. Cette anecdote, c'est la raison pour laquelle l'XAI n'est pas une feature dans Thumalien — c'est l'épine dorsale méthodologique."*
+> *Cette découverte n'a été possible que parce qu'on a appliqué de l'**explicabilité** dès la version 1. Sans XAI, on aurait livré un modèle à 0,99 de F1 qui aurait collapsé en production. Cette anecdote, c'est la raison pour laquelle l'XAI n'est pas une feature dans ThumaCheck — c'est l'épine dorsale méthodologique."*
 
 `[CUT vers SLIDE 4: "F1=0.99 → biais Reuters → V2"]`
 
@@ -121,7 +121,7 @@ Plutôt qu'une démo linéaire "voici notre projet, voici nos features, voici no
 
 `[SCREEN: Analyse Temps Réel, soumettre un texte fiable connu]`
 
-> *"Premier test : un communiqué officiel d'une institution scientifique. Score 0,89 fiable. Le modèle est confiant. Mais surtout — et c'est ce qui distingue Thumalien d'un classifieur boîte noire — voici **trois niveaux d'explication simultanés**.*
+> *"Premier test : un communiqué officiel d'une institution scientifique. Score 0,89 fiable. Le modèle est confiant. Mais surtout — et c'est ce qui distingue ThumaCheck d'un classifieur boîte noire — voici **trois niveaux d'explication simultanés**.*
 >
 > *Niveau 1 : les top mots qui poussent vers fiable, calculés à partir des coefficients exacts de la LogReg. Pas une approximation, c'est la formule fermée du modèle."*
 
@@ -209,7 +209,7 @@ Plutôt qu'une démo linéaire "voici notre projet, voici nos features, voici no
 >
 > *Limite numéro 1 : notre kappa de Cohen entre annotateurs sur le gold set est de 0,498 sur la version 2 — modéré-faible. La frontière fiable / suspect est intrinsèquement subjective. On atténue avec un bootstrap d'intervalle de confiance à 95% sur la réduction des faux positifs : intervalle de minus 73% à minus 60%, donc l'effet reste robuste, mais on ne peut pas prétendre à une précision quasi-parfaite.*
 >
-> *Limite numéro 2 : Thumalien détecte des **signaux de désinformation**, pas la vérité factuelle. On classe la forme du discours, pas son contenu. C'est documenté dans le guide utilisateur et affiché en clair sur le dashboard.*
+> *Limite numéro 2 : ThumaCheck détecte des **signaux de désinformation**, pas la vérité factuelle. On classe la forme du discours, pas son contenu. C'est documenté dans le guide utilisateur et affiché en clair sur le dashboard.*
 >
 > *Limite numéro 3 : on est un binôme étudiant. Dans une équipe de quatre comme prévu par le cadre pédagogique, on aurait probablement développé une couche de monitoring drift plus sophistiquée et une intégration MLflow pour le tracking d'expériences. On les a placées dans la roadmap V10 à V12."*
 
@@ -229,7 +229,7 @@ Plutôt qu'une démo linéaire "voici notre projet, voici nos features, voici no
 >
 > *Aujourd'hui, en V9, notre F1 macro sur gold est de 0,67. C'est plus bas. C'est plus honnête. C'est validé par 501 tests, 80% de mutation kill rate, une AIPD, une Model Card, et une explicabilité qui prouve sa propre fidélité avec un uplift de 0,21 contre baseline aléatoire.*
 >
-> *Thumalien n'est pas un classifieur. C'est un **système de décision auditable** — défendable devant un utilisateur, devant un régulateur, et devant vous.*
+> *ThumaCheck n'est pas un classifieur. C'est un **système de décision auditable** — défendable devant un utilisateur, devant un régulateur, et devant vous.*
 >
 > *La désinformation ne se règle pas par un modèle. Elle se règle par un dispositif technique, méthodologique et éthique articulé. C'est ce qu'on a essayé de construire en six mois.*
 >
@@ -273,7 +273,7 @@ Plutôt qu'une démo linéaire "voici notre projet, voici nos features, voici no
 
 **Vidéo** : 1080p 30fps minimum, idéalement 4K 30fps si la captation OBS le permet. Bitrate cible 10-12 Mbps en H.264. Aspect 16:9 strict.
 
-**Cohérence visuelle** : palette de couleurs alignée avec le dashboard (bleu cyan #00D4FF, rouge danger #FF1744, vert succès #00E676, fond #0e1117). Police Inter ou SF Pro. **Logo Thumalien** en watermark discret en bas à droite tout au long.
+**Cohérence visuelle** : palette de couleurs alignée avec le dashboard (bleu cyan #00D4FF, rouge danger #FF1744, vert succès #00E676, fond #0e1117). Police Inter ou SF Pro. **Logo ThumaCheck** en watermark discret en bas à droite tout au long.
 
 **Rythme** : viser un changement de plan ou un focus de mouvement **toutes les 8-12 secondes**. Pas de plan fixe de plus de 20 secondes — le cerveau décroche.
 
@@ -297,7 +297,7 @@ Plutôt qu'une démo linéaire "voici notre projet, voici nos features, voici no
 
 **Description YouTube structurée** :
 ```
-Thumalien V9 — Système de détection de désinformation Bluesky
+ThumaCheck V9 — Système de détection de désinformation Bluesky
 M1 BDIA - Projet d'étude 2025/2026 - Azélie Bernard & Sébastien Lazcanotegui
 
 00:00 Introduction
@@ -406,7 +406,7 @@ Avant de cliquer sur "publier" :
 - [ ] Audio normalisé à -16 LUFS, aucun pic au-dessus de -1 dB
 - [ ] Sous-titres français corrigés, sans erreur factuelle
 - [ ] Tous les chiffres cités à l'oral correspondent à ceux du rapport et de la Model Card
-- [ ] Logo Thumalien présent en watermark sur 100% de la vidéo
+- [ ] Logo ThumaCheck présent en watermark sur 100% de la vidéo
 - [ ] Aucune information personnelle visible (notification email, chat Slack) dans les captures
 - [ ] Lien GitHub testé, mène bien au repo public
 - [ ] Lien rapport testé, le PDF s'ouvre correctement
@@ -437,4 +437,4 @@ Avant de cliquer sur "publier" :
 
 ---
 
-*Script vidéo Thumalien V9 — version finale Mai 2026 — Azélie Bernard*
+*Script vidéo ThumaCheck (client : Thumalien) — version finale Mai 2026 — Azélie Bernard*

@@ -1,8 +1,8 @@
 """
-Thumalien -- MongoDB Aggregation Helpers
+ThumaCheck -- MongoDB Aggregation Helpers
 ========================================
 
-Reusable aggregation functions for the Thumalien dashboard and pipeline.
+Reusable aggregation functions for the ThumaCheck dashboard and pipeline.
 Designed to push computation into MongoDB rather than loading raw documents
 into Python, which is critical for performance at scale (> 100K posts).
 

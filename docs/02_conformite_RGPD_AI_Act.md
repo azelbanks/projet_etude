@@ -1,5 +1,5 @@
 # Document de Conformite RGPD & AI Act
-## Projet Thumalien — Analyse d'Impact et Mesures de Conformite
+## Projet ThumaCheck (client : Thumalien) — Analyse d'Impact et Mesures de Conformite
 
 **Reference** : RGPD-THUM-2026-001
 **Version** : 1.0
@@ -12,7 +12,7 @@
 
 ## 1. Objet et perimetre
 
-Ce document formalise la conformite du projet Thumalien au Reglement General sur la Protection des Donnees (RGPD — UE 2016/679) et anticipe les exigences du Reglement sur l'Intelligence Artificielle (AI Act — UE 2024/1689).
+Ce document formalise la conformite du projet ThumaCheck au Reglement General sur la Protection des Donnees (RGPD — UE 2016/679) et anticipe les exigences du Reglement sur l'Intelligence Artificielle (AI Act — UE 2024/1689).
 
 **Perimetre couvert** :
 - Collecte de posts publics sur Bluesky
@@ -159,9 +159,9 @@ Avis : Le traitement peut etre mis en oeuvre sous reserve du suivi des mesures
 
 ### 4.1 Classification du systeme
 
-L'AI Act classe les systemes d'IA en 4 niveaux de risque. Determinons la classification de Thumalien.
+L'AI Act classe les systemes d'IA en 4 niveaux de risque. Determinons la classification de ThumaCheck.
 
-| Niveau | Description | Thumalien ? |
+| Niveau | Description | ThumaCheck ? |
 |--------|------------|:-----------:|
 | **Risque inacceptable** (Art. 5) | Systemes de scoring social, manipulation subliminale, identification biometrique en temps reel | Non |
 | **Haut risque** (Annexe III) | Systemes utilises dans l'emploi, l'education, les services essentiels, la justice, l'immigration | Non |
@@ -171,7 +171,7 @@ L'AI Act classe les systemes d'IA en 4 niveaux de risque. Determinons la classif
 **Classification retenue : Risque limite a minimal**
 
 **Justification** :
-- Thumalien ne prend aucune decision automatisee affectant des droits fondamentaux
+- ThumaCheck ne prend aucune decision automatisee affectant des droits fondamentaux
 - Le score de credibilite est un outil d'aide a la decision, pas un verdict
 - Le systeme ne genere pas de contenu et ne manipule pas d'information
 - Il ne cible pas de personnes vulnerables
@@ -201,7 +201,7 @@ Bien que non obligatoires pour un systeme a risque limite, nous appliquons volon
 ### 4.4 Model Card — Fiche d'identite du modele
 
 ```
-NOM DU MODELE : Thumalien Pipeline V9 Cascade
+NOM DU MODELE : ThumaCheck Pipeline V9 Cascade
 TYPE : Classification binaire (Fiable / Suspect)
 ARCHITECTURE : Pipeline 2 etapes :
   - Stage 1 : Filtre fait/opinion (TF-IDF + LogReg, seuil 0.40)
@@ -323,7 +323,7 @@ RESPONSABLE : Azelie Bernard
 | AI Act — Transparence | Conforme | Dashboard + documentation |
 | AI Act — Documentation | Conforme | Model card + cahier des charges |
 
-**Avis global** : Le projet Thumalien presente un niveau de conformite **satisfaisant** pour un projet de recherche academique. Les mesures implementees couvrent les exigences principales du RGPD et de l'AI Act. Un plan d'action est defini pour les ameliorations restantes.
+**Avis global** : Le projet ThumaCheck presente un niveau de conformite **satisfaisant** pour un projet de recherche academique. Les mesures implementees couvrent les exigences principales du RGPD et de l'AI Act. Un plan d'action est defini pour les ameliorations restantes.
 
 ---
 

@@ -1,5 +1,5 @@
 """
-Thumalien -- Intelligence Command Center
+ThumaCheck -- Intelligence Command Center
 ========================================
 Dashboard Streamlit de detection de fake news bilingue FR/EN.
 Pipeline V9 : filtre fait/opinion + V5 (TF-IDF) + V6 (Style) + CamemBERT + SHAP.
@@ -158,6 +158,17 @@ section[data-testid="stSidebar"] {
 
 /* ---- kpi row ---- */
 .kpi-row { display: flex; gap: 12px; margin-bottom: 16px; }
+
+/* ---- Focus indicators for keyboard navigation (WCAG 2.1) ---- */
+*:focus-visible {
+    outline: 2px solid #00D4FF !important;
+    outline-offset: 2px !important;
+}
+button:focus-visible, [role="button"]:focus-visible {
+    outline: 3px solid #00D4FF !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 8px rgba(0,212,255,0.4) !important;
+}
 </style>
 """
 
@@ -548,8 +559,8 @@ def metric_card(icon, label, value, color, delta=None):
 def footer():
     st.divider()
     st.markdown(
-        '<div class="footer-text" role="contentinfo" aria-label="Informations sur le pipeline Thumalien">'
-        'Thumalien v9.0 &mdash; Pipeline fait/opinion + V5+V6+CamemBERT + SHAP '
+        '<div class="footer-text" role="contentinfo" aria-label="Informations sur le pipeline ThumaCheck">'
+        'ThumaCheck v9.0 &mdash; Pipeline fait/opinion + V5+V6+CamemBERT + SHAP '
         '&mdash; Seuil 0.44 &mdash; WCAG 2.1 AA &mdash; '
         'Descriptions textuelles sur toutes les visualisations'
         '</div>',
@@ -996,6 +1007,58 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
                 except Exception as e:
                     logging.warning("Décomposition méta-learner échouée: %s", e)
 
+            # ----------------------------------------------------------
+            # CamemBERT Attention Heatmap (XAI-03/XAI-04)
+            # ----------------------------------------------------------
+            if cam_classifier is not None:
+                try:
+                    attn_data = cam_classifier.extract_attention(text_input)
+                    tokens = attn_data['tokens']
+                    weights = attn_data['attention_weights']
+
+                    # Filter special tokens and subword prefixes
+                    display_tokens, display_weights = [], []
+                    for t, w in zip(tokens, weights):
+                        if t in ('<s>', '</s>', '<pad>'):
+                            continue
+                        # Clean subword markers
+                        clean = t.replace('\u2581', ' ').strip()
+                        if clean:
+                            display_tokens.append(clean)
+                            display_weights.append(w)
+
+                    if display_tokens:
+                        st.markdown('---')
+                        st.subheader('Heatmap d\'attention CamemBERT')
+
+                        # Build heatmap as colored HTML spans
+                        spans = []
+                        for tok, w in zip(display_tokens, display_weights):
+                            # Red intensity based on attention weight
+                            r = int(255 * w)
+                            g = int(50 * (1 - w))
+                            b = int(50 * (1 - w))
+                            a = max(0.15, w * 0.85)
+                            safe_tok = html.escape(tok)
+                            spans.append(
+                                f'<span style="background:rgba({r},{g},{b},{a:.2f});'
+                                f'padding:2px 4px;margin:1px;border-radius:4px;'
+                                f'display:inline-block;font-size:0.9rem;"'
+                                f' title="attention: {w:.3f}">{safe_tok}</span>'
+                            )
+                        st.markdown(
+                            '<div class="glass-card" role="region" aria-label="Heatmap attention CamemBERT">'
+                            '<div style="line-height:2.2;">' + ' '.join(spans) + '</div>'
+                            '</div>',
+                            unsafe_allow_html=True,
+                        )
+                        st.caption(
+                            "Poids d'attention du token [CLS] (derniere couche, moyenne sur 12 tetes). "
+                            "Rouge intense = le modele concentre son attention sur ce token."
+                        )
+                except Exception as e:
+                    logging.debug("Attention CamemBERT non disponible: %s", e)
+
 
 def _page_batch_analysis(detector, emo):
     st.markdown("Importez un fichier CSV avec une colonne `text` pour analyser plusieurs textes.")
@@ -1016,21 +1079,37 @@ def _page_batch_analysis(detector, emo):
         st.info(f'{n} textes détectés dans le fichier.')
 
         if st.button(f'Analyser {n} textes', type='primary'):
-            with st.spinner(f'Analyse de {n} textes en cours...'):
-                texts = pd.Series(batch_df['text'].astype(str).values)
-                results = detector.predict(texts)
+            progress_bar = st.progress(0, text='Preparation...')
+            BATCH_SIZE = 200
 
-                batch_df['Score'] = results['ai_score_credibility'].values
-                batch_df['Label'] = results['prediction_label'].map({0: 'FIABLE', 1: 'SUSPECT'}).values
-                batch_df['Langue'] = results['language'].values
+            texts = pd.Series(batch_df['text'].astype(str).values)
+            all_results = []
+            total_batches = (n + BATCH_SIZE - 1) // BATCH_SIZE
 
-                try:
-                    emo_features = emo.get_emotion_features(texts.tolist())
-                    batch_df['Emotion'] = [
-                        EMOTION_LABELS[int(np.argmax(p))] for p in emo_features
-                    ]
-                except Exception:
-                    batch_df['Emotion'] = 'neutre'
+            for i in range(0, n, BATCH_SIZE):
+                batch_end = min(i + BATCH_SIZE, n)
+                batch_texts = texts.iloc[i:batch_end].reset_index(drop=True)
+                batch_result = detector.predict(batch_texts)
+                all_results.append(batch_result)
+                progress = min((i + BATCH_SIZE) / n, 1.0)
+                progress_bar.progress(progress, text=f'Analyse : {batch_end}/{n} textes')
+
+            results = pd.concat(all_results, ignore_index=True)
+            progress_bar.progress(1.0, text='Extraction des emotions...')
+
+            batch_df['Score'] = results['ai_score_credibility'].values
+            batch_df['Label'] = results['prediction_label'].map({0: 'FIABLE', 1: 'SUSPECT'}).values
+            batch_df['Langue'] = results['language'].values
+
+            try:
+                emo_features = emo.get_emotion_features(texts.tolist())
+                batch_df['Emotion'] = [
+                    EMOTION_LABELS[int(np.argmax(p))] for p in emo_features
+                ]
+            except Exception:
+                batch_df['Emotion'] = 'neutre'
+
+            progress_bar.progress(1.0, text=f'Termine : {n} textes analyses')
 
             # Summary
             n_fiable = (batch_df['Label'] == 'FIABLE').sum()
@@ -1467,7 +1546,7 @@ def _section_compliance():
 # ===================================================================
 
 def page_about():
-    hero('À propos', 'Architecture, équipe et vision du projet Thumalien')
+    hero('À propos', 'Architecture, équipe et vision du projet ThumaCheck')
 
     st.subheader('Architecture du pipeline')
     st.markdown("""
@@ -1559,13 +1638,16 @@ def _load_auth_config():
 
 def main():
     st.set_page_config(
-        page_title='Thumalien — Détection de Fake News',
+        page_title='ThumaCheck — Détection de Fake News',
         page_icon='',
         layout='wide',
         initial_sidebar_state='expanded',
     )
 
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+    # Declare page language for screen readers (WCAG)
+    st.markdown('<script>document.documentElement.lang="fr";</script>', unsafe_allow_html=True)
 
     # --- Authentication ---
     auth_config = _load_auth_config()
@@ -1588,9 +1670,9 @@ def main():
     # --- Sidebar ---
     authenticator.logout('Déconnexion', 'sidebar')
     st.sidebar.markdown(
-        '<div role="banner" aria-label="Thumalien Intelligence Center" style="text-align:center;padding:12px 0;">'
+        '<div role="banner" aria-label="ThumaCheck Intelligence Center" style="text-align:center;padding:12px 0;">'
         '<span style="font-size:1.4rem;letter-spacing:4px;color:#00D4FF;font-weight:300;">'
-        'THUMALIEN</span><br>'
+        'THUMACHECK</span><br>'
         '<span style="font-size:0.7rem;color:#607D8B;">Intelligence Center v9.0</span>'
         '</div>',
         unsafe_allow_html=True,

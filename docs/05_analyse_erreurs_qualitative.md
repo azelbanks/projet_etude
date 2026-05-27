@@ -4,7 +4,7 @@
 **Reference** : QUAL-THUM-2026-005
 **Version** : 1.0
 **Date** : Avril 2026
-**Equipe** : Thumalien Data Science
+**Equipe** : Niamato Consulting — Data Science
 
 ---
 

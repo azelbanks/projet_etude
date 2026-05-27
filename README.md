@@ -1,4 +1,6 @@
-# Thumalien — Social Media Intelligence & AI Monitor
+# ThumaCheck — Social Media Intelligence & AI Monitor
+
+> **Développé par [Niamato Consulting](https://github.com/azelbanks/projet_etude) (Azélie Bernard & Sébastien Lazcanotegui) pour [Thumalien](https://thumalien.com), entreprise spécialisée en fact-checking et veille média.**
 
 ![Python](https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker)
@@ -8,7 +10,7 @@
 
 ## Description du Projet
 
-**Thumalien** est une solution complète de surveillance et d'analyse des réseaux sociaux (Bluesky) en temps réel. Le projet intègre un pipeline Data Engineering complet et deux modèles d'Intelligence Artificielle pour qualifier l'information.
+**ThumaCheck** est une solution complète de surveillance et d'analyse des réseaux sociaux (Bluesky) en temps réel, développée par **Niamato Consulting** pour le compte de **Thumalien**. Le projet intègre un pipeline Data Engineering complet et deux modèles d'Intelligence Artificielle pour qualifier l'information.
 
 L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et d'analyser l'**ambiance émotionnelle** des discussions en ligne.
 
@@ -135,7 +137,7 @@ Tous les documents sont disponibles dans [`docs/pdf/`](docs/pdf/) :
 | [PRA/PCA](docs/pdf/09_PRA_PCA.pdf) | Plan de Reprise et Continuité d'Activité |
 | [Veille technologique](docs/pdf/10_veille_technologique.pdf) | Politique de veille technique et réglementaire |
 | [Accessibilité & handicap](docs/pdf/11_accessibilite_handicap.pdf) | Mesures d'accessibilité du système |
-| [Rapport de projet](docs/pdf/rapport_projet_thumalien.pdf) | Rapport complet du projet Thumalien |
+| [Rapport de projet](docs/pdf/rapport_projet_thumalien.pdf) | Rapport complet du projet ThumaCheck (pour Thumalien) |
 | [Guide utilisateur](docs/pdf/guide_utilisateur.pdf) | Guide d'utilisation du système |
 | [Rôles et compétences](docs/pdf/roles_et_competences_projet.pdf) | Distribution des rôles et compétences |
 | [Rendu individuel Azelie](docs/pdf/rendu_individuel_azelie_bernard.pdf) | Bilan personnel et compétences |

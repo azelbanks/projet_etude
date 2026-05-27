@@ -1,4 +1,4 @@
-# Index des figures XAI — Thumalien V9
+# Index des figures XAI — ThumaCheck V9
 
 Généré automatiquement par `scripts/run_xai_pipeline.py` le 2026-05-09.
 Gold set : 200 posts annotés.

@@ -1,9 +1,9 @@
-# Model Card — Thumalien V9
+# Model Card — ThumaCheck V9
 
 **Document n°** : MC-THUM-2026-001
 **Version** : 1.0
 **Date** : 2026-05-09
-**Auteurs** : Équipe Thumalien
+**Auteurs** : Niamato Consulting
 **Format** : Google Model Card (Mitchell et al. 2019), enrichi d'une section
 *Explicabilité* conforme à l'AI Act (UE 2024/1689) art. 13.
 
@@ -13,14 +13,14 @@
 
 | Champ | Valeur |
 |---|---|
-| Nom | Thumalien V9 — Pipeline 2-étapes fait/opinion + ensemble hybride |
+| Nom | ThumaCheck V9 — Pipeline 2-étapes fait/opinion + ensemble hybride |
 | Version | 9.0 |
 | Type | Classifieur binaire bilingue (FR/EN) — fiable / suspect |
 | Architecture | Stage 1 : LogReg fait/opinion · Stage 2 : ensemble V5 (TF-IDF+LogReg) + V6 (style+GradientBoosting) + CamemBERT-base fine-tuné · Méta-learner LogReg |
 | Date de l'entraînement | Avril 2026 (V8), mai 2026 (V9 stage 1) |
 | Cadre légal | Projet d'étude académique, Master 1 Data Analytics |
 | License | À usage pédagogique. Non destiné à la production |
-| Contact | équipe Thumalien — voir `docs/00_INDEX.md` |
+| Contact | Niamato Consulting — voir `docs/00_INDEX.md` |
 | Citation | À compléter le cas échéant |
 
 ## 2. Usage prévu

@@ -1,4 +1,4 @@
-# Rapport de Projet — Thumalien
+# Rapport de Projet — ThumaCheck (client : Thumalien)
 ## Pipeline NLP de détection de fake news sur Bluesky
 
 **Auteur** : Azélie Bernard
@@ -9,7 +9,7 @@
 
 ## Résumé
 
-Ce rapport présente Thumalien, un système de détection de fake news sur le réseau social Bluesky. Le pipeline NLP bilingue (FR/EN) a évolué de la V1.0 (baseline TF-IDF) à la V9 (pipeline 2 étapes fait/opinion). La V5 combine une vectorisation TF-IDF (30K features), 15 features linguistiques et un modèle d'émotions (MLP PyTorch, 7 classes) dans un classifieur LogisticRegression, entraîné sur 197 782 textes. La V6 est un modèle "style-only" topic-agnostic (28 features stylistiques + 7 émotions, GradientBoosting). La V7 est un méta-learner V5+V6 avec explicabilité SHAP. La V8 intègre CamemBERT comme 3e signal sémantique pour le français (F1 suspect +28%). La V9 introduit un pipeline en cascade : un classifieur fait/opinion (Stage 1) filtre les posts d'opinion avant la détection, réduisant les faux positifs de 67% (186 → 62) sur un gold standard de 473 posts annotés par 2 annotateurs humains (kappa inter-annotateurs = 0.498). Le système (collecte, MongoDB, inférence, dashboard Streamlit) est conteneurisé via Docker Compose, avec suivi carbone par CodeCarbon.
+Ce rapport présente ThumaCheck, un système de détection de fake news sur le réseau social Bluesky, développé par Niamato Consulting pour le client Thumalien. Le pipeline NLP bilingue (FR/EN) a évolué de la V1.0 (baseline TF-IDF) à la V9 (pipeline 2 étapes fait/opinion). La V5 combine une vectorisation TF-IDF (30K features), 15 features linguistiques et un modèle d'émotions (MLP PyTorch, 7 classes) dans un classifieur LogisticRegression, entraîné sur 197 782 textes. La V6 est un modèle "style-only" topic-agnostic (28 features stylistiques + 7 émotions, GradientBoosting). La V7 est un méta-learner V5+V6 avec explicabilité SHAP. La V8 intègre CamemBERT comme 3e signal sémantique pour le français (F1 suspect +28%). La V9 introduit un pipeline en cascade : un classifieur fait/opinion (Stage 1) filtre les posts d'opinion avant la détection, réduisant les faux positifs de 67% (186 → 62) sur un gold standard de 473 posts annotés par 2 annotateurs humains (kappa inter-annotateurs = 0.498). Le système (collecte, MongoDB, inférence, dashboard Streamlit) est conteneurisé via Docker Compose, avec suivi carbone par CodeCarbon.
 
 ---
 
@@ -53,9 +53,9 @@ Ce rapport présente Thumalien, un système de détection de fake news sur le r�
 
 Sup de Vinci est une école d'informatique proposant des formations du Bac+3 au Bac+5 dans les domaines du numérique, de la data et de l'intelligence artificielle. Le campus de Bordeaux accompagne ses étudiants dans l'acquisition de compétences techniques et méthodologiques à travers des projets concrets et professionnalisants. Le présent rapport s'inscrit dans le cadre de la formation Master 1 Big Data et Intelligence Artificielle (promotion 2025-2026).
 
-### Niamato Consulting — Contexte commanditaire
+### Niamato Consulting — Cabinet de conseil (notre équipe)
 
-Niamato Consulting est une société de conseil spécialisée en data science et intelligence artificielle. Dans le cadre de ce projet, elle intervient en tant que commanditaire fictif pour le compte d'un client du secteur média et fact-checking, souhaitant disposer d'un outil de veille automatisée capable de détecter les contenus suspects sur les réseaux sociaux émergents. Le MVP Thumalien a été développé en réponse à ce besoin, avec pour objectif de livrer un prototype fonctionnel de détection de fake news sur Bluesky.
+Niamato Consulting est la société de conseil en data science et intelligence artificielle qui réalise le projet. L'équipe Niamato Consulting intervient pour le compte du client **Thumalien**, une entreprise du secteur média et fact-checking souhaitant disposer d'un outil de veille automatisée capable de détecter les contenus suspects sur les réseaux sociaux émergents. La solution **ThumaCheck** (pipeline NLP + dashboard) a été développée en réponse à ce besoin, avec pour objectif de livrer un prototype fonctionnel de détection de fake news sur Bluesky.
 
 ### Équipe projet
 
@@ -95,9 +95,9 @@ Les approches de détection de fake news se répartissent en trois familles prin
 
 L'évaluation de la détection de fake news sur données réelles pose des défis spécifiques. Le kappa de Cohen (1960) est la métrique standard d'accord inter-annotateurs, mais Gwet (2008) et Cicchetti & Feinstein (1990) montrent qu'il est biaisé lorsque la prévalence d'une classe est très faible (paradoxe kappa-prévalence). Le Gwet's AC1 corrige ce biais et constitue une alternative robuste.
 
-### Positionnement de Thumalien
+### Positionnement de ThumaCheck
 
-Thumalien se positionne dans la lignée des approches hybrides, en combinant un pipeline TF-IDF (V5), un modèle style-only topic-agnostic (V6), et des Transformers fine-tunés (CamemBERT, RoBERTa) dans un méta-learner. L'originalité réside dans le pipeline cascade V9 qui sépare explicitement les faits des opinions avant l'analyse de crédibilité — une approche motivée par l'observation empirique (Fisher p=0.0005) que les opinions ne sont presque jamais de la désinformation.
+ThumaCheck se positionne dans la lignée des approches hybrides, en combinant un pipeline TF-IDF (V5), un modèle style-only topic-agnostic (V6), et des Transformers fine-tunés (CamemBERT, RoBERTa) dans un méta-learner. L'originalité réside dans le pipeline cascade V9 qui sépare explicitement les faits des opinions avant l'analyse de crédibilité — une approche motivée par l'observation empirique (Fisher p=0.0005) que les opinions ne sont presque jamais de la désinformation.
 
 ---
 
@@ -113,7 +113,7 @@ Bluesky est un réseau social décentralisé basé sur le protocole AT (Authenti
 
 ### Composants du système
 
-Le projet Thumalien est composé de 4 briques :
+Le projet ThumaCheck est composé de 4 briques :
 
 1. **Collecteur** : ingestion continue des posts Bluesky via l'API AT Protocol
 2. **Base de données** : stockage MongoDB des posts collectés (245 000+ posts à date, collecte continue)

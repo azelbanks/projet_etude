@@ -1,7 +1,8 @@
-# Roles et Competences Projet Thumalien
+# Roles et Competences Projet ThumaCheck (client : Thumalien)
 ## Cartographie des professionnels necessaires a l'excellence du projet
 
-**Projet** : Thumalien — Social Media Intelligence & AI Monitor
+**Projet** : ThumaCheck (client : Thumalien) — Social Media Intelligence & AI Monitor
+**Cabinet** : Niamato Consulting
 **Auteur** : Azelie Bernard
 **Formation** : Master Big Data
 **Date** : Avril 2026
@@ -10,7 +11,7 @@
 
 ## Preambule — Pourquoi cette reflexion ?
 
-Un projet comme Thumalien ne se resume pas a du code. Il mobilise des competences qui traversent l'ingenierie des donnees, l'intelligence artificielle, l'infrastructure, la visualisation et la gouvernance. Chaque brique du systeme — de la collecte Bluesky en temps reel jusqu'a la prediction de credibilite affichee sur le dashboard — exige un savoir-faire specifique.
+Un projet comme ThumaCheck ne se resume pas a du code. Il mobilise des competences qui traversent l'ingenierie des donnees, l'intelligence artificielle, l'infrastructure, la visualisation et la gouvernance. Chaque brique du systeme — de la collecte Bluesky en temps reel jusqu'a la prediction de credibilite affichee sur le dashboard — exige un savoir-faire specifique.
 
 Ce document identifie les **roles professionnels indispensables**, non pas comme une liste theorique, mais comme une reflexion ancree dans la realite concrete du projet : ses choix techniques, ses difficultes rencontrees et ses ambitions futures. Chaque role est pousse au plus haut niveau de competence attendu dans l'industrie, car la detection de desinformation est un sujet ou l'approximation n'est pas acceptable.
 
@@ -40,7 +41,7 @@ L'objectif est double :
 
 ### Architecture du projet et mapping des competences
 
-Le projet Thumalien repose sur 4 briques techniques, chacune necessitant des competences specifiques :
+Le projet ThumaCheck repose sur 4 briques techniques, chacune necessitant des competences specifiques :
 
 ```
 COLLECTE          STOCKAGE           INTELLIGENCE          RESTITUTION
@@ -57,7 +58,7 @@ Data Engineer    Data Engineer        ML Engineer           Dashboard Dev
 
 ### Organisation reelle du projet : binome complementaire
 
-Le projet Thumalien a ete realise en **binome** par Azelie Bernard et Sebastien Lazcanotegui, avec une repartition des responsabilites fondee sur la complementarite des competences :
+Le projet ThumaCheck a ete realise par Niamato Consulting en **binome** par Azelie Bernard et Sebastien Lazcanotegui, avec une repartition des responsabilites fondee sur la complementarite des competences :
 
 | Membre | Role principal | Contributions cles |
 |--------|---------------|-------------------|
@@ -73,7 +74,7 @@ Le projet Thumalien a ete realise en **binome** par Azelie Bernard et Sebastien 
 | Equipe optimale | 6 personnes | Ajout Data Scientist dedie + Dashboard Dev |
 | Equipe d'excellence | 8 personnes | Tous les roles specialises, expertise maximale par domaine |
 
-**Reflexion** : le projet Thumalien a ete realise en binome, ce qui a impose une polyvalence forte a Azelie sur le plan technique et a confie a Sebastien un role structurant de validation et de qualite. Cette organisation a l'avantage de la rapidite de decision et de la communication directe. Cependant, pour atteindre un niveau de production industrielle — ou chaque composant est pousse a son maximum — la specialisation de chaque role devient indispensable. Un ingenieur ML qui doit aussi gerer l'infrastructure Docker perd du temps sur l'optimisation de ses modeles. Un Data Engineer qui doit aussi concevoir le dashboard ne peut pas pousser la resilience de son pipeline au maximum.
+**Reflexion** : le projet ThumaCheck a ete realise en binome, ce qui a impose une polyvalence forte a Azelie sur le plan technique et a confie a Sebastien un role structurant de validation et de qualite. Cette organisation a l'avantage de la rapidite de decision et de la communication directe. Cependant, pour atteindre un niveau de production industrielle — ou chaque composant est pousse a son maximum — la specialisation de chaque role devient indispensable. Un ingenieur ML qui doit aussi gerer l'infrastructure Docker perd du temps sur l'optimisation de ses modeles. Un Data Engineer qui doit aussi concevoir le dashboard ne peut pas pousser la resilience de son pipeline au maximum.
 
 ---
 
@@ -88,9 +89,9 @@ Le projet Thumalien a ete realise en **binome** par Azelie Bernard et Sebastien 
 | **Rattachement** | Direction Technique / CTO |
 | **Certification de reference** | Google Professional Data Engineer, AWS Data Analytics, Databricks Certified |
 
-### Pourquoi ce role est obligatoire pour Thumalien
+### Pourquoi ce role est obligatoire pour ThumaCheck
 
-Le coeur de Thumalien est un flux de donnees continu : des posts Bluesky sont collectes en temps reel via WebSocket, transformes, stockes dans MongoDB, puis consommes par les modeles IA et le dashboard. Sans un Data Engineer de haut niveau, ce pipeline est fragile : perte de donnees en cas de deconnexion, absence de deduplication, pas de monitoring de la qualite des donnees entrantes.
+Le coeur de ThumaCheck est un flux de donnees continu : des posts Bluesky sont collectes en temps reel via WebSocket, transformes, stockes dans MongoDB, puis consommes par les modeles IA et le dashboard. Sans un Data Engineer de haut niveau, ce pipeline est fragile : perte de donnees en cas de deconnexion, absence de deduplication, pas de monitoring de la qualite des donnees entrantes.
 
 Actuellement, le collecteur (`src/collection/collect_bluesky.py`) fonctionne avec une boucle de recherche par mots-cles toutes les 5 minutes avec 3 tentatives et backoff exponentiel. C'est une base solide, mais un Data Engineer senior pousse cette architecture beaucoup plus loin.
 
@@ -168,9 +169,9 @@ Actuellement, le collecteur (`src/collection/collect_bluesky.py`) fonctionne ave
 | **Rattachement** | Equipe IA / Direction R&D |
 | **Certification de reference** | Google ML Engineer, DeepLearning.AI NLP Specialization |
 
-### Pourquoi ce role est obligatoire pour Thumalien
+### Pourquoi ce role est obligatoire pour ThumaCheck
 
-Thumalien repose sur deux modeles d'IA qui sont le coeur de sa proposition de valeur : la detection de fake news (LogReg + TF-IDF, pipeline expert V2) et l'analyse emotionnelle (MLP PyTorch). Le projet a deja rencontre des problemes majeurs que seul un ML Engineer senior aurait anticipes : le biais Reuters (le modele apprenait le style d'ecriture au lieu de la desinformation), le domain shift (F1 excellent sur articles longs mais 77% de faux suspects sur Bluesky), et le choix du seuil de decision (0.44 au lieu de 0.50).
+ThumaCheck repose sur deux modeles d'IA qui sont le coeur de sa proposition de valeur : la detection de fake news (LogReg + TF-IDF, pipeline expert V2) et l'analyse emotionnelle (MLP PyTorch). Le projet a deja rencontre des problemes majeurs que seul un ML Engineer senior aurait anticipes : le biais Reuters (le modele apprenait le style d'ecriture au lieu de la desinformation), le domain shift (F1 excellent sur articles longs mais 77% de faux suspects sur Bluesky), et le choix du seuil de decision (0.44 au lieu de 0.50).
 
 Ces problemes sont classiques en NLP applique, mais ils sont subtils et destructeurs. Un ML Engineer de haut niveau les previent avant qu'ils n'impactent la production.
 
@@ -249,9 +250,9 @@ Ces problemes sont classiques en NLP applique, mais ils sont subtils et destruct
 | **Rattachement** | Equipe Data Science / Direction R&D |
 | **Certification de reference** | PhD ou Master en statistiques/ML, publications |
 
-### Pourquoi ce role est obligatoire pour Thumalien
+### Pourquoi ce role est obligatoire pour ThumaCheck
 
-Le Data Scientist est le gardien de la rigueur methodologique. Dans Thumalien, c'est lui qui pose les bonnes questions : le F1 de 0.90 est-il reellement fiable ou est-il gonfle par un desequilibre dans le jeu de test ? Le seuil de 0.44 est-il robuste ou va-t-il deriver dans le temps ? Les 73.4% de posts "fiables" sur Bluesky refletent-ils la realite ou un biais du modele ?
+Le Data Scientist est le gardien de la rigueur methodologique. Dans ThumaCheck, c'est lui qui pose les bonnes questions : le F1 de 0.90 est-il reellement fiable ou est-il gonfle par un desequilibre dans le jeu de test ? Le seuil de 0.44 est-il robuste ou va-t-il deriver dans le temps ? Les 73.4% de posts "fiables" sur Bluesky refletent-ils la realite ou un biais du modele ?
 
 Le rapport du projet montre deja une excellente demarche scientifique (analyse du biais Reuters, GridSearch systematique, comparaison de strategies d'adaptation). Le Data Scientist senior pousse cette rigueur encore plus loin.
 
@@ -306,9 +307,9 @@ Le rapport du projet montre deja une excellente demarche scientifique (analyse d
 | **Rattachement** | Equipe Infrastructure / Equipe IA |
 | **Certification de reference** | Google MLOps, AWS ML Specialty |
 
-### Pourquoi ce role est obligatoire pour Thumalien
+### Pourquoi ce role est obligatoire pour ThumaCheck
 
-Actuellement, le modele Thumalien est un fichier `.pkl` charge manuellement par le dashboard. Il n'y a pas de versioning des modeles, pas de pipeline de retraining automatise, pas de monitoring de la performance en production. Le jour ou le modele commence a deriver (parce que les sujets d'actualite changent, parce que les patterns de desinformation evoluent), personne ne le saura.
+Actuellement, le modele ThumaCheck est un fichier `.pkl` charge manuellement par le dashboard. Il n'y a pas de versioning des modeles, pas de pipeline de retraining automatise, pas de monitoring de la performance en production. Le jour ou le modele commence a deriver (parce que les sujets d'actualite changent, parce que les patterns de desinformation evoluent), personne ne le saura.
 
 Le MLOps Engineer est celui qui transforme un prototype de notebook en un systeme de production fiable et auto-surveillant.
 
@@ -364,7 +365,7 @@ Le MLOps Engineer est celui qui transforme un prototype de notebook en un system
 | **Rattachement** | Equipe Produit / Equipe Data |
 | **Certification de reference** | Certifications Tableau/Plotly, UX Design |
 
-### Pourquoi ce role est obligatoire pour Thumalien
+### Pourquoi ce role est obligatoire pour ThumaCheck
 
 Le dashboard est l'interface entre l'intelligence du systeme et ses utilisateurs. Un modele IA aussi performant soit-il est inutile si sa restitution est confuse, lente ou peu lisible. Le dashboard Streamlit actuel offre deja 3 pages (Vue Globale, Analyse temps reel, Metriques & Transparence), mais un specialiste de la visualisation transforme cette interface en un veritable outil d'aide a la decision.
 
@@ -421,9 +422,9 @@ Le dashboard est l'interface entre l'intelligence du systeme et ses utilisateurs
 | **Rattachement** | Direction Infrastructure / CTO |
 | **Certification de reference** | AWS Solutions Architect, CKA (Kubernetes), Terraform Associate |
 
-### Pourquoi ce role est obligatoire pour Thumalien
+### Pourquoi ce role est obligatoire pour ThumaCheck
 
-Thumalien repose sur une architecture Docker Compose avec 4 services (MongoDB, Collector, Jupyter, Streamlit). C'est adapte au developpement et au prototypage, mais insuffisant pour une production serieuse. Un DevOps senior transforme cette architecture en un systeme resilient, securise, scalable et observable.
+ThumaCheck repose sur une architecture Docker Compose avec 4 services (MongoDB, Collector, Jupyter, Streamlit). C'est adapte au developpement et au prototypage, mais insuffisant pour une production serieuse. Un DevOps senior transforme cette architecture en un systeme resilient, securise, scalable et observable.
 
 ### Missions detaillees
 
@@ -477,9 +478,9 @@ Thumalien repose sur une architecture Docker Compose avec 4 services (MongoDB, C
 | **Rattachement** | Direction Produit / Direction Generale |
 | **Certification de reference** | PMP, Scrum Product Owner (PSPO), CDMP |
 
-### Pourquoi ce role est obligatoire pour Thumalien
+### Pourquoi ce role est obligatoire pour ThumaCheck
 
-Thumalien n'est pas qu'un exercice technique. C'est un outil de detection de desinformation qui touche a des questions ethiques, legales et societales. Le Chef de Projet est celui qui maintient la vision : pourquoi construit-on cet outil ? Pour qui ? Avec quelles limites ? Il arbitre entre les ambitions techniques et les contraintes reelles.
+ThumaCheck n'est pas qu'un exercice technique. C'est un outil de detection de desinformation qui touche a des questions ethiques, legales et societales. Le Chef de Projet est celui qui maintient la vision : pourquoi construit-on cet outil ? Pour qui ? Avec quelles limites ? Il arbitre entre les ambitions techniques et les contraintes reelles.
 
 ### Missions detaillees
 
@@ -496,9 +497,9 @@ Thumalien n'est pas qu'un exercice technique. C'est un outil de detection de des
 
 **Taches** :
 - Assurer la conformite RGPD du projet : les posts Bluesky sont des donnees publiques, mais les handles sont des donnees personnelles. Faut-il les anonymiser ? Les conserver combien de temps ?
-- Anticiper le cadre de l'AI Act europeen : Thumalien est-il un systeme d'IA a haut risque ? Quelles obligations de transparence, d'explicabilite et de supervision humaine s'appliquent ?
+- Anticiper le cadre de l'AI Act europeen : ThumaCheck est-il un systeme d'IA a haut risque ? Quelles obligations de transparence, d'explicabilite et de supervision humaine s'appliquent ?
 - Rediger la documentation de conformite : registre de traitement, analyse d'impact (AIPD), politique de retention des donnees
-- Definir les limites ethiques du systeme : Thumalien ne doit pas devenir un outil de censure. Comment garantir que le label "suspect" est utilise pour informer, pas pour restreindre ?
+- Definir les limites ethiques du systeme : ThumaCheck ne doit pas devenir un outil de censure. Comment garantir que le label "suspect" est utilise pour informer, pas pour restreindre ?
 - Coordonner avec le DPO (Delegue a la Protection des Donnees) si l'organisation en dispose
 
 #### Mission 3 — Coordination et communication
@@ -533,9 +534,9 @@ Thumalien n'est pas qu'un exercice technique. C'est un outil de detection de des
 | **Rattachement** | Equipe Transverse / RSE |
 | **Certification de reference** | INR (Institut du Numerique Responsable), ISO 14001, AI Ethics |
 
-### Pourquoi ce role est obligatoire pour Thumalien
+### Pourquoi ce role est obligatoire pour ThumaCheck
 
-Thumalien integre deja CodeCarbon pour mesurer l'empreinte carbone des entrainements (0.55 g CO2 au total — exemplaire). Mais la demarche Green IT ne se limite pas a la mesure : elle doit guider les choix d'architecture, de modeles et d'infrastructure. Le choix de LogReg plutot que RoBERTa est un choix Green IT autant que technique (10-100x moins d'energie). Cet expert formalise et pousse cette logique.
+ThumaCheck integre deja CodeCarbon pour mesurer l'empreinte carbone des entrainements (0.55 g CO2 au total — exemplaire). Mais la demarche Green IT ne se limite pas a la mesure : elle doit guider les choix d'architecture, de modeles et d'infrastructure. Le choix de LogReg plutot que RoBERTa est un choix Green IT autant que technique (10-100x moins d'energie). Cet expert formalise et pousse cette logique.
 
 ### Missions detaillees
 
@@ -546,7 +547,7 @@ Thumalien integre deja CodeCarbon pour mesurer l'empreinte carbone des entrainem
 - Calculer l'empreinte totale du projet : entrainement + inference + infrastructure + stockage + reseau
 - Definir un budget carbone pour le projet : combien de g CO2 par mois sont acceptables ? Comment le reduire ?
 - Optimiser l'efficacite energetique : batch les predictions au lieu de les faire une par une, eteindre les services non utilises (Jupyter la nuit), compresser les donnees en base
-- Comparer l'empreinte de Thumalien avec des solutions equivalentes : combien consommerait un pipeline base sur GPT-4 ou RoBERTa ? Quantifier l'avantage du choix frugal
+- Comparer l'empreinte de ThumaCheck avec des solutions equivalentes : combien consommerait un pipeline base sur GPT-4 ou RoBERTa ? Quantifier l'avantage du choix frugal
 
 #### Mission 2 — IA de confiance et explicabilite
 
@@ -625,9 +626,9 @@ A titre de reflexion professionnelle, voici comment les memes activites se repar
 
 ## 11. Reflexion — La synergie comme condition de l'excellence
 
-### Ce que le projet Thumalien nous enseigne
+### Ce que le projet ThumaCheck nous enseigne
 
-Thumalien, dans sa forme actuelle, est un projet remarquable par sa completude : un pipeline de bout en bout, de la collecte temps reel a la visualisation, en passant par deux modeles d'IA, le tout conteneurise et mesure en empreinte carbone. Le fait qu'il ait ete realise par un binome dans le cadre d'un Master — Azelie assurant le developpement technique et Sebastien la validation qualite — en temoigne d'une organisation efficace et d'une polyvalence forte.
+ThumaCheck, dans sa forme actuelle, est un projet remarquable par sa completude : un pipeline de bout en bout, de la collecte temps reel a la visualisation, en passant par deux modeles d'IA, le tout conteneurise et mesure en empreinte carbone. Le fait qu'il ait ete realise par un binome dans le cadre d'un Master — Azelie assurant le developpement technique et Sebastien la validation qualite — en temoigne d'une organisation efficace et d'une polyvalence forte.
 
 Mais c'est precisement cette polyvalence qui revele la necessite des roles specialises. Chaque defi rencontre dans le projet — le biais Reuters, le domain shift, le choix du seuil 0.44, la gestion du multilingue — est un probleme classique pour le specialiste concerne, mais un obstacle potentiellement bloquant pour un generaliste qui decouvre le probleme en contexte.
 
@@ -659,7 +660,7 @@ Dans un projet d'excellence, les roles ne sont pas simplement juxtaposes : ils s
 
 ### L'excellence n'est pas la perfection technique — c'est l'adequation
 
-Un projet d'excellence n'est pas celui qui utilise les technologies les plus avancees. C'est celui qui fait les bons choix pour le bon contexte. Thumalien l'illustre parfaitement :
+Un projet d'excellence n'est pas celui qui utilise les technologies les plus avancees. C'est celui qui fait les bons choix pour le bon contexte. ThumaCheck l'illustre parfaitement :
 
 - **Choisir LogReg plutot que RoBERTa** n'est pas un compromis, c'est un choix d'ingenierie : F1 comparable, 100x moins d'energie, interpretabilite totale, deploiement trivial
 - **Choisir un seuil de 0.44 plutot que 0.50** n'est pas un hack, c'est une calibration metier : optimiser pour le cas d'usage reel (textes courts Bluesky), pas pour une metrique abstraite
@@ -680,10 +681,10 @@ Au-dela des competences techniques, l'excellence d'une equipe data repose sur de
 
 Ce document n'est pas une fiche de poste. C'est une vision de ce que signifie porter un projet de Social Media Intelligence au plus haut niveau d'excellence. Chaque role decrit ici est une composante indispensable d'un systeme ou la qualite de l'ensemble depend de la qualite de chaque partie.
 
-Le projet Thumalien a demontre qu'un binome complementaire — Azelie sur le developpement technique, Sebastien sur la validation et la qualite — peut construire un systeme fonctionnel et intelligent de bout en bout. L'etape suivante — transformer ce prototype en un produit d'excellence industrielle — necessiterait une equipe ou chaque membre apporte une expertise profonde dans son domaine, tout en comprenant suffisamment les autres domaines pour collaborer efficacement.
+Le projet ThumaCheck a demontre qu'un binome complementaire — Azelie sur le developpement technique, Sebastien sur la validation et la qualite — peut construire un systeme fonctionnel et intelligent de bout en bout. L'etape suivante — transformer ce prototype en un produit d'excellence industrielle — necessiterait une equipe ou chaque membre apporte une expertise profonde dans son domaine, tout en comprenant suffisamment les autres domaines pour collaborer efficacement.
 
 **L'excellence n'est pas un etat, c'est une discipline collective.**
 
 ---
 
-*Document genere dans le cadre du projet Thumalien — Master Big Data — Avril 2026*
+*Document genere dans le cadre du projet ThumaCheck (client : Thumalien) — Niamato Consulting — Master Big Data — Avril 2026*

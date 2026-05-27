@@ -1,16 +1,16 @@
 # Evolution des Modeles — Comparatif de Progression
-## Projet Thumalien — Social Media Intelligence & AI Monitor
+## Projet ThumaCheck (client : Thumalien) — Social Media Intelligence & AI Monitor
 
 **Reference** : EVOL-THUM-2026-001
 **Version** : 1.0
 **Date** : Avril 2026
-**Auteur** : Thumalien Team — Direction Projet Data
+**Auteur** : Niamato Consulting — Direction Projet Data
 
 ---
 
 ## 1. Synthese executive
 
-Ce document retrace l'evolution complete du pipeline de detection de desinformation Thumalien, de la version V1 (decembre 2025) a la version V5 + CamemBERT (avril 2026). Chaque iteration est analysee en termes de performances, d'avantages, d'inconvenients, de limites identifiees et de marges de progression exploitees dans la version suivante.
+Ce document retrace l'evolution complete du pipeline de detection de desinformation ThumaCheck, de la version V1 (decembre 2025) a la version V5 + CamemBERT (avril 2026). Chaque iteration est analysee en termes de performances, d'avantages, d'inconvenients, de limites identifiees et de marges de progression exploitees dans la version suivante.
 
 ### Tableau de synthese globale
 
@@ -748,7 +748,7 @@ Cette section a ete revisee par analyse critique des axes reellement implementab
 
 ## 11. Conclusion
 
-Le pipeline Thumalien est passe d'un modele biaise inutilisable (V1, F1 = 0.996 artificiel) a un systeme bilingue performant (V5 + CamemBERT V2). L'evolution montre deux trajectoires distinctes par langue :
+Le pipeline ThumaCheck est passe d'un modele biaise inutilisable (V1, F1 = 0.996 artificiel) a un systeme bilingue performant (V5 + CamemBERT V2). L'evolution montre deux trajectoires distinctes par langue :
 
 **Francais** : Progression spectaculaire de 0 (V1, pas de FR) a F1 = 0.944 global et 0.904 sur ultra-court (V5 TF-IDF). Le parcours V3 (F1 court = 0.65) -> V4 (+32% par augmentation) -> V5 (+10.4% par donnees sociales) demontre l'importance des donnees representatives du cas d'usage. CamemBERT V2 atteint F1 = 0.966 et F1 ultra-court = 0.957, confirmant l'apport des donnees sociales synthetiques pour les transformers egalement.
 

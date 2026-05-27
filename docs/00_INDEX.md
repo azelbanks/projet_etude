@@ -1,5 +1,5 @@
 # Index Général de la Documentation Projet
-## Thumalien -- Social Media Intelligence & AI Monitor
+## ThumaCheck (client : Thumalien) -- Social Media Intelligence & AI Monitor
 
 **Référence** : IDX-THUM-2026-001
 **Version** : 2.0

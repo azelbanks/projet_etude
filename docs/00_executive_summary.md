@@ -1,4 +1,4 @@
-# Executive Summary — Projet Thumalien
+# Executive Summary — Projet ThumaCheck (pour Thumalien)
 
 ## Problematique
 
@@ -8,7 +8,7 @@ La desinformation sur les reseaux sociaux constitue un enjeu societaire majeur. 
 
 ## Solution
 
-**Thumalien** est un pipeline NLP bilingue de detection de fake news en 2 etapes :
+**ThumaCheck** est un pipeline NLP bilingue de detection de fake news en 2 etapes, developpe par **Niamato Consulting** pour le compte de **Thumalien** :
 
 1. **Stage 1** : Filtre fait/opinion (ecarte les opinions avant analyse)
 2. **Stage 2** : Meta-learner V8 combinant TF-IDF V5 (lexical) + Style V6 (28 features stylistiques) + CamemBERT (semantique FR)
@@ -60,4 +60,4 @@ Le systeme inclut un dashboard Streamlit 5 pages avec explicabilite SHAP integre
 ---
 
 *Projet d'etude M1 Big Data & IA — Sup de Vinci — Mai 2026*
-*Equipe : Azelie Bernard (Lead technique), Sebastien Lazcanotegui (Consolidation ML)*
+*Equipe Niamato Consulting : Azelie Bernard (Lead technique), Sebastien Lazcanotegui (Consolidation ML)*

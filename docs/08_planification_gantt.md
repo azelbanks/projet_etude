@@ -1,4 +1,4 @@
-# Planification detaillee du projet Thumalien
+# Planification detaillee du projet ThumaCheck (client : Thumalien)
 ## Diagramme de Gantt, WBS, dependances et jalons
 
 **Reference** : PLAN-THUM-2026-001
@@ -132,7 +132,7 @@ THUMALIEN - Projet Etude M1
 
 ```mermaid
 gantt
-    title Planification Projet Thumalien
+    title Planification Projet ThumaCheck
     dateFormat YYYY-MM-DD
     axisFormat %d/%m
     todayMarker off
@@ -524,7 +524,7 @@ Toute tache sur le chemin critique qui prend du retard retarde la livraison fina
 
 ```mermaid
 gantt
-    title Planning previsionnel vs reel - Projet Thumalien
+    title Planning previsionnel vs reel - Projet ThumaCheck
     dateFormat YYYY-MM-DD
     axisFormat %b %Y
     todayMarker off

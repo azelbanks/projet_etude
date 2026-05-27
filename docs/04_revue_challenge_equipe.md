@@ -11,7 +11,7 @@
 
 ## 1. Objectif de cette revue
 
-Ce document constitue l'audit du Chef de Projet sur l'ensemble des roles de l'equipe Thumalien. Pour chaque role, le Chef de Projet :
+Ce document constitue l'audit du Chef de Projet sur l'ensemble des roles de l'equipe Niamato Consulting. Pour chaque role, le Chef de Projet :
 
 1. **Verifie** que les missions assignees sont bien couvertes par le travail realise
 2. **Challenge** les choix techniques et methodologiques
@@ -470,7 +470,7 @@ MongoDB tourne 24/7. Meme au repos, un serveur consomme de l'energie. Sur une an
 
 ### Ce que ce projet fait remarquablement bien
 
-Thumalien est un projet d'une maturite exceptionnelle pour un contexte academique. Les points suivants meritent d'etre soulignes :
+ThumaCheck est un projet d'une maturite exceptionnelle pour un contexte academique. Les points suivants meritent d'etre soulignes :
 
 1. **La decouverte et correction du biais Reuters** est un cas d'ecole en data science. Transformer un modele a 99% de F1 (biaise) en un modele a 90% (reel) en comprenant pourquoi est exactement le travail d'un Data Scientist de haut niveau.
 
@@ -496,7 +496,7 @@ Les lacunes identifiees sont celles d'un projet academique qui n'a pas encore at
 
 ### Verdict global
 
-**Le projet Thumalien est pret pour une mise en production supervisee.** Les fondations sont solides (pipeline ML, donnees, dashboard). Les 10 actions prioritaires identifiees dans cette revue permettront de combler les lacunes restantes et d'atteindre un niveau d'excellence industrielle.
+**Le projet ThumaCheck est pret pour une mise en production supervisee.** Les fondations sont solides (pipeline ML, donnees, dashboard). Les 10 actions prioritaires identifiees dans cette revue permettront de combler les lacunes restantes et d'atteindre un niveau d'excellence industrielle.
 
 Le Chef de Projet recommande de proceder par phases :
 - **Phase immediate (2 semaines)** : Actions 1 a 5 (securite, monitoring, CI/CD)

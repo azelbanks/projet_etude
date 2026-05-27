@@ -1,7 +1,7 @@
-# Guide de Production Video MVP — Thumalien
+# Guide de Production Video MVP — ThumaCheck (client : Thumalien)
 ## VI.2 - VIDEO & MVP - SAVOIR CONVAINCRE
 
-**Projet** : Thumalien — Social Media Intelligence & AI Monitor
+**Projet** : ThumaCheck — Social Media Intelligence & AI Monitor (client : Thumalien)
 **Equipe** : Azelie Bernard (Lead Technique) / Sebastien Lazcanotegui (Optimisation ML & Documentation)
 **Formation** : Master Big Data — Sup de Vinci
 **Duree cible** : 15-18 minutes
@@ -86,7 +86,7 @@
 | **Slides professionnelles** | **Canva AI** (Magic Design) | Generer des slides a partir du plan, theme dark/tech |
 | **Schema d'architecture** | **Claude** (mode artefact) | Demander un schema SVG ou Mermaid du pipeline |
 | **Illustrations** | **DALL-E / Midjourney** | Generer des visuels "cybersecurity", "data analysis" pour les slides |
-| **Logo Thumalien** | **Canva AI / DALL-E** | Logo style tech/surveillance pour le titre |
+| **Logo ThumaCheck** | **Canva AI / DALL-E** | Logo style tech/surveillance pour le titre |
 
 ### 3.2 Aide au script et voix
 
@@ -161,7 +161,7 @@ Notre defi :
 
 Un humain met en moyenne 3 minutes pour verifier un seul post.
 Pour 188 000 posts, ca represente plus d'un an de travail non-stop.
-C'est pour ca qu'on a cree Thumalien."
+C'est pour ca qu'on a cree ThumaCheck."
 
 **[1:30-2:30] PRESENTATION DE L'EQUIPE**
 Scene OBS : slide equipe (photos + roles)
@@ -181,7 +181,7 @@ du modele, les fine-tunings CamemBERT et RoBERTa."
 Scene OBS : slide architecture
 
 Script Sebastien :
-"Voici Thumalien, en un schema : Bluesky, collecteur, MongoDB,
+"Voici ThumaCheck, en un schema : Bluesky, collecteur, MongoDB,
 pipeline NLP, dashboard. Tout conteneurise avec Docker.
 Une commande, et le systeme entier demarre."
 
@@ -273,7 +273,7 @@ et un monitoring de la qualite des donnees."
 Scene OBS : dashboard plein ecran + webcam en petit
 
 Script Azelie :
-"Voici le dashboard Thumalien."
+"Voici le dashboard ThumaCheck."
 (ouvrir le dashboard Streamlit — le design glassmorphism dark va impressionner)
 
 "On voit les KPIs en temps reel : nombre de posts, pourcentage fiable,
@@ -339,7 +339,7 @@ Script Azelie :
 Scene OBS : slide perspectives + les deux noms
 
 Script Sebastien :
-"Les prochaines etapes pour Thumalien :
+"Les prochaines etapes pour ThumaCheck :
 - Une API REST avec FastAPI pour integrer la detection dans d'autres outils
 - La detection multimodale : analyser les images, pas seulement le texte
 - L'extension a d'autres langues
@@ -351,7 +351,7 @@ qui est a la fois efficace, interpretable, et eco-responsable.
 
 Merci pour votre attention."
 
-(Slide finale : "Thumalien — Azelie Bernard & Sebastien Lazcanotegui — Master Big Data — Sup de Vinci")
+(Slide finale : "ThumaCheck — Niamato Consulting pour Thumalien — Azelie Bernard & Sebastien Lazcanotegui — Master Big Data — Sup de Vinci")
 
 ---
 

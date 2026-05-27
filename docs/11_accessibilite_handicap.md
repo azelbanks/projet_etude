@@ -1,5 +1,5 @@
 # Accessibilite et Prise en Compte du Handicap
-## Projet Thumalien
+## Projet ThumaCheck (client : Thumalien)
 
 **Reference** : ACC-THUM-2026-001
 **Version** : 1.0
@@ -9,7 +9,7 @@
 
 ## 1. Engagement accessibilite
 
-Le projet Thumalien s'engage a rendre ses outils et interfaces accessibles au plus grand nombre, conformement aux principes du RGAA (Referentiel General d'Amelioration de l'Accessibilite) et des WCAG 2.1 (Web Content Accessibility Guidelines).
+Le projet ThumaCheck s'engage a rendre ses outils et interfaces accessibles au plus grand nombre, conformement aux principes du RGAA (Referentiel General d'Amelioration de l'Accessibilite) et des WCAG 2.1 (Web Content Accessibility Guidelines).
 
 ---
 

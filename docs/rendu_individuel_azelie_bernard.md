@@ -1,5 +1,5 @@
 # Rendu Individuel - Azélie Bernard
-## Projet Thumalien - Master Big Data, Sup de Vinci
+## Projet ThumaCheck (client : Thumalien) - Master Big Data, Sup de Vinci
 
 **Étudiant** : Azélie Bernard
 **Rôle principal** : Lead technique (Data Engineer, ML Engineer, DevOps, Dashboard Dev)
@@ -9,7 +9,7 @@
 
 ## 1. Mon rôle dans le projet
 
-J'ai assuré le rôle de **lead technique** sur le projet Thumalien, couvrant l'ensemble de la chaîne de valeur : de la collecte des données sur Bluesky jusqu'au déploiement du dashboard de visualisation, en passant par le développement des modèles de détection de fake news.
+J'ai assuré le rôle de **lead technique** sur le projet ThumaCheck, couvrant l'ensemble de la chaîne de valeur : de la collecte des données sur Bluesky jusqu'au déploiement du dashboard de visualisation, en passant par le développement des modèles de détection de fake news.
 
 ### Responsabilités principales
 - Architecture technique et infrastructure Docker

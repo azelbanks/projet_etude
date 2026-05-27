@@ -1,13 +1,32 @@
 import os
 import sys
 import re
+import json
 import time
 import datetime
 import random
+import logging
+from pathlib import Path
 from atproto import Client
 from pymongo import MongoClient, UpdateOne
 from dotenv import load_dotenv
 from src.collection.pipeline_monitor import PipelineMonitor
+
+# ---------------------------------------------------------------------------
+#  Structured logging
+# ---------------------------------------------------------------------------
+logger = logging.getLogger('thumacheck.collector')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s — %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(
+            os.path.join(os.path.dirname(__file__), '..', '..', 'logs', 'collector.log'),
+            encoding='utf-8',
+        ),
+    ],
+)
 
 # Chargement de l'environnement
 load_dotenv()
@@ -19,34 +38,50 @@ HANDLE = os.getenv('BLUESKY_HANDLE')
 PASSWORD = os.getenv('BLUESKY_PASSWORD')
 
 # --- CONFIGURATION EXPERTE ---
-# On structure les recherches par langue pour respecter le Cahier des Charges (FR/EN)
-SEARCH_CONFIG = {
+# Chargement externe depuis JSON (si disponible), sinon fallback en dur
+_CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / 'config' / 'search_config.json'
+
+_DEFAULT_SEARCH_CONFIG = {
     "en": [
-        # Thématiques à risque de désinformation
         "climate change", "vaccine", "conspiracy", "breaking news", "leaked",
         "censored", "urgent", "trump", "election",
-        # Termes sensationnalistes / désinformation
         "exposed", "they lied", "cover up", "wake up",
-        # Termes neutres (baseline contraste)
         "weekend", "art", "technology", "community",
     ],
     "fr": [
-        # Thématiques à risque de désinformation
         "changement climatique", "vaccin", "complot", "alerte info", "scandale",
         "censuré", "urgent", "macron", "élection", "démission",
-        # Termes sensationnalistes / désinformation
         "on nous cache", "révélation", "ils mentent", "manipulation",
-        # Actualité / société (rééquilibrage volume FR)
         "politique", "santé", "éducation", "immigration", "retraite",
         "sécurité", "économie", "justice", "grève", "assemblée nationale",
-        # Termes neutres (baseline contraste)
         "weekend", "art", "technologie", "communauté",
     ]
 }
 
+
+def _load_search_config():
+    """Charge la config de recherche depuis config/search_config.json ou fallback."""
+    if _CONFIG_PATH.exists():
+        try:
+            with open(_CONFIG_PATH, 'r', encoding='utf-8') as f:
+                cfg = json.load(f)
+            logger.info('Search config loaded from %s (%d FR, %d EN terms)',
+                        _CONFIG_PATH, len(cfg.get('fr', [])), len(cfg.get('en', [])))
+            return cfg
+        except Exception as e:
+            logger.warning('Failed to load search config: %s — using defaults', e)
+    return _DEFAULT_SEARCH_CONFIG
+
+
+SEARCH_CONFIG = _load_search_config()
+
 # Paramètres de résilience
 SLEEP_TIME = 300  # 5 minutes
 MAX_RETRIES = 3
+
+# --- Circuit Breaker ---
+CIRCUIT_BREAKER_THRESHOLD = 5   # consecutive failures before opening
+CIRCUIT_BREAKER_TIMEOUT = 120   # seconds before retrying after circuit opens
 
 # --- RGPD Art. 21 : Liste d'exclusion (droit d'opposition) ---
 _EXCLUDED_HANDLES_FILE = os.path.join(
@@ -108,11 +143,27 @@ def compute_word_count(text):
 
 def detect_language_hint(text):
     """
-    Heuristique simple de détection de langue.
-    Si plus de 30% des mots sont des mots français courants, retourne 'fr', sinon 'en'.
+    Detection de langue via langdetect (probabiliste) avec fallback heuristique.
+    Retourne 'fr', 'en', ou 'other'.
     """
-    text_without_urls = _URL_PATTERN.sub('', text).strip().lower()
-    words = text_without_urls.split()
+    text_without_urls = _URL_PATTERN.sub('', text).strip()
+    if len(text_without_urls) < 3:
+        return "en"
+
+    # Methode principale : langdetect (probabiliste, fiable)
+    try:
+        from langdetect import detect
+        lang = detect(text_without_urls[:500])
+        if lang == 'fr':
+            return 'fr'
+        elif lang == 'en':
+            return 'en'
+        return 'other'
+    except Exception:
+        pass
+
+    # Fallback heuristique si langdetect echoue
+    words = text_without_urls.lower().split()
     if not words:
         return "en"
     fr_count = sum(1 for w in words if w in _FR_COMMON_WORDS)
@@ -126,30 +177,31 @@ def connect_db():
         uri = f"mongodb://{quote_plus(MONGO_USER)}:{quote_plus(MONGO_PASSWORD)}@{MONGO_HOST}:27017/?authSource=admin"
     else:
         uri = f"mongodb://{MONGO_HOST}:27017/"
-    print(f"🔌 Connexion à MongoDB : {MONGO_HOST} (auth={'oui' if MONGO_USER else 'non'})")
+    logger.info('Connexion a MongoDB : %s (auth=%s)', MONGO_HOST, 'oui' if MONGO_USER else 'non')
     MAX_RETRIES = 20
     retries = 0
     while retries < MAX_RETRIES:
         try:
             client = MongoClient(uri, serverSelectionTimeoutMS=5000)
             client.admin.command('ping')
-            print(f"✅ MongoDB connecté (Database: thumalien_db)!")
+            logger.info('MongoDB connecte (Database: thumalien_db)')
             return client['thumalien_db']['raw_posts']
         except Exception as e:
             wait = 5 * (retries + 1)
             retries += 1
-            print(f"⏳ Base de données indisponible. Tentative {retries}/{MAX_RETRIES} dans {wait}s... ({e})")
+            logger.warning('Base de donnees indisponible. Tentative %d/%d dans %ds... (%s)',
+                           retries, MAX_RETRIES, wait, e)
             time.sleep(wait)
-    raise ConnectionError(f"MongoDB inaccessible après {MAX_RETRIES} tentatives")
+    raise ConnectionError(f"MongoDB inaccessible apres {MAX_RETRIES} tentatives")
 
 def get_bluesky_client():
     try:
         client = Client()
         client.login(HANDLE, PASSWORD)
-        print(f"✅ Authentification Bluesky réussie pour {HANDLE}")
+        logger.info('Authentification Bluesky reussie pour %s', HANDLE)
         return client
     except Exception as e:
-        print(f"❌ CRITIQUE : Échec authentification Bluesky : {e}")
+        logger.critical('Echec authentification Bluesky : %s', e)
         return None
 
 def extract_metadata(post):
@@ -172,119 +224,128 @@ def extract_metadata(post):
     
     return has_image, image_url, langs
 
+def _exponential_backoff(attempt, base=2, max_wait=120):
+    """Calcule un delai d'attente exponentiel avec jitter."""
+    wait = min(base ** attempt + random.uniform(0, 1), max_wait)
+    return wait
+
+
 def run_collection_cycle(collection, client, monitor=None):
     reload_excluded_handles()
     total_new = 0
+    consecutive_failures = 0
     start_time = datetime.datetime.now()
     if monitor:
         monitor.start_cycle()
-    print(f"\n--- 🔄 Cycle de collecte Multi-Langues : {start_time.strftime('%H:%M:%S')} ---")
+    logger.info('Cycle de collecte Multi-Langues : %s', start_time.strftime('%H:%M:%S'))
 
-    # On itère sur chaque langue (FR, EN...)
     for lang, keywords in SEARCH_CONFIG.items():
-        print(f"   🌍 Traitement de la langue : {lang.upper()}")
+        logger.info('Traitement de la langue : %s', lang.upper())
 
         for kw in keywords:
-            try:
-                # REQUÊTE API CIBLÉE
-                # On ajoute le filtre 'lang' pour ne pas polluer la base avec du bruit
-                data = client.app.bsky.feed.search_posts({
-                    'q': kw,
-                    'limit': 25, # On réduit légèrement par mot pour éviter le rate-limit
-                    'sort': 'latest',
-                    'lang': lang
-                })
+            # --- Circuit breaker : si trop d'erreurs consecutives, pause longue ---
+            if consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD:
+                logger.warning(
+                    'Circuit breaker OUVERT : %d erreurs consecutives. '
+                    'Pause de %ds avant reprise.',
+                    consecutive_failures, CIRCUIT_BREAKER_TIMEOUT,
+                )
+                time.sleep(CIRCUIT_BREAKER_TIMEOUT)
+                consecutive_failures = 0
 
-                ops = [] # Liste pour le Bulk Write (Optimisation Performance)
-                skipped = 0
+            # --- Tentatives avec exponential backoff ---
+            success = False
+            for attempt in range(MAX_RETRIES):
+                try:
+                    data = client.app.bsky.feed.search_posts({
+                        'q': kw,
+                        'limit': 25,
+                        'sort': 'latest',
+                        'lang': lang
+                    })
 
-                for post in data.posts:
-                    # --- RGPD Art. 21 : droit d'opposition ---
-                    if getattr(post.author, 'handle', None) in EXCLUDED_HANDLES:
-                        skipped += 1
-                        continue
+                    ops = []
+                    skipped = 0
 
-                    # --- Validation du texte ---
-                    is_valid, result = validate_text(post.record.text)
-                    if not is_valid:
-                        skipped += 1
-                        continue
+                    for post in data.posts:
+                        if getattr(post.author, 'handle', None) in EXCLUDED_HANDLES:
+                            skipped += 1
+                            continue
 
-                    clean_text = result
+                        is_valid, result = validate_text(post.record.text)
+                        if not is_valid:
+                            skipped += 1
+                            continue
 
-                    # Extraction avancée
-                    has_image, image_url, detected_langs = extract_metadata(post)
+                        clean_text = result
+                        has_image, image_url, detected_langs = extract_metadata(post)
 
-                    doc = {
-                        # Champs primaires
-                        "uri": post.uri,
-                        "cid": post.cid,
-                        "text": clean_text,
-                        "created_at": post.record.created_at,
+                        doc = {
+                            "uri": post.uri,
+                            "cid": post.cid,
+                            "text": clean_text,
+                            "created_at": post.record.created_at,
+                            "search_term": kw,
+                            "search_lang": lang,
+                            "collected_at": datetime.datetime.now(),
+                            "author_did": post.author.did,
+                            "author_handle": post.author.handle,
+                            "author_display_name": post.author.display_name,
+                            "has_image": has_image,
+                            "image_url": image_url,
+                            "reply_count": getattr(post, 'reply_count', 0),
+                            "repost_count": getattr(post, 'repost_count', 0),
+                            "like_count": getattr(post, 'like_count', 0),
+                            "declared_langs": detected_langs,
+                            "text_word_count": compute_word_count(clean_text),
+                            "text_language_hint": detect_language_hint(clean_text),
+                            "ai_processed": False
+                        }
 
-                        # Contexte de collecte (Traçabilité)
-                        "search_term": kw,
-                        "search_lang": lang,
-                        "collected_at": datetime.datetime.now(),
+                        ops.append(
+                            UpdateOne({"uri": post.uri}, {"$set": doc}, upsert=True)
+                        )
 
-                        # Auteur
-                        "author_did": post.author.did,
-                        "author_handle": post.author.handle,
-                        "author_display_name": post.author.display_name,
+                    if ops:
+                        result = collection.bulk_write(ops)
+                        added = result.upserted_count
+                        duplicates = result.modified_count
+                        total_new += added + duplicates
+                        if monitor:
+                            monitor.record_keyword(kw, lang, added=added, duplicates=duplicates)
+                    else:
+                        if monitor:
+                            monitor.record_keyword(kw, lang, added=0, duplicates=0)
 
-                        # Métadonnées IA (Feature Engineering)
-                        "has_image": has_image,
-                        "image_url": image_url,
-                        "reply_count": getattr(post, 'reply_count', 0),
-                        "repost_count": getattr(post, 'repost_count', 0),
-                        "like_count": getattr(post, 'like_count', 0),
-                        "declared_langs": detected_langs,
+                    consecutive_failures = 0
+                    success = True
+                    break  # sortie de la boucle retry
 
-                        # Analyse textuelle (Feature Engineering)
-                        "text_word_count": compute_word_count(clean_text),
-                        "text_language_hint": detect_language_hint(clean_text),
-
-                        # Placeholders pour l'IA (seront remplis plus tard)
-                        "ai_processed": False
-                    }
-
-                    # On prépare l'opération d'insertion/mise à jour
-                    ops.append(
-                        UpdateOne({"uri": post.uri}, {"$set": doc}, upsert=True)
-                    )
-
-                # Exécution en masse (Beaucoup plus rapide que one-by-one)
-                if ops:
-                    result = collection.bulk_write(ops)
-                    added = result.upserted_count
-                    duplicates = result.modified_count
-                    total_new += added + duplicates
-                    # print(f"      -> '{kw}': {added} posts traités")
+                except Exception as e:
+                    err_str = str(e).lower()
+                    logger.warning('Erreur sur "%s" (%s), tentative %d/%d: %s',
+                                   kw, lang, attempt + 1, MAX_RETRIES, e)
                     if monitor:
-                        monitor.record_keyword(kw, lang, added=added, duplicates=duplicates)
-                else:
-                    if monitor:
-                        monitor.record_keyword(kw, lang, added=0, duplicates=0)
+                        monitor.record_keyword(kw, lang, errors=1, error_msg=e)
 
-                # Délai aléatoire entre requêtes (respect rate limit API)
-                time.sleep(random.uniform(1.0, 2.5))
+                    if '429' in err_str or 'rate' in err_str or 'too many' in err_str:
+                        wait = random.uniform(30, 60)
+                        logger.info('Rate limit detecte — pause %.0fs', wait)
+                        time.sleep(wait)
+                    else:
+                        wait = _exponential_backoff(attempt)
+                        logger.info('Backoff exponentiel: %.1fs', wait)
+                        time.sleep(wait)
 
-            except Exception as e:
-                err_str = str(e).lower()
-                print(f"⚠️ Erreur sur '{kw}' ({lang}): {e}")
-                if monitor:
-                    monitor.record_keyword(kw, lang, errors=1, error_msg=e)
+            if not success:
+                consecutive_failures += 1
+                logger.error('Echec definitif sur "%s" (%s) apres %d tentatives',
+                             kw, lang, MAX_RETRIES)
 
-                # Rate limit détecté : backoff progressif
-                if '429' in err_str or 'rate' in err_str or 'too many' in err_str:
-                    wait = random.uniform(30, 60)
-                    print(f"   ⏳ Rate limit détecté — pause {wait:.0f}s")
-                    time.sleep(wait)
-                else:
-                    # Erreur réseau ou autre : petite pause de sécurité
-                    time.sleep(random.uniform(3, 5))
+            # Delai inter-requetes (respect rate limit API)
+            time.sleep(random.uniform(1.0, 2.5))
 
-    print(f"📦 Cycle terminé. {total_new} documents traités/ajoutés.")
+    logger.info('Cycle termine. %d documents traites/ajoutes.', total_new)
     if monitor:
         monitor.end_cycle()
 
@@ -477,7 +538,10 @@ def run_inference_cycle(collection):
 
 
 if __name__ == "__main__":
-    print("🚀 Démarrage du Collecteur Bluesky Intelligent (V3 — avec inference auto)")
+    # Ensure logs/ directory exists
+    os.makedirs(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'), exist_ok=True)
+
+    logger.info('Demarrage du Collecteur Bluesky Intelligent (V3 — avec inference auto)')
 
     db_collection = connect_db()
     bsky_client = get_bluesky_client()
@@ -487,14 +551,12 @@ if __name__ == "__main__":
         while True:
             run_collection_cycle(db_collection, bsky_client, monitor=monitor)
 
-            # Inference IA automatique sur les nouveaux posts
             try:
                 run_inference_cycle(db_collection)
             except Exception as e:
-                print(f"⚠️ Erreur inference: {e}")
+                logger.error('Erreur inference: %s', e, exc_info=True)
 
-            # Gestion du temps d'attente
-            print(f"💤 Mise en veille pour {SLEEP_TIME} secondes...")
+            logger.info('Mise en veille pour %ds...', SLEEP_TIME)
             time.sleep(SLEEP_TIME)
     else:
-        print("❌ Impossible de démarrer : Vérifiez vos identifiants dans .env")
+        logger.critical('Impossible de demarrer : Verifiez vos identifiants dans .env')

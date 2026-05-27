@@ -1,11 +1,13 @@
-# Script video 18 min — Thumalien V9 (v3 client)
+# Script video 18 min — ThumaCheck (v3 client)
 
 **Duree cible** : 18 min (15-20 min cadre MASTERE)
 **Format** : screencast + voix off + inserts camera (intro, transitions, conclusion)
 **Speakers** : Azelie Bernard (A) / Sebastien Lazcanotegui (S) — repartition 50/50
 **Entreprise** : Niamato Consulting (expertise Data & IA)
-**Audience** : client (entreprise media / fact-checking / plateforme) + jury evaluateur
-**Objectif** : convaincre un decideur que Thumalien resout un probleme business reel, avec ROI mesurable
+**Client** : Thumalien (societe de fact-checking et veille mediatique)
+**Solution** : ThumaCheck — pipeline NLP + dashboard de detection de desinformation
+**Audience** : equipe dirigeante Thumalien + jury evaluateur
+**Objectif** : convaincre Thumalien que ThumaCheck resout son probleme de moderation, avec ROI mesurable
 
 ---
 
@@ -53,19 +55,17 @@
 `[SLIDE 1 : Titre projet]`
 
 > *"Bonjour, je suis Azelie Bernard, lead technique chez Niamato Consulting.
-> Nous sommes un cabinet d'expertise Data et Intelligence Artificielle.
-> Nous presentons aujourd'hui Thumalien : une solution de detection
-> de desinformation pour les plateformes de reseaux sociaux decentralises.
+> Nous sommes un cabinet d'expertise Data et Intelligence Artificielle,
+> et Thumalien nous a mandates pour developper une solution
+> de detection de desinformation sur Bluesky.
 >
-> Notre client cible : toute organisation qui analyse des contenus publics —
-> media, fact-checker, observatoire de la desinformation, ou plateforme
-> qui souhaite outiller ses moderateurs.
->
-> Le probleme business est simple : un moderateur humain met en moyenne
+> Vous le savez : vos equipes de fact-checking passent en moyenne
 > 3 a 5 minutes par post pour evaluer sa fiabilite.
 > A 60 000 posts publics par jour sur Bluesky, c'est intenable.
-> Thumalien analyse un texte en 1,5 milliseconde, avec une explication
-> auditable a chaque decision."*
+>
+> ThumaCheck est la solution que nous avons construite pour vous.
+> Elle analyse un texte en 1,5 milliseconde,
+> avec une explication auditable a chaque decision."*
 
 ---
 
@@ -91,18 +91,21 @@
 > plus de 60 000 posts publics par jour analysables.
 > Aucune equipe de moderation centralisee.
 >
-> Notre promesse au client : classifier un post comme fiable ou suspect
+> Ce que nous vous garantissons :
+> classifier un post comme fiable ou suspect
 > en moins de 5 millisecondes, en francais comme en anglais,
-> avec une explication qui permet au moderateur de defendre sa decision."*
+> avec une explication qui permet a vos equipes
+> de defendre chaque decision."*
 
 `[SLIDE 4 : Les 4 exigences]`
 
-> *"Le cahier des charges fixe quatre exigences non-negociables.
+> *"Nous avons fixe quatre exigences non-negociables.
 > Transparence : chaque score est explicable.
 > Bilinguisme : francais et anglais a performance equivalente.
 > Frugalite : moins de 5 ms par texte, empreinte CO2 mesuree.
 > Et conformite au RGPD et a l'AI Act.
-> Ces quatre exigences structurent toute la solution."*
+> Ces quatre exigences structurent toute la solution
+> que nous vous presentons aujourd'hui."*
 
 ---
 
@@ -185,7 +188,7 @@
 
 `[SCREEN : dashboard Streamlit plein ecran]`
 
-> *"Voici le dashboard — l'interface que le client utilise.
+> *"Voici le dashboard ThumaCheck — l'interface que vos equipes utiliseront au quotidien.
 > Cinq pages. Vue Globale : 245 000 posts collectes,
 > 67 % classes fiables.
 >
@@ -193,12 +196,12 @@
 > la jauge de score utilise un code couleur vert-rouge intuitif,
 > les barres SHAP montrent la contribution positive ou negative
 > de chaque feature, et la heatmap d'attention utilise un gradient
-> qui guide l'oeil du moderateur vers les tokens critiques."*
+> qui guide l'oeil de vos analystes vers les tokens critiques."*
 
 `[SCREEN : soumettre texte fiable]`
 
 > *"Premier test : un communique scientifique.
-> Score 0,89 fiable. Mais ce qui distingue Thumalien
+> Score 0,89 fiable. Mais ce qui distingue ThumaCheck
 > d'un classifieur boite noire — trois niveaux d'explication.
 >
 > Niveau 1 : les top mots de la LogReg.
@@ -211,8 +214,9 @@
 > On lit litteralement la decision du modele,
 > coefficient par coefficient.
 >
-> En tant que moderateur, vous avez tout ce qu'il faut
-> pour justifier votre decision aupres de votre hierarchie."*
+> Vos analystes ont tout ce qu'il faut
+> pour justifier chaque decision aupres de votre hierarchie —
+> et aupres de vos regulateurs."*
 
 `[SCREEN : soumettre texte suspect]`
 
@@ -223,8 +227,8 @@
 >
 > Et voici la heatmap d'attention CamemBERT :
 > les tokens 'SCANDALE' et 'mentent' s'illuminent en rouge.
-> C'est exactement ce qu'un moderateur veut voir
-> pour defendre sa decision."*
+> C'est exactement ce que vos analystes
+> veulent voir pour defendre leur decision."*
 
 ---
 
@@ -232,7 +236,7 @@
 
 `[SLIDE 8 : Faithfulness methode]`
 
-> *"Question legitime du client : comment savez-vous
+> *"Vous pourriez nous demander : comment savez-vous
 > que ces explications refletent vraiment le comportement du modele ?
 >
 > On a implemente le protocole ERASER de DeYoung et collegues, ACL 2020.
@@ -262,8 +266,8 @@
 
 `[SLIDE 10 : Qualite industrielle]`
 
-> *"Quand un client evalue une solution, il regarde aussi
-> la qualite du code — est-ce que ca tiendra en production ?
+> *"Quand vous evaluez une solution,
+> vous regardez aussi la qualite du code — est-ce que ca tiendra en production ?
 >
 > 501 tests pytest. 80 % de couverture de code.
 > 77,9 % de branch coverage.
@@ -277,7 +281,7 @@
 > qui se situe entre 60 et 75 %.
 >
 > C'est ce qui separe un prototype
-> d'un systeme qu'une equipe DevOps peut reprendre."*
+> d'un systeme que votre equipe DevOps peut reprendre des demain."*
 
 ---
 
@@ -285,13 +289,13 @@
 
 `[SLIDE 11 : Conformite]`
 
-> *"Sur la conformite reglementaire — un point crucial pour tout client
-> qui deploie de l'IA en Europe a partir d'aout 2026.
+> *"Sur la conformite reglementaire — un point crucial pour vous
+> si vous deployez de l'IA en Europe a partir d'aout 2026.
 >
 > AI Act article 13 transparence : couvert par notre Model Card
 > au format Mitchell 2019.
 > Article 14 supervision humaine : la decomposition dans le dashboard
-> permet a l'operateur de comprendre et contester chaque decision.
+> permet a vos operateurs de comprendre et contester chaque decision.
 >
 > RGPD article 22 : le droit d'explication est couvert
 > par SHAP et Captum.
@@ -334,7 +338,7 @@
 
 `[SLIDE 14 : ROI & Budget]`
 
-> *"Parlons chiffres. Le projet Thumalien a coute environ 50 000 euros,
+> *"Parlons chiffres. Le projet ThumaCheck a coute environ 50 000 euros,
 > essentiellement en ressources humaines — 110 jours-homme repartis
 > entre le developpement technique et la validation.
 >
@@ -348,9 +352,10 @@
 > Pour 1,8 million de posts analyses par mois,
 > ca revient a 0,0005 centime par post.
 >
-> En retour : un gain de productivite x10 pour les moderateurs,
-> une couverture de 60 000 posts par jour — 200 fois plus qu'un humain —
-> et une reduction de 67 % des faux positifs."*
+> Ce que vous gagnez : un facteur x10 de productivite pour vos moderateurs,
+> une couverture de 60 000 posts par jour — 200 fois plus qu'un humain seul —
+> et une reduction de 67 % des faux positifs
+> qui polluent aujourd'hui vos files de moderation."*
 
 ---
 
@@ -365,7 +370,7 @@
 > On attenue avec un intervalle de confiance bootstrap a 95 % :
 > la reduction des faux positifs reste entre -73 % et -60 %.
 >
-> Thumalien detecte des signaux de desinformation,
+> ThumaCheck detecte des signaux de desinformation,
 > pas la verite factuelle. On classe la forme, pas le contenu.
 >
 > La roadmap V10 inclut MLflow pour le tracking,
@@ -388,9 +393,9 @@
 > une AIPD, une Model Card, et une explicabilite
 > qui prouve sa propre fidelite.
 >
-> Thumalien n'est pas un classifieur.
+> ThumaCheck n'est pas un classifieur.
 > C'est un systeme de decision auditable — defendable
-> devant un moderateur, devant un regulateur, et devant vous.
+> devant vos analystes, devant vos regulateurs, et devant votre direction.
 >
 > Un score sans explication est un verdict sans proces.
 > C'est la phrase qui a guide chacune de nos decisions techniques."*

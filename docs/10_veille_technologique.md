@@ -1,5 +1,5 @@
 # Politique de Veille Technologique
-## Projet Thumalien - Suivi des évolutions technologiques et réglementaires
+## Projet ThumaCheck (client : Thumalien) - Suivi des évolutions technologiques et réglementaires
 
 **Référence** : VEILLE-THUM-2026-001
 **Version** : 1.1
@@ -9,7 +9,7 @@
 
 ## 1. Objectif
 
-La veille technologique permet de maintenir le projet Thumalien à l'état de l'art en matière de NLP, détection de désinformation et conformité réglementaire. Elle alimente les décisions d'évolution du pipeline et anticipe les ruptures technologiques.
+La veille technologique permet de maintenir le projet ThumaCheck à l'état de l'art en matière de NLP, détection de désinformation et conformité réglementaire. Elle alimente les décisions d'évolution du pipeline et anticipe les ruptures technologiques.
 
 ---
 
@@ -69,7 +69,7 @@ La veille technologique permet de maintenir le projet Thumalien à l'état de l'
 
 ### 3.3 Technologies à surveiller (roadmap)
 
-| Technologie | Intérêt pour Thumalien | Horizon | Priorité |
+| Technologie | Intérêt pour ThumaCheck | Horizon | Priorité |
 |------------|------------------------|:-------:|:--------:|
 | RAG (Retrieval-Augmented Generation) | Cross-checker les claims avec une base factuelle (Wikipedia, Google Fact Check Tools API) | T3 2026 | **Haute** |
 | LLM-as-Judge (GPT-4o, Claude) | Scoring zero-shot de la crédibilité, benchmark contre V7 | T3 2026 | **Haute** |
@@ -84,12 +84,12 @@ La veille technologique permet de maintenir le projet Thumalien à l'état de l'
 
 ### 3.4 Tendances 2026 en détection de désinformation
 
-| Tendance | Description | Impact pour Thumalien |
+| Tendance | Description | Impact pour ThumaCheck |
 |----------|-------------|----------------------|
 | LLM Fact-Checking | Les LLMs (GPT-4o, Claude, Gemini) sont utilisés pour vérifier les claims en les comparant à des sources fiables | Possibilité d'ajouter une couche de vérification factuelle au-dessus de la détection stylistique |
 | Multimodal Misinformation | La désinformation s'appuie de plus en plus sur des images générées par IA (deepfakes, infographies truquées) | Extension future vers l'analyse d'images avec CLIP ou BLIP-2 |
 | Explicabilité réglementaire | L'AI Act impose la transparence des systèmes IA à risque — SHAP devient un standard industriel | Notre intégration SHAP anticipe cette obligation |
-| Federated Learning | Entraîner des modèles sans centraliser les données (privacy-preserving) | Pertinent si Thumalien est déployé chez plusieurs clients |
+| Federated Learning | Entraîner des modèles sans centraliser les données (privacy-preserving) | Pertinent si ThumaCheck est déployé chez plusieurs clients |
 | Synthetic Data Augmentation | Génération de données synthétiques pour équilibrer les datasets (déjà utilisé en V4/V5) | Approfondir avec des LLMs pour générer des faux plus réalistes |
 
 ---
@@ -105,7 +105,7 @@ La veille technologique permet de maintenir le projet Thumalien à l'état de l'
    Frequence : hebdomadaire
 
 2. ANALYSE
-   Pertinence pour Thumalien ? (oui/non)
+   Pertinence pour ThumaCheck ? (oui/non)
    Impact estime (performance, cout, conformite)
    Effort d'integration
 

@@ -58,7 +58,7 @@ def set_notes(slide, text):
     tf.text = text
 
 
-def add_footer(slide, text="Niamato Consulting  ·  Thumalien V9  ·  M1 BDIA 2026"):
+def add_footer(slide, text="Niamato Consulting  ·  ThumaCheck  ·  Client : Thumalien  ·  M1 BDIA 2026"):
     tb = slide.shapes.add_textbox(Inches(9.0), Inches(7.0), Inches(4.0), Inches(0.35))
     p = tb.text_frame.paragraphs[0]
     p.text = text
@@ -221,11 +221,11 @@ def create_presentation():
     # Filet décoratif haut
     add_line_h(slide, 2.5, 1.2, 8.3, CYAN_DIM, 1)
 
-    add_text(slide, "THUMALIEN V9", 0.5, 1.5, 12.3, 1.3,
+    add_text(slide, "THUMACHECK", 0.5, 1.5, 12.3, 1.3,
              size=76, color=CYAN, bold=True, align=PP_ALIGN.CENTER)
 
-    add_text(slide, "Détection de désinformation Bluesky — bilingue, explicable, frugale",
-             1.0, 3.0, 11.3, 0.65, size=26, color=GRAY, align=PP_ALIGN.CENTER)
+    add_text(slide, "Détection de désinformation Bluesky — bilingue, explicable, frugale\nNiamato Consulting pour Thumalien",
+             1.0, 3.0, 11.3, 0.85, size=24, color=GRAY, align=PP_ALIGN.CENTER)
 
     add_line_h(slide, 3.5, 3.95, 6.3, CYAN, 2)
 
@@ -254,9 +254,9 @@ Texte voix-off (Azélie) :
 On entraîne un modèle. On obtient un F1 de 0,99.
 Et c'est précisément à ce moment-là qu'on aurait dû s'inquiéter.
 
-Bonjour, je suis Azélie Bernard, lead technique sur Thumalien.
-Avec Sébastien, en 18 minutes on va vous raconter
-pourquoi ce 0,99 était un piège. »
+Bonjour, je suis Azélie Bernard, lead technique chez Niamato Consulting.
+Thumalien nous a mandatés pour développer ThumaCheck.
+Avec Sébastien, en 18 minutes on va vous montrer pourquoi ce 0,99 était un piège. »
 
 Points clés :
 - Ouverture contre-intuitive = capte l'attention
@@ -367,7 +367,7 @@ Texte voix-off :
 « Bluesky compte 35 millions d'utilisateurs. Plus de 60 000 posts publics
 en français et anglais chaque jour. Et pourtant : zéro équipe de modération
 centralisée, et un angle mort complet côté régulation européenne.
-C'est cet espace non couvert que Thumalien vient adresser. »
+C'est cet espace non couvert que ThumaCheck vient adresser. »
 
 Point d'insistance : marquer une pause sur "zéro équipe" et "angle mort".""")
 
@@ -866,7 +866,7 @@ détectent VRAIMENT les bugs, pas juste qu'ils traversent les lignes.""")
 Timing : 90 secondes
 
 Texte voix-off :
-« Thumalien est conforme aux deux cadres réglementaires européens.
+« ThumaCheck est conforme aux deux cadres réglementaires européens.
 Pour l'AI Act, applicable en août 2026 : notre Model Card satisfait l'article 13
 sur la transparence. La décomposition β·x dans le dashboard répond à l'article 14
 sur la supervision humaine. Et notre système est classé risque limité.
@@ -1111,7 +1111,7 @@ Speaker : SÉBASTIEN
 Timing : 45 secondes
 
 Texte voix-off (Sébastien) :
-« Parlons chiffres. Le projet Thumalien a coûté environ 50 000 euros,
+« Parlons chiffres. Le projet ThumaCheck a coûté environ 50 000 euros,
 essentiellement en ressources humaines — 110 jours-homme répartis
 entre le développement technique et la validation.
 
@@ -1281,13 +1281,13 @@ Rappel : insérer les vrais QR codes avant export final :
 if __name__ == "__main__":
     prs = create_presentation()
     out_dir = os.path.dirname(os.path.abspath(__file__))
-    out_path = os.path.join(out_dir, "Thumalien_V9_slides.pptx")
+    out_path = os.path.join(out_dir, "ThumaCheck_slides.pptx")
     prs.save(out_path)
     print(f"✅ Présentation sauvegardée : {out_path}")
     print(f"   {len(prs.slides)} slides générées")
     print()
     print("📋 Checklist avant export final :")
-    print("   1. Insérer le logo Thumalien (slide 1)")
+    print("   1. Insérer le logo ThumaCheck / Niamato Consulting (slide 1)")
     print("   2. Insérer les 3 QR codes (slide 14)")
     print("   3. Vérifier la police Inter (installer si absente)")
     print("   4. Tester la lisibilité sur téléphone à 50 cm")

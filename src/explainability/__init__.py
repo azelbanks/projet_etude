@@ -1,5 +1,5 @@
 """
-Thumalien — Module d'IA explicable (XAI)
+ThumaCheck — Module d'IA explicable (XAI)
 =========================================
 
 Couvre les 4 niveaux d'explicabilité du pipeline V9 :

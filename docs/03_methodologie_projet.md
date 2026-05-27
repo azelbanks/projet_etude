@@ -4,7 +4,7 @@
 **Reference** : METH-THUM-2026-001
 **Version** : 1.0
 **Date** : Avril 2026
-**Equipe** : Azelie Bernard (Lead technique), Sebastien Lazcanotegui (Validation & Qualite)
+**Equipe** : Niamato Consulting — Azelie Bernard (Lead technique), Sebastien Lazcanotegui (Validation & Qualite)
 
 ---
 
@@ -12,14 +12,14 @@
 
 ### 1.1 Methodologie retenue : Agile adaptee Data/IA
 
-Le projet Thumalien suit une methodologie **Agile adaptee aux projets Data/IA**, inspiree du framework CRISP-DM (Cross-Industry Standard Process for Data Mining) combine avec des pratiques Scrum pour la gestion iterative.
+Le projet ThumaCheck suit une methodologie **Agile adaptee aux projets Data/IA**, inspiree du framework CRISP-DM (Cross-Industry Standard Process for Data Mining) combine avec des pratiques Scrum pour la gestion iterative.
 
 **Pourquoi cette approche** :
 - Les projets IA sont par nature experimentaux : on ne sait pas a l'avance quel modele, quel dataset ou quel seuil donnera les meilleurs resultats
 - L'approche iterative permet de livrer de la valeur incrementalement (V1 → V1.5 → V2 → V3)
 - Chaque iteration est un cycle complet : donnees → modele → evaluation → decision
 
-### 1.2 Phases CRISP-DM appliquees a Thumalien
+### 1.2 Phases CRISP-DM appliquees a ThumaCheck
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -76,7 +76,7 @@ Le projet Thumalien suit une methodologie **Agile adaptee aux projets Data/IA**,
 
 ### 2.1 Organisation de l'equipe
 
-Le projet Thumalien est realise en **binome** dans le cadre d'un Master Big Data. La repartition des responsabilites reflette les competences complementaires des deux membres :
+Le projet ThumaCheck est realise par Niamato Consulting en **binome** dans le cadre d'un Master Big Data. La repartition des responsabilites reflette les competences complementaires des deux membres :
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -139,7 +139,7 @@ La qualite des donnees est le fondement de tout projet IA. Un modele entraine su
 
 #### Controles sur les datasets d'entrainement
 
-| Controle | Methode | Resultat Thumalien |
+| Controle | Methode | Resultat ThumaCheck |
 |----------|---------|-------------------|
 | Biais d'agence (Reuters) | `audit_reuters_leakage()` | Detecte (99.2%) et corrige |
 | Equilibre des classes | Comptage par label | True: 63.1%, Fake: 36.9% (V5, 197 782 textes) |

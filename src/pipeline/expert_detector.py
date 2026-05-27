@@ -1,5 +1,5 @@
 """
-Thumalien — Expert Bilingual Fake News Detector
+ThumaCheck — Expert Bilingual Fake News Detector
 ================================================
 
 Pipeline de détection de désinformation bilingue (FR/EN) de niveau production.
@@ -18,7 +18,7 @@ Solution :
     5. Détection de langue pour routage FR/EN
     6. Monitoring CodeCarbon intégré
 
-Auteur  : Thumalien Team
+Auteur  : Niamato Consulting (pour Thumalien)
 Version : 2.0 (Expert)
 """
 
@@ -892,6 +892,15 @@ class EmotionFeatureExtractor:
         get_emotion_features(texts) -> np.ndarray shape (n_texts, 7)
         Chaque colonne = probabilité d'une émotion :
         [colere, degout, joie, neutre, peur, surprise, tristesse]
+
+    Métriques de validation (notebook 02_Analyse_Emotions_MLP.ipynb) :
+        - F1 macro global : 0.62 (objectif >= 0.60 — ATTEINT)
+        - F1 par classe : joie 0.78, neutre 0.71, colere 0.65,
+          tristesse 0.58, peur 0.54, surprise 0.48, degout 0.42
+        - Train : 25 800 samples (EN 16K + FR 9.8K)
+        - Test : 4 100 samples
+        - Limites connues : degout et neutre peu fiables en anglais
+          (donnees d'entrainement EN limitees pour ces classes)
     """
 
     VOCAB_SIZE = 25000
@@ -1125,7 +1134,7 @@ class ExpertFakeNewsDetector:
         if track_emissions and CODECARBON_AVAILABLE:
             out_dir = emissions_dir or os.path.dirname(self.model_dir) or '.'
             tracker = EmissionsTracker(
-                project_name=f"Thumalien_Expert_{model_type}",
+                project_name=f"ThumaCheck_Expert_{model_type}",
                 output_dir=out_dir,
             )
             tracker.start()
@@ -1400,7 +1409,7 @@ class ExpertFakeNewsDetector:
                 os.path.dirname(os.path.abspath(__file__)), '..', '..', 'emissions.csv'
             )
             tracker = EmissionsTracker(
-                project_name="Thumalien_Inference",
+                project_name="ThumaCheck_Inference",
                 output_dir=os.path.dirname(emissions_path),
                 output_file="emissions.csv",
                 log_level="warning",
@@ -1509,7 +1518,7 @@ class ExpertFakeNewsDetector:
                 os.path.dirname(os.path.abspath(__file__)), '..', '..', 'emissions.csv'
             )
             tracker = EmissionsTracker(
-                project_name="Thumalien_Inference_Adaptive",
+                project_name="ThumaCheck_Inference_Adaptive",
                 output_dir=os.path.dirname(emissions_path),
                 output_file="emissions.csv",
                 log_level="warning",

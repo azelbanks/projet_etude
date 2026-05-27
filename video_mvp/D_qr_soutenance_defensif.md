@@ -1,4 +1,4 @@
-# Q&R Défensif — Soutenance Thumalien V9
+# Q&R Défensif — Soutenance ThumaCheck (client : Thumalien)
 
 **Objectif** : anticiper 22 questions critiques que peut poser un jury MASTERE exigeant, avec **réponse au mot près**, courte (30-60 secondes max), structurée pour désamorcer plutôt qu'esquiver.
 
@@ -253,4 +253,4 @@
 
 ---
 
-*Q&R défensif Thumalien V9 — Mai 2026 — préparation soutenance*
+*Q&R défensif ThumaCheck (client : Thumalien) — Mai 2026 — préparation soutenance*

@@ -1,4 +1,4 @@
-# Script video 18 min — Thumalien V9 (v2 duo)
+# Script video 18 min — ThumaCheck (client : Thumalien) (v2 duo)
 
 **Duree cible** : 18 min (15-20 min cadre MASTERE)
 **Format** : screencast + voix off + inserts camera (intro, transitions, conclusion)
@@ -47,7 +47,7 @@
 
 `[SLIDE 1 : Titre projet]`
 
-> *"Bonjour, je suis Azelie Bernard, lead technique sur Thumalien.
+> *"Bonjour, je suis Azelie Bernard, lead technique sur ThumaCheck.
 > Avec Sebastien Lazcanotegui, on a passe six mois a construire un systeme
 > de detection de desinformation bilingue sur Bluesky.
 > En 18 minutes, on va vous raconter pourquoi ce 0,99 etait un piege,
@@ -173,7 +173,7 @@
 
 > *"Premier test : un communique d'institution scientifique.
 > Score 0,89 fiable. Mais surtout — et c'est ce qui distingue
-> Thumalien d'un classifieur boite noire — trois niveaux d'explication.
+> ThumaCheck d'un classifieur boite noire — trois niveaux d'explication.
 >
 > Niveau 1 : les top mots de la LogReg.
 > Pas une approximation, c'est la formule fermee exacte du modele.
@@ -329,7 +329,7 @@
 > d'intervalle de confiance a 95 % : la reduction des faux positifs
 > reste entre -73 % et -60 %, donc l'effet est robuste.
 >
-> Limite 2 : Thumalien detecte des signaux de desinformation,
+> Limite 2 : ThumaCheck detecte des signaux de desinformation,
 > pas la verite factuelle. On classe la forme, pas le contenu.
 >
 > Limite 3 : on est un binome. Dans une equipe de quatre
@@ -356,7 +356,7 @@
 > une AIPD, une Model Card, et une explicabilite
 > qui prouve sa propre fidelite.
 >
-> Thumalien n'est pas un classifieur.
+> ThumaCheck n'est pas un classifieur.
 > C'est un systeme de decision auditable — defendable
 > devant un utilisateur, devant un regulateur, et devant vous.
 >
@@ -469,4 +469,4 @@ puis synchroniser au montage.
 
 ---
 
-*Script video Thumalien V9 — v2 duo — Mai 2026*
+*Script video ThumaCheck (client : Thumalien) — v2 duo — Mai 2026*

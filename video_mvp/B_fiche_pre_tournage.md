@@ -1,4 +1,4 @@
-# Fiche pré-tournage — Vidéo Thumalien V9
+# Fiche pré-tournage — Vidéo ThumaCheck (client : Thumalien)
 
 **Objectif** : tout préparer en 2-3 heures pour ne pas perdre de temps pendant la captation. Une mauvaise préparation = 4x le temps de tournage et un résultat médiocre.
 
@@ -422,4 +422,4 @@ Ce nommage permet de tout charger dans DaVinci Resolve dans l'ordre de lecture p
 
 ---
 
-*Fiche pré-tournage Thumalien V9 — Mai 2026*
+*Fiche pré-tournage ThumaCheck (client : Thumalien) — Mai 2026*

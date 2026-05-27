@@ -1,5 +1,5 @@
 """
-Thumalien — Weekly Score Monitoring
+ThumaCheck — Weekly Score Monitoring
 ====================================
 
 Connects to MongoDB, samples recent posts, runs the ExpertFakeNewsDetector V2,
@@ -31,6 +31,12 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'src'))
 
 from pipeline.expert_detector import ExpertFakeNewsDetector
+
+try:
+    from codecarbon import EmissionsTracker
+    CODECARBON_AVAILABLE = True
+except ImportError:
+    CODECARBON_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -80,8 +86,21 @@ def fetch_recent_posts(n: int = SAMPLE_SIZE) -> pd.DataFrame:
 #  Scoring
 # ---------------------------------------------------------------------------
 
-def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector) -> dict:
-    """Run predict() and compute aggregate metrics."""
+def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector, track_emissions: bool = True) -> dict:
+    """Run predict() and compute aggregate metrics, optionally tracking energy."""
+    tracker = None
+    if track_emissions and CODECARBON_AVAILABLE:
+        try:
+            tracker = EmissionsTracker(
+                project_name='ThumaCheck_WeeklyScoring',
+                output_dir=os.path.join(PROJECT_ROOT, 'logs'),
+                output_file='weekly_emissions.csv',
+                log_level='error',
+            )
+            tracker.start()
+        except Exception:
+            tracker = None
+
     results = detector.predict(pd.Series(df['text'].values))
 
     labels = results['prediction_label'].values
@@ -114,6 +133,19 @@ def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector) -> dict:
     # Average text length
     avg_text_length = round(float(df['text'].str.len().mean()), 1)
 
+    # Stop energy tracking
+    energy_metrics = {}
+    if tracker is not None:
+        try:
+            emissions = tracker.stop()
+            energy_metrics = {
+                'co2_emissions_kg': round(float(emissions), 8),
+                'energy_kwh': round(float(getattr(tracker, '_total_energy', 0)), 8),
+            }
+            logger.info('Energy tracked: %.6f kg CO2', emissions)
+        except Exception:
+            pass
+
     return {
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'n_sampled': n_total,
@@ -124,6 +156,7 @@ def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector) -> dict:
         'score_percentiles': percentiles,
         'language_breakdown': language_breakdown,
         'avg_text_length': avg_text_length,
+        'energy': energy_metrics,
     }
 
 

@@ -1,4 +1,4 @@
-# 13 Slides Keynote — Vidéo Thumalien V9
+# 13 Slides Keynote — Vidéo ThumaCheck (client : Thumalien)
 **Format** : 16:9, 1920×1080, exporté en MP4 ou PNG haute résolution pour incrustation montage
 **Palette** : fond `#0e1117` (noir bleuté dashboard), primaire `#00D4FF` (cyan), succès `#00E676` (vert), danger `#FF1744` (rouge), accent `#FFD600` (jaune), texte `#E8E8E8`
 **Police** : Inter ou SF Pro Display — titres 48-64pt, corps 28-32pt, légendes 18-22pt
@@ -8,12 +8,12 @@
 
 ## SLIDE 1 — Titre projet (00:30)
 
-**Composition** : centrée, fond dégradé noir-bleu, logo Thumalien grand format en haut
+**Composition** : centrée, fond dégradé noir-bleu, logo ThumaCheck grand format en haut
 
 ```
-                    [LOGO THUMALIEN — 200px hauteur]
+                    [LOGO THUMACHECK — 200px hauteur]
 
-              THUMALIEN V9
+              THUMACHECK V9
    Détection de désinformation Bluesky — bilingue, explicable, frugale
 
               ──────────────────────────
@@ -25,7 +25,7 @@
 ```
 
 **Notes mise en page** :
-- Titre principal `THUMALIEN V9` en cyan #00D4FF, font-weight 700, 72pt
+- Titre principal `THUMACHECK V9` en cyan #00D4FF, font-weight 700, 72pt
 - Sous-titre en gris #B0B0B0, 28pt
 - Filet horizontal cyan 2px largeur 60% centré
 - Noms en blanc 24pt, formation en gris 18pt
@@ -425,7 +425,7 @@
 **Composition phase 2 (transition douce vers remerciements)** :
 
 ```
-                    [LOGO THUMALIEN]
+                    [LOGO THUMACHECK]
 
                        MERCI
 
@@ -458,6 +458,6 @@
 
 **Animations** : utiliser uniquement Keynote Magic Move ou wipe/fade, JAMAIS les transitions agressives (cube, flip, etc.) qui font tutoriel-débutant.
 
-**Cohérence** : toutes les slides doivent partager le même footer en bas à droite : `Thumalien V9 · M1 BDIA 2026` en gris 14pt — repère visuel constant.
+**Cohérence** : toutes les slides doivent partager le même footer en bas à droite : `ThumaCheck V9 · M1 BDIA 2026` en gris 14pt — repère visuel constant.
 
 **Test rapide de lisibilité** : ouvrir la slide sur un téléphone à 50 cm — si tu ne lis pas tout, augmente la police.

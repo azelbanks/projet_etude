@@ -1,5 +1,5 @@
 # Rendu Individuel - Sebastien Lazcanotegui
-## Projet Thumalien - Master Big Data, Sup de Vinci
+## Projet ThumaCheck (client : Thumalien) - Master Big Data, Sup de Vinci
 
 **Etudiant** : Sebastien Lazcanotegui
 **Role principal** : Consolidation ML, optimisation hyperparametres, revue de code
@@ -9,7 +9,7 @@
 
 ## 1. Mon role dans le projet
 
-J'ai contribue au projet Thumalien en tant que **specialiste consolidation ML**, avec un focus sur l'optimisation des hyperparametres, le debiaisage du pipeline et la revue critique des choix techniques. Mon apport principal a ete la consolidation du modele NLP pour en ameliorer la robustesse.
+J'ai contribue au projet ThumaCheck en tant que **specialiste consolidation ML**, avec un focus sur l'optimisation des hyperparametres, le debiaisage du pipeline et la revue critique des choix techniques. Mon apport principal a ete la consolidation du modele NLP pour en ameliorer la robustesse.
 
 ### Responsabilites principales
 - Optimisation des hyperparametres du pipeline (GridSearch)

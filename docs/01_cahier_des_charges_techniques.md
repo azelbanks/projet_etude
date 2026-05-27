@@ -1,5 +1,5 @@
 # Cahier des Charges Techniques
-## Projet Thumalien — Social Media Intelligence & AI Monitor
+## Projet ThumaCheck (client : Thumalien) — Social Media Intelligence & AI Monitor
 
 **Reference** : CDC-THUM-2026-001
 **Version** : 2.0
@@ -12,7 +12,7 @@
 
 ## 1. Objet du document
 
-Le present cahier des charges techniques (CDC) formalise les exigences fonctionnelles, techniques et operationnelles du projet Thumalien. Il constitue le document de reference pour l'ensemble des intervenants du projet et sert de base contractuelle pour la validation des livrables.
+Le present cahier des charges techniques (CDC) formalise les exigences fonctionnelles, techniques et operationnelles du projet ThumaCheck (solution developpee pour le client Thumalien). Il constitue le document de reference pour l'ensemble des intervenants du projet et sert de base contractuelle pour la validation des livrables.
 
 Ce CDC couvre :
 - Les exigences fonctionnelles et non-fonctionnelles
