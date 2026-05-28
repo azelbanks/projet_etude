@@ -16,20 +16,25 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 
 ### Fonctionnalités Clés
 * **Collecte en temps réel :** Ingestion continue des posts Bluesky via l'API AT Protocol.
-* **Détection de Fake News (V9) :** Pipeline cascade 2 étapes : filtre fait/opinion puis analyse V8 (meta-learner V5+V6+CamemBERT). Bilingue FR/EN, 15 features linguistiques + 28 features stylistiques.
+* **Détection de Fake News (V9) :** Pipeline cascade 2 étapes : filtre fait/opinion puis analyse V8 (meta-learner V5+V6+CamemBERT) + RoBERTa EN cascade (60/40 blend textes courts). Bilingue FR/EN, 17 features linguistiques (dont emoji) + 28 features stylistiques.
 * **Analyse Émotionnelle (Deep Learning) :** Réseau de neurones MLP (PyTorch) classifiant les textes selon 7 émotions (Colère, Dégoût, Joie, Neutre, Peur, Surprise, Tristesse).
 * **Modèles avancés :** CamemBERT (FR, F1 0.957) et RoBERTa (EN, F1 0.874) fine-tunés pour les textes ultra-courts type réseaux sociaux.
-* **Explicabilité IA (XAI) complète :** Pipeline 6 modules dans `src/explainability/` couvrant les 4 niveaux de l'IA explicable :
+* **Explicabilité IA (XAI) complète :** Pipeline 8 mécanismes dans `src/explainability/` couvrant les 4 niveaux de l'IA explicable :
+    * `explain_prediction()` — coefficients LogReg × TF-IDF par mot (exposé via API `/explain`)
     * SHAP global (beeswarm + dependence) sur V6
+    * SHAP par instance sur V6
+    * SHAP sur émotions (KernelExplainer sur MLP 7 classes)
     * Attention CamemBERT (CLS dernière couche + heatmap par couche)
     * Layer Integrated Gradients (Captum) avec axiome de Completeness vérifié
     * Décomposition exacte du méta-learner V8 (β·x) intégrée au dashboard
     * Validation faithfulness (AOPC, Comprehensiveness@k, Sufficiency@k vs random) — **uplift +0.21** sur le gold set
     * Model Card formelle (`docs/12_model_card.md`) avec section dédiée XAI
     * Reproductible en 1 commande : `python scripts/run_xai_pipeline.py`
-* **Dashboard Interactif :** 5 pages Streamlit (Dashboard, Analyse IA, Explorateur, Performance, À propos).
-* **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon.
-* **Tests :** 501 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
+* **Dashboard Interactif :** 5 pages Streamlit (Dashboard, Analyse IA, Explorateur, Performance, À propos). Glossaire pédagogique intégré, zone d'incertitude visuelle, distribution complète des 7 émotions.
+* **API REST :** FastAPI avec endpoints `/predict`, `/explain` (XAI mot-par-mot), `/health`, `/energy`. Rate limiting (60 req/min), monitoring énergétique continu (CodeCarbon).
+* **Scalabilité :** Prototype Kafka consumer pour architecture événementielle (batch processing, métriques, topic de sortie).
+* **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon (entraînement + API en temps réel).
+* **Tests :** 536 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
 
 ### Métriques clés (V9)
 * **245 000+ posts** collectés depuis décembre 2025 (collecte continue)
@@ -67,15 +72,18 @@ projet_etude/
 ├── dashboard/              # Application Streamlit (Dashboard V5, 5 pages)
 ├── data/training/          # Datasets d'entraînement (FR+EN, 6 sources)
 ├── docs/                   # Documentation complète du projet
-│   └── pdf/                # Documents PDF exportés
+│   ├── pdf/                # Documents PDF exportés
+│   └── references/         # Cadre pédagogique et cahier des charges institutionnel
 ├── models/                 # Modèles entraînés (.joblib, .pt)
 ├── notebooks/              # Notebooks d'exploration, entraînement et analyse
 ├── src/
+│   ├── api/                # API FastAPI (predict, explain, energy, health)
 │   ├── app/                # Point d'entrée application
 │   ├── collection/         # Collecteur Bluesky + qualité des données
 │   ├── explainability/     # Pipeline XAI : SHAP global, attention, IG, decomposition meta-learner, faithfulness
-│   ├── monitoring/         # Monitoring hebdomadaire (drift detection)
-│   └── pipeline/           # Pipeline NLP expert + CamemBERT + agrégations
+│   ├── monitoring/         # Monitoring hebdomadaire (drift detection, fairness audit)
+│   ├── pipeline/           # Pipeline NLP expert + CamemBERT + RoBERTa + agrégations
+│   └── scalability/        # Prototype Kafka consumer pour architecture événementielle
 ├── scripts/
 │   └── run_xai_pipeline.py # Pipeline XAI complet en 1 commande (figures + INDEX.md + results.json)
 ├── docker-compose.yml
@@ -216,7 +224,9 @@ python3 -m pytest tests/test_benchmark_latence.py -v -s
 | Intégration pipeline | 11 | — |
 | Benchmark latence | 3 | — |
 | Sécurité / validation entrées | 7 | — |
-| **Total** | **501** | **80%** |
+| Fairness audit | 5 | — |
+| Kafka consumer | 3 | — |
+| **Total** | **536** | **80%** |
 
 ---
 
