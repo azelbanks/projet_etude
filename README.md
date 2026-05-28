@@ -34,7 +34,7 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 * **API REST :** FastAPI avec endpoints `/predict`, `/explain` (XAI mot-par-mot), `/health`, `/energy`. Rate limiting (60 req/min), monitoring énergétique continu (CodeCarbon).
 * **Scalabilité :** Prototype Kafka consumer pour architecture événementielle (batch processing, métriques, topic de sortie).
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon (entraînement + API en temps réel).
-* **Tests :** 536 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
+* **Tests :** 537 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
 
 ### Métriques clés (V9)
 * **245 000+ posts** collectés depuis décembre 2025 (collecte continue)
@@ -226,7 +226,7 @@ python3 -m pytest tests/test_benchmark_latence.py -v -s
 | Sécurité / validation entrées | 7 | — |
 | Fairness audit | 5 | — |
 | Kafka consumer | 3 | — |
-| **Total** | **536** | **80%** |
+| **Total** | **537** | **80%** |
 
 ---
 
