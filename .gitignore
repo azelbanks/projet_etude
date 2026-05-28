@@ -45,3 +45,6 @@ backups/
 .coverage*
 .Trash-0/
 .Rhistory
+
+# Mutation testing cache
+.mutmut-cache
