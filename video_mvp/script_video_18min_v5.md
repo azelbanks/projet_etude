@@ -215,21 +215,43 @@
 
 `[SCREEN : soumettre texte fiable]`
 
-> *"Premier test : un communique scientifique.
-> Score 0,89 — classe fiable.
-> Ce qui distingue ThumaCheck d'un outil boite noire :
-> trois niveaux d'explication.
+> *"Premier test : une depeche scientifique du CNRS publiee dans Nature.
 >
-> Premier niveau : les mots les plus influents.
-> Ce n'est pas une approximation —
-> c'est la formule exacte du modele.
+> Avant meme d'evaluer la fiabilite, le pipeline effectue un premier filtre.
+> Il verifie si le texte exprime un fait ou une opinion —
+> parce que l'AI Act interdit de qualifier une opinion de desinformation.
+> Ici, le contenu est bien factuel. On passe a l'etape d'analyse.
 >
-> Deuxieme niveau : l'analyse du style d'ecriture.
-> La presence de citations et la diversite du vocabulaire
-> confirment un contenu fiable.
+> Regardons maintenant les trois modeles travailler en parallele.
+> V5 — notre modele TF-IDF principal — donne un score de 0,94.
+> Tres fiable.
+> V6 — le detecteur de style — affiche 0,05 de suspicion.
+> Le style d'ecriture est neutre et informatif.
+> Le meta-learner V8 combine ces deux signaux avec CamemBERT
+> et rend son verdict : FIABLE.
 >
-> Troisieme niveau : la decomposition complete de la decision.
-> On lit le poids de chaque critere, coefficient par coefficient.
+> Le desaccord entre V5 et V6 est de 0,01 — quasi nul.
+> Les trois modeles sont en accord. C'est un signal fort de coherence.
+>
+> L'emotion dominante : neutre a 65,8 %.
+> Pas de charge emotionnelle excessive. Coherent avec un contenu scientifique.
+>
+> Maintenant les trois niveaux d'explication.
+>
+> Premier niveau : les contributions SHAP par feature de style.
+> Ce ne sont pas des approximations — ce sont les contributions exactes
+> de chaque caracteristique linguistique au score V6.
+>
+> Deuxieme niveau : la heatmap d'attention CamemBERT.
+> Les tokens surlignés en rouge sont ceux sur lesquels
+> le modele de deep learning a concentre son attention.
+> CNRS et Nature ont un poids fort — des ancres de credibilite.
+>
+> Troisieme niveau : la decomposition complete du meta-learner V8.
+> Le logit z vaut -0,918. Transforme en probabilite : 28,5 % de suspicion.
+> Donc 71,5 % de fiabilite. Decision FIABLE, seuil franchi.
+> On lit le poids exact de chaque modele dans la decision finale,
+> coefficient par coefficient.
 >
 > Vos analystes ont tout ce qu'il faut
 > pour justifier chaque decision aupres de votre hierarchie —
