@@ -243,9 +243,10 @@
 > de chaque caracteristique linguistique au score V6.
 >
 > Deuxieme niveau : la heatmap d'attention CamemBERT.
-> Les tokens surlignés en rouge sont ceux sur lesquels
-> le modele de deep learning a concentre son attention.
-> CNRS et Nature ont un poids fort — des ancres de credibilite.
+> CamemBERT decoupe le texte en sous-unites de mots.
+> Les tokens en rouge intense sont ceux sur lesquels
+> le modele a concentre son attention —
+> ce sont les ancres semantiques qui ont guide sa decision.
 >
 > Troisieme niveau : la decomposition complete du meta-learner V8.
 > Le logit z vaut -0,918. Transforme en probabilite : 28,5 % de suspicion.
@@ -283,10 +284,12 @@
 > Ce sont exactement les marqueurs rhetorique
 > que vos analystes cherchent manuellement aujourd'hui.
 >
-> La heatmap CamemBERT confirme :
-> SCANDALE et CACHE s'affichent en rouge intense.
-> Le modele de deep learning a concentre son attention
-> sur les mots les plus alarmants du texte.
+> La heatmap CamemBERT visualise l'attention du modele token par token.
+> CamemBERT decoupe les mots en sous-unites —
+> SCANDALE devient SC-AND-ALE, CACHE devient CA-CHE.
+> Les sous-tokens en rouge intense sont ceux
+> sur lesquels le modele a concentre son attention.
+> Les termes les plus alarmants ressortent clairement.
 >
 > Et le premier contributeur dans la decomposition V8 :
 > score_v6_suspect avec +0,567 vers SUSPECT.

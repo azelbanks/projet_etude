@@ -393,9 +393,13 @@ au score V6.
 
 Deuxieme niveau :
 la heatmap d'attention CamemBERT.
-CNRS et Nature sont surlignés —
-des ancres de credibilite
-que le modele a identifiees.
+
+CamemBERT decoupe le texte
+en sous-unites de mots.
+
+Les tokens en rouge intense —
+ce sont les ancres semantiques
+qui ont guide la decision du modele.
 
 Troisieme niveau :
 la decomposition complete du meta-learner.
@@ -463,10 +467,15 @@ manuellement aujourd'hui.
 ---
 
 Heatmap CamemBERT :
-SCANDALE et CACHE en rouge intense.
+CamemBERT decoupe les mots
+en sous-unites —
+SCANDALE → SC-AND-ALE,
+CACHE → CA-CHE.
 
-Le modele concentre son attention
-sur les mots les plus alarmants.
+Les sous-tokens en rouge
+sont ceux sur lesquels
+le modele concentre son attention.
+Les termes alarmants ressortent.
 
 ---
 

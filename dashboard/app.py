@@ -1064,19 +1064,26 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
                         st.subheader('Heatmap d\'attention CamemBERT')
 
                         # Build heatmap as colored HTML spans
+                        # Normalize weights to amplify contrast
+                        w_min = min(display_weights)
+                        w_max = max(display_weights)
+                        w_range = w_max - w_min if w_max > w_min else 1e-6
+                        norm_weights = [(w - w_min) / w_range for w in display_weights]
+
                         spans = []
-                        for tok, w in zip(display_tokens, display_weights):
-                            # Red intensity based on attention weight
-                            r = int(255 * w)
-                            g = int(50 * (1 - w))
-                            b = int(50 * (1 - w))
-                            a = max(0.15, w * 0.85)
+                        for tok, w_norm in zip(display_tokens, norm_weights):
+                            # Amplify: apply power curve to boost high-attention tokens
+                            w_boost = w_norm ** 0.5
+                            r = int(220 + 35 * w_boost)
+                            g = int(240 * (1 - w_boost))
+                            b = int(240 * (1 - w_boost))
+                            a = 0.15 + 0.85 * w_boost
                             safe_tok = html.escape(tok)
                             spans.append(
                                 f'<span style="background:rgba({r},{g},{b},{a:.2f});'
-                                f'padding:2px 4px;margin:1px;border-radius:4px;'
-                                f'display:inline-block;font-size:0.9rem;"'
-                                f' title="attention: {w:.3f}">{safe_tok}</span>'
+                                f'padding:3px 5px;margin:2px;border-radius:4px;'
+                                f'display:inline-block;font-size:0.95rem;font-weight:{"600" if w_boost > 0.6 else "400"};"'
+                                f' title="attention: {w_boost:.3f}">{safe_tok}</span>'
                             )
                         st.markdown(
                             '<div class="glass-card" role="region" aria-label="Heatmap attention CamemBERT">'
@@ -1681,7 +1688,7 @@ def page_about():
                     Collecteur V3 Python
                     (28 FR + 16 EN termes)
                            |
-                    MongoDB (238K+ posts)
+                    MongoDB (245K+ posts)
                     (healthcheck, auth)
                            |
               +------------+------------+
@@ -1744,7 +1751,10 @@ Score final + Explication SHAP
 
     st.subheader('Chiffres clés')
     c1, c2, c3, c4 = st.columns(4)
-    c1.markdown(metric_card('', 'Posts collectés', '238K+', '#00D4FF'), unsafe_allow_html=True)
+    # Chiffre dynamique depuis MongoDB si disponible
+    _data = _fetch_mongo_data()
+    _n_posts = f'{_data[1]:,}' if _data else '245K+'
+    c1.markdown(metric_card('', 'Posts collectés', _n_posts, '#00D4FF'), unsafe_allow_html=True)
     c2.markdown(metric_card('', 'Versions modèle', '9', '#FFD600'), unsafe_allow_html=True)
     c3.markdown(metric_card('', 'Features', '30K+50', '#00E676'), unsafe_allow_html=True)
     c4.markdown(metric_card('', 'Notebooks', '28', '#00D4FF'), unsafe_allow_html=True)
