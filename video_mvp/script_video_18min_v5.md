@@ -259,27 +259,57 @@
 
 `[SCREEN : soumettre texte suspect]`
 
-> *"Deuxieme test : un texte sensationnaliste.
-> Score 0,12 de credibilite, donc 88 % suspect.
-> Les explications s'inversent :
-> le sensationnalisme du langage est identifie comme signal fort.
+> *"Deuxieme test : un texte sensationnaliste typique des reseaux sociaux.
 >
-> Et la heatmap d'attention surligne directement les mots problematiques :
-> 'SCANDALE' et 'mentent' s'affichent en rouge.
-> C'est exactement ce que vos analystes
-> veulent voir pour defendre leur decision."*
+> Stage 1 : le pipeline le classe factuel a 48 % — on passe a l'analyse.
+> Et la, les signaux sont sans appel.
+>
+> V5 — le TF-IDF — donne 0,00 de fiabilite. Zero.
+> Il ne detecte aucun signal de credibilite dans ce texte.
+> V6 — le detecteur de style — affiche 0,98 de suspicion.
+> Le style crie la desinformation : majuscules, points d'exclamation,
+> appel au partage viral, injonction a la peur.
+> Le meta-learner V8 combine les deux :
+> logit z = +0,991, soit 72,9 % de suspicion. Decision SUSPECT.
+>
+> Le desaccord V5/V6 est de 0,02 — quasi nul.
+> Les deux modeles sont en accord total.
+> C'est le cas contraire du texte fiable :
+> ici, tout converge vers le meme verdict.
+>
+> Le dashboard detecte et liste automatiquement
+> les mots sensationnalistes du texte :
+> 'scandale', 'on vous ment', 'partagez avant censure'.
+> Ce sont exactement les marqueurs rhetorique
+> que vos analystes cherchent manuellement aujourd'hui.
+>
+> La heatmap CamemBERT confirme :
+> SCANDALE et CACHE s'affichent en rouge intense.
+> Le modele de deep learning a concentre son attention
+> sur les mots les plus alarmants du texte.
+>
+> Et le premier contributeur dans la decomposition V8 :
+> score_v6_suspect avec +0,567 vers SUSPECT.
+> C'est le style qui a fait basculer la decision.
+> Pas le sujet — le style."*
 
 `[SCREEN : page emotions ou analyse]`
 
-> *"Un dernier point sur cette demo.
-> Chaque texte est aussi analyse
-> sur 7 dimensions emotionnelles :
-> colere, degout, joie, neutre, peur, surprise, tristesse.
+> *"Dernier element de cette demo : l'emotion dominante.
 >
-> Pour vos equipes, c'est un signal complementaire.
-> Un post qui combine un score suspect
-> et une forte charge de colere
-> peut etre priorise dans votre file.
+> Sur le texte fiable, l'emotion etait neutre a 65,8 %.
+> Sur ce texte suspect : surprise a 74,6 %.
+>
+> Ce n'est pas anodin. Les contenus de desinformation
+> utilisent deliberement la surprise et la peur
+> pour contourner le sens critique.
+>
+> Pour vos equipes, c'est un signal complementaire puissant.
+> Un post SUSPECT avec une emotion de surprise elevee
+> peut etre priorise en tete de votre file de moderation.
+>
+> ThumaCheck analyse 7 dimensions emotionnelles :
+> colere, degout, joie, neutre, peur, surprise, tristesse.
 > C'est ce que votre cahier des charges demandait
 > sous le nom d'analyse emotionnelle."*
 

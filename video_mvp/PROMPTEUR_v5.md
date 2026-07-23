@@ -420,40 +420,98 @@ et aupres de vos regulateurs.
 # [ECRAN : soumettre texte suspect]
 
 Deuxieme test :
-un texte sensationnaliste.
-
-Score 0,12 de credibilite,
-donc 88 % suspect.
-
-Les explications s'inversent :
-le sensationnalisme du langage
-est identifie comme signal fort.
+un texte sensationnaliste
+typique des reseaux sociaux.
 
 ---
 
-Et la heatmap d'attention
-surligne directement les mots problematiques :
-"SCANDALE" et "mentent"
-s'affichent en rouge.
+Stage 1 : factuel a 48 %.
+On passe a l'analyse.
 
-C'est exactement ce que vos analystes
-veulent voir pour defendre leur decision.
+---
+
+V5 — TF-IDF principal —
+score 0,00 de fiabilite.
+Zero. Aucun signal de credibilite.
+
+V6 — detecteur de style —
+0,98 de suspicion.
+Majuscules, points d'exclamation,
+appel au partage, injonction a la peur.
+
+Le meta-learner V8 :
+logit z = +0,991.
+72,9 % de suspicion.
+Decision SUSPECT.
+
+---
+
+Desaccord V5/V6 : 0,02.
+Les deux modeles sont en accord total.
+
+---
+
+Le dashboard liste automatiquement
+les mots sensationnalistes :
+"scandale", "on vous ment",
+"partagez avant censure".
+
+Ce sont exactement les marqueurs
+que vos analystes cherchent
+manuellement aujourd'hui.
+
+---
+
+Heatmap CamemBERT :
+SCANDALE et CACHE en rouge intense.
+
+Le modele concentre son attention
+sur les mots les plus alarmants.
+
+---
+
+Premier contributeur dans V8 :
+score_v6_suspect a +0,567 vers SUSPECT.
+
+C'est le style qui a fait basculer
+la decision.
+Pas le sujet — le style.
 
 ---
 
 # [ECRAN : page emotions ou analyse]
 
-Un dernier point sur cette demo.
-Chaque texte est aussi analyse
-sur 7 dimensions emotionnelles :
-colere, degout, joie, neutre,
-peur, surprise, tristesse.
+Dernier element de cette demo :
+l'emotion dominante.
+
+---
+
+Sur le texte fiable :
+neutre a 65,8 %.
+
+Sur ce texte suspect :
+surprise a 74,6 %.
+
+---
+
+Les contenus de desinformation
+utilisent deliberement la surprise
+et la peur
+pour contourner le sens critique.
+
+---
 
 Pour vos equipes,
-c'est un signal complementaire.
-Un post qui combine un score suspect
-et une forte charge de colere
-peut etre priorise dans votre file.
+un post SUSPECT
+avec surprise elevee :
+a prioriser en tete de file.
+
+---
+
+ThumaCheck analyse
+7 dimensions emotionnelles :
+colere, degout, joie, neutre,
+peur, surprise, tristesse.
 
 C'est ce que votre cahier des charges
 demandait sous le nom
