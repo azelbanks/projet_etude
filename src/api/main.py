@@ -183,11 +183,14 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 app = FastAPI(title="ThumaCheck API", version="1.0.0", lifespan=lifespan)
 
+# CORS restrictif — origines explicites uniquement
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=os.environ.get(
+        "THUMACHECK_CORS_ORIGINS", "http://localhost:8501"
+    ).split(","),
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 app.add_middleware(EnergyTrackingMiddleware)

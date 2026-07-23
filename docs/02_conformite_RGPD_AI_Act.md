@@ -157,6 +157,8 @@ Avis : Le traitement peut etre mis en oeuvre sous reserve du suivi des mesures
 
 ## 4. Conformite AI Act (Reglement UE 2024/1689)
 
+> **Echeance reglementaire** : Le Reglement AI Act (UE 2024/1689) est pleinement applicable a compter du **2 aout 2026** (obligations de transparence art. 50, pouvoirs de sanction GPAI). Les obligations haut risque (Annexe III) sont reportees au 2 decembre 2027 (Digital Omnibus). ThumaCheck anticipe ces echeances.
+
 ### 4.1 Classification du systeme
 
 L'AI Act classe les systemes d'IA en 4 niveaux de risque. Determinons la classification de ThumaCheck.
@@ -184,6 +186,7 @@ L'AI Act classe les systemes d'IA en 4 niveaux de risque. Determinons la classif
 | **Transparence** : informer que le contenu est genere/analyse par une IA | Le dashboard affiche clairement que les scores sont produits par un modele d'IA. La page "Metriques & Transparence" detaille le fonctionnement | Conforme |
 | **Information sur les limites** | La page Metriques documente les limites : pas de verification factuelle, biais thematique, langues limitees | Conforme |
 | **Documentation technique** | Ce document + rapport technique + model card | Conforme |
+| **Transparence IA** (Art. 50) | Banniere dans le dashboard informant l'utilisateur que les analyses sont produites par IA. Attribution claire des scores comme indicatifs | Conforme |
 
 ### 4.3 Bonnes pratiques volontaires (au-dela des obligations)
 
@@ -261,6 +264,7 @@ RESPONSABLE : Azelie Bernard
 | ~~CI/CD automatise (tests)~~ | Haute | T2 2026 | DevOps | **Implementee** (`.github/workflows/tests.yml`) |
 | Hachage des handles dans la base (pseudonymisation renforcee) | Moyenne | T3 2026 | Data Engineer | A implementer |
 | Chiffrement au repos de MongoDB | Moyenne | T3 2026 | DevOps | A implementer |
+| CORS restrictif (origines explicites) | Haute | T2 2026 | DevOps | **Implementee** (`main.py`, origines configurables via env) |
 | Scan de vulnerabilites des images Docker (Trivy) | Haute | T2 2026 | DevOps | A implementer |
 | Mecanisme de feedback utilisateur (contester une prediction) | Moyenne | T3 2026 | Dashboard Dev | A implementer |
 | Audit annuel de conformite | Haute | T2 2027 | Chef de Projet | A implementer |
@@ -328,5 +332,5 @@ RESPONSABLE : Azelie Bernard
 ---
 
 *Document valide par la Direction Projet — Avril 2026*
-*Prochaine revue : Octobre 2026*
+*Prochaine revue : Aout 2026 (alignee sur l'echeance AI Act du 2 aout 2026)*
 *Reference : RGPD-THUM-2026-001 — Version 1.0*

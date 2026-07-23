@@ -383,7 +383,7 @@ Point d'insistance : marquer une pause sur "zéro équipe" et "angle mort".""")
         ("\U0001F50D", "TRANSPARENCE",  "Chaque score doit être explicable et auditable",    CYAN),
         ("\U0001F310", "BILINGUE",      "Français + anglais, performance équivalente",        GREEN),
         ("\U0001F331", "FRUGALITÉ",     "< 5 ms par texte, empreinte CO₂ mesurée",           YELLOW),
-        ("\u2696\uFE0F","CONFORMITÉ",   "RGPD art. 22 + AI Act art. 13/14",                  RED),
+        ("\u2696\uFE0F","CONFORMITÉ",   "RGPD art. 22 + AI Act art. 13/14/50 — 2 août 2026", RED),
     ]
     for i, (icon, kw, desc, col) in enumerate(exigences):
         y = 1.5 + i * 1.25
@@ -821,7 +821,7 @@ détectent VRAIMENT les bugs, pas juste qu'ils traversent les lignes.""")
     # ── AI Act ──
     add_text(slide, "AI ACT  (UE 2024/1689)", 0.8, 1.4, 6, 0.4,
              size=22, color=CYAN, bold=True)
-    add_text(slide, "pleinement applicable août 2026", 7.5, 1.45, 5, 0.35,
+    add_text(slide, "pleinement applicable 2 août 2026", 7.5, 1.45, 5, 0.35,
              size=16, color=GRAY, italic=True)
 
     add_line_h(slide, 0.8, 1.9, 11.7, BORDER, 1)
@@ -829,17 +829,18 @@ détectent VRAIMENT les bugs, pas juste qu'ils traversent les lignes.""")
     ai_items = [
         ("Art. 13 (transparence)", "→  Model Card MC-THUM-2026-001"),
         ("Art. 14 (supervision)",  "→  Décomposition β·x dans le dashboard"),
+        ("Art. 50 (transparence IA)","→  Bannière IA visible dans le dashboard"),
         ("Risque limité classifié","→  Doc 02 § 4.1"),
     ]
     for j, (art, proof) in enumerate(ai_items):
-        y = 2.1 + j * 0.55
+        y = 2.1 + j * 0.45
         add_text(slide, "✅", 0.8, y, 0.4, 0.4, size=18, color=GREEN)
         add_text(slide, art, 1.4, y, 4.5, 0.4, size=19, color=WHITE)
         add_text(slide, proof, 6.5, y, 6, 0.4, size=17, color=GRAY,
                  font="Courier New")
 
     # ── Séparateur ──
-    add_line_h(slide, 0.8, 3.9, 11.7, CYAN_DIM, 1)
+    add_line_h(slide, 0.8, 4.1, 11.7, CYAN_DIM, 1)
 
     # ── RGPD ──
     add_text(slide, "RGPD  (UE 2016/679)", 0.8, 4.15, 6, 0.4,
@@ -1145,12 +1146,12 @@ et une réduction de 67 % des faux positifs. »""")
             "Streamlit AppTest",
         ], "Industrialisation", CYAN),
         ("V11", "Q4 2026", [
-            "ClaimBuster intégration",
+            "ClaimBuster + LLM open-weight",
             "Monitoring Grafana",
             "Tests E2E nightly",
         ], "Vérif. factuelle", GREEN),
         ("V12", "2027", [
-            "Modèle FR spécialisé",
+            "Mistral / modèle souverain",
             "Annotation communautaire",
             "Federated learning",
         ], "Inclusion", YELLOW),

@@ -1626,7 +1626,7 @@ def _section_compliance():
             '<div class="glass-card" role="region" aria-label="Conformite AI Act europeen">'
             '<div style="font-size:1.3rem;margin-bottom:8px;color:#00D4FF;">AI Act européen</div>'
             '<ul style="font-size:0.88rem;line-height:1.8;color:#B0B0B0;">'
-            '<li>Système classé risque limité (art. 52)</li>'
+            '<li>Risque limité (art. 50/52) — applicable 2 août 2026</li>'
             '<li>Scores présentés comme aide à la décision</li>'
             '<li>Biais documentés (ablation study, gold set)</li>'
             '<li>Explicabilité SHAP intégrée</li>'
@@ -1791,6 +1791,17 @@ def main():
     if st.session_state.get('authentication_status') is False:
         st.error('Identifiants incorrects.')
         return
+
+    # --- AI Act Art. 50 — Banniere de transparence IA ---
+    st.markdown(
+        '<div role="status" aria-label="Avertissement intelligence artificielle" '
+        'style="background:rgba(0,212,255,0.08);border-left:3px solid #00D4FF;'
+        'padding:8px 14px;margin-bottom:12px;font-size:0.82rem;color:#B0BEC5;">'
+        'Ce systeme utilise l\'intelligence artificielle pour analyser des contenus. '
+        'Les scores sont indicatifs et ne constituent pas une decision automatisee. '
+        'Conforme AI Act art. 50 (UE 2024/1689).</div>',
+        unsafe_allow_html=True,
+    )
 
     # --- Sidebar ---
     authenticator.logout('Déconnexion', 'sidebar')

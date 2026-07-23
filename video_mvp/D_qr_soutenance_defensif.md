@@ -214,7 +214,45 @@
 
 ---
 
-## Préparation à la soutenance — règles d'or
+## VI. Questions veille technologique et reglementaire
+
+### Q23 — *"L'AI Act entre en vigueur le 2 aout 2026. Votre projet sera-t-il conforme a temps ?"*
+
+**Reponse** :
+> *"ThumaCheck est conforme by design. Pour l'article 50, on a implemente une banniere de transparence IA visible des la connexion au dashboard — l'utilisateur sait immediatement qu'il interagit avec un systeme d'IA. Pour les articles 13 et 14, notre Model Card MC-THUM-2026-001 documente le modele selon le format Google et notre pipeline XAI offre 8 methodes d'explication. Notre classification en risque limite est documentee dans le doc 02 section 4.1. On anticipe l'echeance, on ne la subit pas."*
+
+**Strategie** : enumerer les preuves concretes d'implementation, pas les intentions. Citer le numero de document et la section.
+
+---
+
+### Q24 — *"Apres l'incident HuggingFace de juillet 2026, comment gerez-vous la securite de votre pipeline ML ?"*
+
+**Reponse** :
+> *"L'incident HuggingFace montre qu'un agent IA autonome peut exploiter un dataset malveillant pour compromettre une plateforme. Notre pipeline est protege a plusieurs niveaux : CORS restrictif avec origines explicites — plus de wildcard, rate limiting a 60 requetes par minute, sanitization HTML des entrees, MongoDB restreint a localhost, Docker avec utilisateur non-root, et surtout nos modeles sont charges localement — on n'a aucune dependance HuggingFace en production. Le fichier .env est exclu du versionning. C'est documente dans la section 5 du doc conformite."*
+
+**Strategie** : citer l'incident par son nom pour montrer la veille active, puis enumerer les mesures concretes.
+
+---
+
+### Q25 — *"Pourquoi ne pas utiliser Mistral plutot que CamemBERT pour le francais ?"*
+
+**Reponse** :
+> *"Ce sont deux architectures fondamentalement differentes. CamemBERT est un encodeur de 110 millions de parametres optimise pour la classification — 38 ms par texte. Mistral est un LLM generatif de 7 milliards de parametres minimum — on estime plus de 200 ms par texte avec GPU. Pour notre tache de classification binaire, CamemBERT est le bon outil : plus rapide, plus frugal, plus explicable via les attention maps. Mistral est dans notre roadmap V12 comme alternative souveraine pour quand le cas d'usage evoluera vers la verification factuelle, qui est une tache generative. C'est un choix d'architecture delibere, pas un manque de veille."*
+
+**Strategie** : montrer qu'on connait le paysage des modeles et qu'on a fait un choix eclaire encodeur vs generatif.
+
+---
+
+### Q26 — *"Que pensez-vous des modeles open-weight recents comme Kimi K3 ou GLM-5.2 pour votre pipeline ?"*
+
+**Reponse** :
+> *"Kimi K3, 2800 milliards de parametres, et GLM-5.2, 744 milliards — ce sont des modeles impressionnants. Mais ils sont hors de notre contrainte de frugalite : notre pipeline traite un texte en 1,5 ms, ces modeles necessitent des GPU haut de gamme et des centaines de millisecondes. Ils sont pertinents pour notre roadmap V11 ou on prevoit une analyse batch offline avec des LLM open-weight pour la verification factuelle. Le point important : open-weight ne signifie pas open-source — les licences varient et certaines ont des implications pour la conformite AI Act. On les surveille activement mais on ne les integre pas par effet de mode."*
+
+**Strategie** : montrer un esprit critique face au hype cycle, distinguer inference temps reel vs batch, et soulever le point licence.
+
+---
+
+## Preparation a la soutenance — regles d'or
 
 **1. Le silence vaut de l'or.** Si on te pose une question difficile, prends 3 secondes de silence avant de répondre. Ça donne l'image d'une réflexion et ça désamorce l'urgence.
 
@@ -248,8 +286,11 @@
 | XAI | AOPC +0.21, 5.6× random, 17 sigmas | DeYoung 2020 (ERASER) |
 | Volume | 245k posts, 197k textes, 9 versions | Rapport § 8 |
 | Annotation | kappa 0.498, n=200, 9 suspects | Landis & Koch 1977 |
-| Conformité | RGPD art 22/35, AI Act art 13/14 | Doc 02, Model Card |
+| Conformité | RGPD art 22/35, AI Act art 13/14/50 | Doc 02, Model Card |
 | Limites | gold set 200 posts, ReLU saturé IG | Sundararajan 2020 |
+| Securite ML | CORS restrictif, rate limit 60/min, non-root | Incident HuggingFace juil. 2026 |
+| AI Act deadline | Art. 50 transparence, banniere dashboard | 2 aout 2026, UE 2024/1689 |
+| Modeles souverains | Mistral V12 roadmap, CamemBERT 38ms | Frugalite vs puissance |
 
 ---
 
