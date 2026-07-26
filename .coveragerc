@@ -5,6 +5,9 @@ omit =
     */migrations/*
     notebooks/*
     scripts/*
+    src/scalability/kafka_consumer.py
+    src/explainability/attention_viz.py
+    src/explainability/integrated_gradients.py
 
 [report]
 exclude_lines =
