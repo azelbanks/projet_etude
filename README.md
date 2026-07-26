@@ -37,15 +37,15 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 * **Tests :** 537 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
 
 ### Métriques clés (V9)
-* **537 000+ posts** collectés depuis décembre 2025 (collecte continue)
+* **537 845 posts** collectés depuis décembre 2025 (collecte finalisée — Juil 2026)
 * **197 782 textes** d'entraînement (7 datasets, FR+EN)
 * **F1-score V5** : 0.913 (CV), seuil de décision : 0.44
 * **V9 Cascade** : faux positifs réduits de -67% (Fisher p=0.0005)
 * **CamemBERT FR** : F1 0.957 sur textes ultra-courts
 * **RoBERTa EN V2** : F1 0.874 sur textes ultra-courts (+4.3% vs V1)
 * **Latence** : 1.5 ms/texte (728 textes/sec)
-* **67%** des posts Bluesky classés fiables
-* **Empreinte CO2** : 6.14 g (total entraînement, dont 64% Transformers)
+* **68,9%** des posts Bluesky classés fiables
+* **Empreinte CO2** : 8,86 g (total entraînement, CodeCarbon mesuré — réf. ADEME 2024 : 52 m en voiture essence)
 
 ---
 
