@@ -35,8 +35,8 @@ FONT = "Inter"
 EMUIN = 914400
 SLIDE_W = Inches(13.333)
 SLIDE_H = Inches(7.5)
-OUT = "/sessions/laughing-focused-brown/mnt/video_mvp/ThumaCheck_slides_CLIENT.pptx"
-ASSET = "/sessions/laughing-focused-brown/mnt/outputs/"
+OUT = "/Users/azeliebernard/Documents/MASTER Big data/projet_etude/video_mvp/ThumaCheck_slides_CLIENT.pptx"
+ASSET = "/Users/azeliebernard/Desktop/thumalien_captures/qr_codes/"
 
 prs = Presentation()
 prs.slide_width = SLIDE_W
@@ -128,7 +128,8 @@ def head(s, kicker, title, title_color=PETROL):
 s = slide(PETROL)
 # bande coral en bas
 line(s, 0, 7.30, 13.333, 0.20, color=CORAL)
-pic(s, ASSET+"logo_h_white.png", 4.5, 1.05, w=4.33)
+try: pic(s, ASSET+"logo_h_white.png", 4.5, 1.05, w=4.33)
+except Exception: pass
 text(s, 1.0, 2.75, 11.33, 1.1, [P(("THUMACHECK", 60, WHITE, True))], align=PP_ALIGN.CENTER)
 text(s, 1.0, 3.95, 11.33, 0.5,
      [P(("Détection de désinformation sur Bluesky", 21, BEIGE_TX, False))], align=PP_ALIGN.CENTER)
@@ -336,8 +337,8 @@ footer(s,9)
 # =================== SLIDE 10 — QUALITE INDUSTRIELLE ===================
 s = slide()
 head(s, "L'exigence", "Qualité industrielle")
-text(s,0.7,1.78,11.0,0.4,[P(("501 tests   ·   80 % coverage   ·   80,3 % mutation kill rate",15,MUTE,False,True))])
-panels=[("PYTEST","501","tests passants",["0 échec","0 skip"],PETROL),
+text(s,0.7,1.78,11.0,0.4,[P(("537 tests   ·   80 % coverage   ·   80,3 % mutation kill rate",15,MUTE,False,True))])
+panels=[("PYTEST","537","tests passants",["0 échec","0 skip"],PETROL),
         ("COVERAGE","80 %","line coverage",["77,9 % branch","quality gate CI --fail-under=75"],CORAL),
         ("MUTMUT","80,3 %","kill rate (143 / 178)",["> benchmark Google","(60–75 %)"],GREEN)]
 pw=3.85; px=[0.7,4.74,8.78]
@@ -380,16 +381,16 @@ footer(s,11)
 
 # =================== SLIDE 12 — GREEN IT ===================
 s = slide()
-head(s, "L'empreinte", "Green IT — ≈ 6,88 g CO₂ au total", title_color=GREEN)
+head(s, "L'empreinte", "Green IT — 8,86 g CO₂ mesuré (CodeCarbon)", title_color=GREEN)
 # repartition gauche
 rect(s,0.7,1.95,6.0,4.05,fill=CARD,line=BORDER,lw=1.0,shape=MSO_SHAPE.ROUNDED_RECTANGLE,radius=0.04)
 text(s,1.05,2.2,5.3,0.4,[P(("RÉPARTITION DE L'EMPREINTE",13,PETROL,True))])
-parts=[("RoBERTa EN (V1+V2)","50 %  (3,47 g)",0.50,PETROL),
-       ("V5 LogReg (3 runs)","32 %  (2,18 g)",0.32,CORAL),
-       ("CamemBERT fine-tune","7 %  (0,48 g)",0.07,LIGHTBL),
-       ("V6 GradientBoost*","5 %  (~0,36 g)",0.05,BLUEGREY),
-       ("Pipeline XAI*","3 %  (~0,23 g)",0.03,GREEN),
-       ("Inférence cumulée*","2 %  (~0,15 g)",0.02,MUTE)]
+parts=[("RoBERTa EN (V1+V2)","39 %  (3,47 g)",0.39,PETROL),
+       ("Expert V3+V4+V5","43 %  (3,78 g)",0.43,CORAL),
+       ("V6 Style GradientBoost","8 %  (0,69 g)",0.08,BLUEGREY),
+       ("V5 Bluesky fine-tune","5 %  (0,45 g)",0.05,GREEN),
+       ("CamemBERT V1+V2","5 %  (0,45 g)",0.05,LIGHTBL),
+       ("V7 + V8 + Stage1","< 1 %  (0,01 g)",0.01,MUTE)]
 for i,(k,v,frac,c) in enumerate(parts):
     yy=2.72+i*0.52
     text(s,1.05,yy,3.1,0.35,[P((k,12.5,INK,False))])
@@ -399,7 +400,7 @@ for i,(k,v,frac,c) in enumerate(parts):
 rect(s,6.93,1.95,5.7,4.05,fill=CARD_ALT,line=BORDER,lw=1.0,shape=MSO_SHAPE.ROUNDED_RECTANGLE,radius=0.04)
 text(s,7.28,2.2,5.0,0.4,[P(("DÉCISION ARCHITECTURALE",13,PETROL,True))])
 dec=[("Production temps réel","V5 seul — 1,5 ms, 0,6 g CO₂ / jour"),
-     ("Analyse offline batch","V8 avec CamemBERT — 0,48 g entraînement"),
+     ("Analyse offline batch","V8 avec CamemBERT — 0,45 g entraînement"),
      ("ROI Green IT","frugalité en prod + puissance en analyse")]
 for i,(k,v) in enumerate(dec):
     yy=2.75+i*1.0
@@ -407,7 +408,7 @@ for i,(k,v) in enumerate(dec):
     text(s,7.55,yy+0.36,4.8,0.5,[P((v,12.5,INK,False))])
 text(s,7.28,5.75,5.1,0.4,[P(("Documenté — Model Card § 8",11.5,MUTE,False,True))])
 text(s,0.7,6.5,11.93,0.35,
-     [P(("* estimé via CodeCarbon (Apple M4 Pro).   ≈ 30 mètres en voiture — empreinte quasi nulle.",12,MUTE,False,True))])
+     [P(("Mesuré via CodeCarbon (Apple M4 Pro, France).   ≈ 52 m en voiture essence — réf. ADEME 2024 : 170 g CO₂/km — empreinte quasi nulle.",12,MUTE,False,True))])
 footer(s,12)
 
 # =================== SLIDE 13 — METHODOLOGIE ===================
@@ -438,7 +439,7 @@ tools=[("Git + GitHub Actions","Versioning, CI/CD, quality gates"),
        ("Docker Compose","4 conteneurs, déploiement 1 commande"),
        ("MongoDB","245K posts, indexes, validation"),
        ("FastAPI","API REST pour intégration externe"),
-       ("pytest + mutmut","501 tests, 80 % cov, 80,3 % kill"),
+       ("pytest + mutmut","537 tests, 80 % cov, 80,3 % kill"),
        ("CodeCarbon","empreinte carbone par version")]
 tw=3.85
 for i,(t,d) in enumerate(tools):
@@ -513,7 +514,8 @@ text(s,1.5,5.6,10.33,0.4,[P(("Niamato Consulting",13,BLUEGREY,True))],align=PP_A
 # =================== SLIDE 17 — MERCI ===================
 s = slide(PETROL)
 line(s,0,7.30,13.333,0.20,color=CORAL)
-pic(s, ASSET+"logo_h_white.png", 4.92, 0.9, w=3.5)
+try: pic(s, ASSET+"logo_h_white.png", 4.92, 0.9, w=3.5)
+except Exception: pass
 text(s,1.0,2.4,11.33,0.9,[P(("MERCI",52,WHITE,True))],align=PP_ALIGN.CENTER)
 text(s,1.0,3.45,11.33,0.4,[P(("Azélie Bernard   ·   Sébastien Lazcanotegui",17,BEIGE_TX,False))],align=PP_ALIGN.CENTER)
 text(s,1.0,3.85,11.33,0.35,[P(("Master 1 Big Data & Intelligence Artificielle — 2026",13,BLUEGREY,False))],align=PP_ALIGN.CENTER)

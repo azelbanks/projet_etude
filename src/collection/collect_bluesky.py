@@ -76,7 +76,7 @@ def _load_search_config():
 SEARCH_CONFIG = _load_search_config()
 
 # Paramètres de résilience
-SLEEP_TIME = 300  # 5 minutes
+SLEEP_TIME = 120  # 2 minutes (réduit pour accélérer collecte, safe anti-ban)
 MAX_RETRIES = 3
 
 # --- Circuit Breaker ---
@@ -274,54 +274,66 @@ def run_collection_cycle(collection, client, monitor=None):
             success = False
             for attempt in range(MAX_RETRIES):
                 try:
-                    data = client.app.bsky.feed.search_posts({
-                        'q': kw,
-                        'limit': 25,
-                        'sort': 'latest',
-                        'lang': lang
-                    })
-
                     ops = []
                     skipped = 0
+                    cursor = None
 
-                    for post in data.posts:
-                        if getattr(post.author, 'handle', None) in EXCLUDED_HANDLES:
-                            skipped += 1
-                            continue
+                    # Pagination : 2 pages × 100 posts = 200 posts/mot-clé max
+                    for _page in range(2):
+                        params = {'q': kw, 'limit': 100, 'sort': 'latest', 'lang': lang}
+                        if cursor:
+                            params['cursor'] = cursor
+                        try:
+                            data = client.app.bsky.feed.search_posts(params)
+                        except Exception as page_err:
+                            # Bluesky peut introduire de nouveaux types d'embed non supportés
+                            # par la version actuelle d'atproto — on sauvegarde ce qu'on a
+                            logger.debug('Page %d ignorée pour "%s": %s', _page + 1, kw, page_err)
+                            break
 
-                        is_valid, result = validate_text(post.record.text)
-                        if not is_valid:
-                            skipped += 1
-                            continue
+                        for post in data.posts:
+                            if getattr(post.author, 'handle', None) in EXCLUDED_HANDLES:
+                                skipped += 1
+                                continue
 
-                        clean_text = result
-                        has_image, image_url, detected_langs = extract_metadata(post)
+                            is_valid, result = validate_text(post.record.text)
+                            if not is_valid:
+                                skipped += 1
+                                continue
 
-                        doc = {
-                            "uri": post.uri,
-                            "cid": post.cid,
-                            "text": clean_text,
-                            "created_at": post.record.created_at,
-                            "search_term": kw,
-                            "search_lang": lang,
-                            "collected_at": datetime.datetime.now(),
-                            "author_did": post.author.did,
-                            "author_handle": post.author.handle,
-                            "author_display_name": post.author.display_name,
-                            "has_image": has_image,
-                            "image_url": image_url,
-                            "reply_count": getattr(post, 'reply_count', 0),
-                            "repost_count": getattr(post, 'repost_count', 0),
-                            "like_count": getattr(post, 'like_count', 0),
-                            "declared_langs": detected_langs,
-                            "text_word_count": compute_word_count(clean_text),
-                            "text_language_hint": detect_language_hint(clean_text),
-                            "ai_processed": False
-                        }
+                            clean_text = result
+                            has_image, image_url, detected_langs = extract_metadata(post)
 
-                        ops.append(
-                            UpdateOne({"uri": post.uri}, {"$set": doc}, upsert=True)
-                        )
+                            doc = {
+                                "uri": post.uri,
+                                "cid": post.cid,
+                                "text": clean_text,
+                                "created_at": post.record.created_at,
+                                "search_term": kw,
+                                "search_lang": lang,
+                                "collected_at": datetime.datetime.now(),
+                                "author_did": post.author.did,
+                                "author_handle": post.author.handle,
+                                "author_display_name": post.author.display_name,
+                                "has_image": has_image,
+                                "image_url": image_url,
+                                "reply_count": getattr(post, 'reply_count', 0),
+                                "repost_count": getattr(post, 'repost_count', 0),
+                                "like_count": getattr(post, 'like_count', 0),
+                                "declared_langs": detected_langs,
+                                "text_word_count": compute_word_count(clean_text),
+                                "text_language_hint": detect_language_hint(clean_text),
+                                "ai_processed": False
+                            }
+
+                            ops.append(
+                                UpdateOne({"uri": post.uri}, {"$set": doc}, upsert=True)
+                            )
+
+                        cursor = getattr(data, 'cursor', None)
+                        if not cursor:
+                            break
+                        time.sleep(2.0)  # pause prudente entre pages
 
                     if ops:
                         result = collection.bulk_write(ops)

@@ -116,7 +116,7 @@ Bluesky est un réseau social décentralisé basé sur le protocole AT (Authenti
 Le projet ThumaCheck est composé de 4 briques :
 
 1. **Collecteur** : ingestion continue des posts Bluesky via l'API AT Protocol
-2. **Base de données** : stockage MongoDB des posts collectés (245 000+ posts à date, collecte continue)
+2. **Base de données** : stockage MongoDB des posts collectés (537 000+ posts à date, collecte continue)
 3. **Pipeline NLP** : détection de fake news + analyse émotionnelle
 4. **Dashboard** : visualisation temps réel via Streamlit
 
@@ -349,7 +349,7 @@ Le fichier `src/collection/collect_bluesky.py` réalise une collecte continue :
 
 ### Résultats
 
-- **245 000+ posts** collectés depuis décembre 2025
+- **537 000+ posts** collectés depuis décembre 2025
 - Mix multilingue naturel (FR + EN + autres langues)
 - Champs stockés : `text`, `uri`, `author_handle`, `created_at`, `search_term`, `collected_at`
 
@@ -819,7 +819,7 @@ Le pipeline de production (V5 LogReg) ne consomme que 0.73 g. Les modèles Trans
 
 | Composant | Statut | Détails |
 |-----------|--------|---------|
-| Collecte Bluesky | Opérationnel | 245 000+ posts, collecte continue (V3 rééquilibrée) |
+| Collecte Bluesky | Opérationnel | 537 000+ posts, collecte continue (V3 rééquilibrée) |
 | MongoDB | Opérationnel | Docker, 27017, persistance locale |
 | Pipeline V5 (TF-IDF) | Opérationnel | F1 CV=0.90, seuil 0.44, 197K textes |
 | Pipeline V6 (Style) | Opérationnel | GradientBoosting, 28 features stylistiques, topic-agnostic |
@@ -834,7 +834,7 @@ Le pipeline de production (V5 LogReg) ne consomme que 0.73 g. Les modèles Trans
 
 | Métrique | Valeur |
 |----------|--------|
-| Posts collectés | 245 000+ |
+| Posts collectés | 537 000+ |
 | Datasets d'entraînement | 7 (ISOT EN, Kaggle FR, FakeNewsNet, CONSTRAINT, Credibility, Social FR synth.) |
 | Taille dataset V5 | 197 782 textes |
 | CV F1 V5 (TF-IDF) | 0.90 |
@@ -845,7 +845,7 @@ Le pipeline de production (V5 LogReg) ne consomme que 0.73 g. Les modèles Trans
 | V9 Cascade FP (consensus 473) | 62 (-67% vs V5 seul) |
 | V9 Cascade kappa / AC1 | κ=0.199, AC1=0.802 |
 | Annotation humaine | 200 posts gold (2 annotateurs, κ=0.808, AC1=0.978) + 500 posts (2 annotateurs, κ=0.498) |
-| Bluesky % fiable | 67% |
+| Bluesky % fiable | 68,9% |
 | Notebooks | 28 (00 à 27) |
 | Temps d'inference (V5) | 1.5 ms/texte (~728 textes/sec) |
 | Tests unitaires | 107 tests, 29% coverage |
@@ -868,7 +868,7 @@ Note : les modeles Transformer (CamemBERT, RoBERTa) utilises dans V8/V9 sont plu
 
 | Dimension | Etat actuel | Architecture cible |
 |-----------|-------------|-------------------|
-| Volume de donnees | 245 000+ posts dans MongoDB | > 1M posts supporte sans modification |
+| Volume de donnees | 537 000+ posts dans MongoDB | > 1M posts supporte sans modification |
 | Collecte | Collecteur Python mono-thread, ~25 posts/requete | Kafka + collecteurs distribues pour ingestion temps reel |
 | Inference | Batch sequentiel dans le collecteur | Spark Structured Streaming pour inference parallele |
 | Stockage | MongoDB standalone (Docker) | Replica set MongoDB pour HA + sharding horizontal |
@@ -1223,7 +1223,7 @@ Le gold test set initial (200 posts) avait deux limites :
 
 ### Protocole d'annotation
 
-1. **Échantillonnage stratifié** : 500 posts Bluesky extraits de MongoDB (245 000+ posts)
+1. **Échantillonnage stratifié** : 500 posts Bluesky extraits de MongoDB (537 000+ posts)
    - 250 FR + 250 EN
    - 50 posts par tranche de score V5 (0-0.2, 0.2-0.4, 0.4-0.6, 0.6-0.8, 0.8-1.0)
    - Mélangés aléatoirement pour éviter les biais de séquence
@@ -1395,7 +1395,7 @@ Les notations "test 9/10" ou "test 16/18" dans les tableaux de versions désigne
 
 ### 25.1 Constat : biais d'échantillonnage dans le corpus Bluesky
 
-L'analyse du corpus de 245 000+ posts collectés a révélé deux biais structurels liés aux **termes de recherche** utilisés par le collecteur :
+L'analyse du corpus de 537 000+ posts collectés a révélé deux biais structurels liés aux **termes de recherche** utilisés par le collecteur :
 
 #### Déséquilibre FR/EN
 
@@ -1499,7 +1499,7 @@ L'architecture Docker Compose a été professionnalisée :
 
 Cette phase d'audit et de correction démontre une **maturité dans la gestion d'un projet Data/IA** :
 
-1. **Capacité d'auto-critique** : identifier un biais dans son propre corpus de 237K posts, après 5 mois de collecte, requiert une remise en question permanente et une veille sur la qualité des données.
+1. **Capacité d'auto-critique** : identifier un biais dans son propre corpus de 537K posts, après 5 mois de collecte, requiert une remise en question permanente et une veille sur la qualité des données.
 
 2. **Compréhension du pipeline de bout en bout** : le lien entre termes de recherche → distribution émotionnelle → profil dashboard → interprétation utilisateur illustre la maîtrise de la chaîne de valeur complète.
 

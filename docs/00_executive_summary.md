@@ -21,7 +21,7 @@ Le systeme inclut un dashboard Streamlit 5 pages avec explicabilite SHAP integre
 
 | Indicateur | Valeur |
 |-----------|--------|
-| Posts collectes | 245 000+ (collecte continue depuis Dec 2025) |
+| Posts collectes | 537 845 (collecte finalisée — Juil 2026) |
 | Textes d'entrainement | 197 782 (7 datasets, FR+EN) |
 | F1-score V5 (production) | 0.913 (CV 5-folds) |
 | Reduction faux positifs V9 vs V5 | -67% (IC 95% : [-73%, -60%], Fisher p < 0.001) |

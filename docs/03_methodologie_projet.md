@@ -68,7 +68,7 @@ Le projet ThumaCheck suit une methodologie **Agile adaptee aux projets Data/IA**
 | **V7** | Avril 2026 | Ensemble hybride meta-learner V5+V6 + SHAP | FP reduits de 57 a 25 sur gold set |
 | **V8** | Avril 2026 | Integration CamemBERT comme 3e signal semantique | F1 suspect +28% |
 | **V9** | Mai 2026 | Pipeline 2 etapes fait/opinion | FP -67% (186 a 62), kappa 0.187 |
-| **Collecteur V3** | Mai 2026 | Reequilibrage FR/EN (28 FR + 16 EN), suppression biais emotionnel, inference auto V9 | 245 000+ posts (collecte continue), 100% annotes |
+| **Collecteur V3** | Mai 2026 | Reequilibrage FR/EN (28 FR + 16 EN), suppression biais emotionnel, inference auto V9 | 537 000+ posts (collecte continue), 100% annotes |
 
 ---
 
@@ -219,7 +219,7 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 | R02 | Derive du modele (concept drift) | Elevee (60%) | Moyen | Haute | Monitoring hebdomadaire (`weekly_score_check.py`) : alerte si delta score moyen > 5%. Retraining planifie semestriel | Mitige — monitoring actif |
 | R03 | Biais non detecte dans les predictions | Moyenne (40%) | Eleve | Haute | Audit de biais via gold set (kappa mesure). Analyse F1 par segment (FR/EN, court/long). Diversification continue des datasets | Mitige — gold set V2 |
 | R04 | Panne infrastructure (MongoDB, Docker) | Faible (10%) | Eleve | Moyenne | Volumes persistants Docker, `restart: always`, healthchecks Mongo (`mongosh --eval`). PCA documente dans `09_PRA_PCA.md` | Mitige — healthchecks |
-| R05 | Depassement de la capacite de stockage | Faible (15%) | Moyen | Faible | Monitoring de l'espace disque. Politique de retention 12 mois. 245K posts = ~200 MB | Accepte |
+| R05 | Depassement de la capacite de stockage | Faible (15%) | Moyen | Faible | Monitoring de l'espace disque. Politique de retention 12 mois. 537K posts = ~200 MB | Accepte |
 | R06 | Demande d'effacement RGPD massive | Tres faible (5%) | Moyen | Faible | Procedure d'effacement automatisee documentee dans `02_conformite_RGPD_AI_Act.md` §3.2. Index MongoDB sur `author_handle` | Mitige |
 | R07 | Performance insuffisante sur nouvelle thematique (ex: elections, pandemie) | Moyenne (35%) | Moyen | Moyenne | V6 style-only est topic-agnostic par conception. Datasets complementaires thematiques pre-identifies. Active learning sur les FP | Mitige — V6 topic-agnostic |
 | R08 | Indisponibilite d'un membre du binome | Faible (10%) | Eleve | Moyenne | Documentation exhaustive (12 documents). Code commente. Tous les modeles et scripts reproductibles | Mitige — documentation |

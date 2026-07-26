@@ -777,10 +777,10 @@ avec un facteur 2. Nos explications sont fidèles au modèle. »""")
     slide = prs.slides.add_slide(blank)
     set_bg(slide)
     add_title(slide, "QUALITÉ INDUSTRIELLE")
-    add_subtitle(slide, "501 tests  ·  80 % coverage  ·  80,3 % mutation kill rate")
+    add_subtitle(slide, "537 tests  ·  80 % coverage  ·  80,3 % mutation kill rate")
 
     add_stat_card(slide, 0.6, 1.6, 3.8, 5.0,
-                  "PYTEST", "501", "tests passing\n\n✅ 0 failure\n✅ 0 skip", CYAN)
+                  "PYTEST", "537", "tests passing\n\n✅ 0 failure\n✅ 0 skip", CYAN)
     add_stat_card(slide, 4.8, 1.6, 3.8, 5.0,
                   "COVERAGE", "80 %",
                   "line coverage\n77,9 % branch cov\n\nQuality gate CI\n--fail-under=75", GREEN)
@@ -799,7 +799,7 @@ avec un facteur 2. Nos explications sont fidèles au modèle. »""")
 Timing : 60 secondes
 
 Texte voix-off :
-« 501 tests unitaires, tous passants. 80 % de couverture de code.
+« 537 tests unitaires, tous passants. 80 % de couverture de code.
 Mais la couverture seule ne prouve rien — c'est pour ça qu'on a lancé
 le mutation testing avec mutmut.
 80,3 % des mutants sont tués. Pour contexte, le benchmark industriel
@@ -1006,7 +1006,7 @@ C'est un arbitrage documenté dans la Model Card. »""")
         ("Docker Compose", "4 conteneurs, déploiement 1 commande"),
         ("MongoDB", "Stockage 245K posts, indexes, validation"),
         ("FastAPI", "API REST pour intégration externe"),
-        ("pytest + mutmut", "501 tests, 80% coverage, 80.3% kill"),
+        ("pytest + mutmut", "537 tests, 80% coverage, 80.3% kill"),
         ("CodeCarbon", "Suivi empreinte carbone par version"),
         ("Gantt 16 WP", "28 jalons, planification détaillée"),
     ]

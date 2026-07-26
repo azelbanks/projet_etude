@@ -234,7 +234,7 @@ Premiere couche — les donnees.
 Le collecteur se connecte a Bluesky
 via le protocole AT
 et stocke les posts dans MongoDB.
-245 000 posts collectes a ce jour,
+537 000 posts collectes a ce jour,
 avec deduplication automatique
 et reprise sur erreur reseau.
 
@@ -315,7 +315,7 @@ utiliseront au quotidien.
 
 Cinq pages.
 Vue Globale :
-245 000 posts collectes,
+537 000 posts collectes,
 67 % classes fiables.
 
 ---
@@ -564,15 +564,20 @@ les bons criteres.
 
 # [SLIDE 9 : courbe AOPC]
 
-Le resultat :
-nos explications sont 5,6 fois
-plus predictives
-qu'une attribution au hasard.
+Le resultat est sur cette slide.
+
+On a masque les mots que l'outil jugeait decisifs,
+puis mesure combien la prediction changeait.
+Comparaison : meme chose avec des mots pris au hasard.
+
+Resultat : 5,6 fois plus d'impact
+avec nos explications qu'avec le hasard.
 
 Dit autrement :
 quand notre outil vous dit
 "ce mot a fait basculer la decision",
-c'est verifie et mesurable.
+ce n'est pas une intuition.
+C'est mesure, verifie, documente.
 
 ---
 
@@ -708,15 +713,14 @@ en moins de 5 secondes.
 
 # [SLIDE 12 : Green IT]
 
-Le bilan carbone total
-de tout le projet —
-neuf versions de modeles,
-six entrainements,
-le pipeline d'explicabilite —
-represente 6,9 grammes de CO2.
+Le bilan carbone total de tout le projet —
+12 entrainements mesures avec CodeCarbon —
+represente 8,9 grammes de CO2.
 
-C'est l'equivalent
-d'un kilometre en voiture.
+C'est l'equivalent de 52 metres
+en voiture essence.
+Reference ADEME 2024 : 170 g CO2/km.
+Empreinte quasi nulle.
 
 ---
 

@@ -74,7 +74,7 @@
 ### Q8 — *"Comment évaluez-vous votre modèle sur la dérive temporelle ?"*
 
 **Réponse** :
-> *"Honnête : on ne le fait pas systématiquement aujourd'hui, c'est dans la roadmap V10. On a un script de monitoring hebdomadaire dans `src/monitoring/weekly_score_check.py` qui sauvegarde la distribution des scores en JSON pour détection de drift par comparaison de distributions. Mais on n'a pas encore d'alerting automatique. Pour la soutenance, on a vérifié manuellement la stabilité des scores sur les 245 000 posts collectés depuis décembre 2025 — pas de drift visible. Industrialiser ce monitoring avec Grafana et alerts est priorisé V11."*
+> *"Honnête : on ne le fait pas systématiquement aujourd'hui, c'est dans la roadmap V10. On a un script de monitoring hebdomadaire dans `src/monitoring/weekly_score_check.py` qui sauvegarde la distribution des scores en JSON pour détection de drift par comparaison de distributions. Mais on n'a pas encore d'alerting automatique. Pour la soutenance, on a vérifié manuellement la stabilité des scores sur les 537 000 posts collectés depuis décembre 2025 — pas de drift visible. Industrialiser ce monitoring avec Grafana et alerts est priorisé V11."*
 
 **Stratégie** : reconnaître la limite, montrer ce qui existe, donner la roadmap. Honnêteté > esquive.
 

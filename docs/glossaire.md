@@ -17,7 +17,7 @@ Les definitions sont volontairement concises et contextualisees au projet.
 
 **Biais** — Distorsion systematique dans les donnees ou le modele qui conduit a des predictions inegalement fiables selon les sous-populations ou les contextes. ThumaCheck documente un biais lexical (sensibilite aux marqueurs de surface) et un biais temporel (drift sur evenements recents).
 
-**Bluesky** — Reseau social decentralise base sur l'AT Protocol. Source de donnees principale de ThumaCheck, avec plus de 245 000 posts collectes depuis decembre 2025.
+**Bluesky** — Reseau social decentralise base sur l'AT Protocol. Source de donnees principale de ThumaCheck, avec plus de 537 000 posts collectes depuis decembre 2025.
 
 **CamemBERT** — Modele Transformer pre-entraine sur du francais, derive de RoBERTa. Fine-tune dans ThumaCheck pour la detection de desinformation sur textes ultra-courts (F1 = 0.957).
 

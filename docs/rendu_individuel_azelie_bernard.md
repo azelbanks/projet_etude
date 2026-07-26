@@ -32,7 +32,7 @@ J'ai assuré le rôle de **lead technique** sur le projet ThumaCheck, couvrant l
 - Configuration MongoDB avec index unique et volumes persistants
 - Rééquilibrage FR/EN de la collecte (V3 collecteur : 28 termes FR + 16 termes EN, suppression des biais émotionnels)
 - Inférence automatique intégrée au collecteur (émotions + V5 à chaque cycle)
-- **Résultat** : 245 000+ posts collectés depuis décembre 2025 (collecte continue), 100% annotés émotionnellement
+- **Résultat** : 537 000+ posts collectés depuis décembre 2025 (collecte continue), 100% annotés émotionnellement
 
 ### 2.2 Pipeline NLP (Jan - Avril 2026)
 - Baseline V1.0 : TF-IDF + LogisticRegression (F1=0.99, identifié le biais Reuters)
@@ -167,7 +167,7 @@ J'ai assuré le rôle de **lead technique** sur le projet ThumaCheck, couvrant l
 
 ## 6. Bilan personnel
 
-Ce projet représente 6 mois de travail intensif sur un problème complexe et ouvert : la détection de désinformation sur les réseaux sociaux. En tant que lead technique, j'ai mené un projet Data/IA de bout en bout — de la collecte de 245 000+ posts Bluesky au déploiement d'un dashboard interactif, en passant par 9 itérations du pipeline NLP.
+Ce projet représente 6 mois de travail intensif sur un problème complexe et ouvert : la détection de désinformation sur les réseaux sociaux. En tant que lead technique, j'ai mené un projet Data/IA de bout en bout — de la collecte de 537 000+ posts Bluesky au déploiement d'un dashboard interactif, en passant par 9 itérations du pipeline NLP.
 
 Les apprentissages clés :
 - **L'évaluation est plus importante que l'entraînement** : un F1=0.99 en cross-validation masquait un biais Reuters. Le gold test set a été un tournant dans ma compréhension de l'évaluation des modèles.

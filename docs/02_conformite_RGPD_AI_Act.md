@@ -34,7 +34,7 @@ Selon l'article 35 du RGPD, une AIPD est obligatoire lorsque le traitement est s
 | Decision automatisee avec effet juridique | Non | Le score est indicatif, aucune decision automatisee |
 | Surveillance systematique | Partiellement | Collecte continue mais sur posts publics uniquement |
 | Donnees sensibles (Art. 9) | Non | Pas de collecte d'opinions politiques, religion, sante en tant que telles |
-| Donnees a grande echelle | Oui | 245 000+ posts collectes (collecte continue) |
+| Donnees a grande echelle | Oui | 537 000+ posts collectes (collecte continue) |
 | Croisement de donnees | Non | Pas de croisement avec d'autres bases |
 | Personnes vulnerables | Non | Pas de ciblage de populations vulnerables |
 | Usage innovant de technologies | Oui | IA appliquee a la detection de desinformation |

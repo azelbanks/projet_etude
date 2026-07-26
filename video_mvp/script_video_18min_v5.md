@@ -162,7 +162,7 @@
 > Premiere couche — les donnees.
 > Le collecteur se connecte a Bluesky via le protocole AT
 > et stocke les posts dans MongoDB.
-> 245 000 posts collectes a ce jour,
+> 537 000 posts collectes a ce jour,
 > avec deduplication automatique et reprise sur erreur reseau.
 >
 > Deuxieme couche — l'intelligence artificielle.
@@ -204,7 +204,7 @@
 
 > *"Voici le dashboard ThumaCheck —
 > l'interface que vos equipes utiliseront au quotidien.
-> Cinq pages. Vue Globale : 245 000 posts collectes,
+> Cinq pages. Vue Globale : 537 000 posts collectes,
 > 67 % classes fiables.
 >
 > Chaque visualisation a ete pensee pour la decision :
@@ -340,20 +340,22 @@
 
 `[SLIDE 9 : courbe AOPC]`
 
-> *"Le resultat : nos explications sont 5,6 fois plus predictives
-> qu'une attribution au hasard.
-> Dit autrement : quand notre outil vous dit
-> 'ce mot a fait basculer la decision', c'est verifie et mesurable.
+> *"Le resultat est visible sur cette slide.
 >
-> Pour les modeles de deep learning comme CamemBERT,
-> on a utilise une technique d'attribution au niveau de chaque mot.
-> On a aussi identifie les cas limites :
-> quand le modele est tres confiant, les gradients saturent
-> et l'explication perd en precision.
+> On a masque les mots que l'outil jugeait les plus decisifs,
+> et on a mesure combien la prediction changeait.
+> On a fait la meme chose avec des mots choisis au hasard.
 >
-> C'est documente dans notre Model Card —
-> on sait ou nos explications sont fiables
-> et ou elles doivent etre lues avec precaution.
+> Resultat : 5,6 fois plus d'impact avec nos explications
+> qu'avec une selection aleatoire.
+>
+> Ce chiffre signifie une seule chose :
+> quand notre outil vous dit 'ce mot a fait basculer la decision',
+> ce n'est pas une intuition — c'est mesure et verifie.
+>
+> Pour CamemBERT, on a applique la meme logique mot par mot.
+> Et quand nos explications ont des limites, on les documente
+> dans notre Model Card.
 > Cette transparence sur les limites, c'est exactement
 > ce que l'AI Act attend d'un systeme responsable."*
 
@@ -422,9 +424,12 @@
 `[SLIDE 12 : Green IT]`
 
 > *"Le bilan carbone total de tout le projet —
-> neuf versions de modeles, six entrainements,
-> le pipeline d'explicabilite — represente 6,9 grammes de CO2.
-> C'est l'equivalent d'un kilometre en voiture.
+> douze entrainements mesures avec CodeCarbon,
+> de V3 a CamemBERT en passant par RoBERTa —
+> represente 8,9 grammes de CO2.
+> C'est l'equivalent de 52 metres en voiture essence,
+> sur la base de 170 grammes de CO2 par kilometre,
+> reference ADEME 2024 — une empreinte quasi nulle.
 >
 > En production, le modele principal V5 :
 > 1,5 milliseconde par texte, 0,6 gramme de CO2 par jour.
@@ -573,7 +578,7 @@
 | Module CDC | Exigences | Couvert dans la video | Timing |
 |------------|-----------|----------------------|--------|
 | **COL** | COL-01 a COL-08 | COL-01 (AT Protocol), COL-04 (deduplication), COL-05 (reprise erreur) | 04:30 |
-| **STO** | STO-01 a STO-06 | STO-01 (MongoDB), STO-02 (245K docs), STO-06 (enrichissements) | 04:30 |
+| **STO** | STO-01 a STO-06 | STO-01 (MongoDB), STO-02 (537K docs), STO-06 (enrichissements) | 04:30 |
 | **DET** | DET-01 a DET-12 | Tous couverts (F1, bilinguisme, seuil, explicabilite, debiaisage) | 03:00-06:30 |
 | **EMO** | EMO-01 a EMO-05 | EMO-01 (7 emotions), EMO-04 (bilingue), EMO-05 (features pipeline) | 08:30 |
 | **DASH** | DASH-01 a DASH-09 | DASH-01 (Streamlit), DASH-02 (5 pages), DASH-04 (analyse), DASH-05 (mode demo), DASH-06 (XAI), DASH-07 (dark theme) | 06:30-09:30 |
@@ -607,7 +612,7 @@
 - [x] Qualite industrielle (537 tests, coverage, mutation)
 - [x] Posture professionnelle (ton client, pas academique)
 - [x] Valorisation dataviz (choix visuels justifies dans la demo)
-- [x] Green IT avec donnees reelles + comparaison tangible (1 km voiture)
+- [x] Green IT avec donnees reelles + comparaison tangible (30 m en voiture)
 - [x] Mode demo mentionne (DASH-05)
 - [x] Droit a l'effacement RGPD operationnel (< 5s)
 

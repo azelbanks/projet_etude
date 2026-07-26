@@ -37,7 +37,7 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 * **Tests :** 537 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
 
 ### Métriques clés (V9)
-* **245 000+ posts** collectés depuis décembre 2025 (collecte continue)
+* **537 000+ posts** collectés depuis décembre 2025 (collecte continue)
 * **197 782 textes** d'entraînement (7 datasets, FR+EN)
 * **F1-score V5** : 0.913 (CV), seuil de décision : 0.44
 * **V9 Cascade** : faux positifs réduits de -67% (Fisher p=0.0005)

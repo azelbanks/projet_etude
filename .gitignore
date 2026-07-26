@@ -50,3 +50,7 @@ backups/
 
 # Mutation testing cache
 .mutmut-cache
+# Rushes vidéo bruts (trop lourds pour git)
+*.mov
+video_mvp/capcut/
+video_mvp/ThumaCheck_slides_CLIENT_v2.pptx

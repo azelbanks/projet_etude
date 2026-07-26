@@ -195,6 +195,7 @@ class DatasetCleaner:
         french_oversample: int = 3,
         social_oversample: int = 2,
         en_subsample: Optional[int] = None,
+        **kwargs,
     ) -> pd.DataFrame:
         """
         Crée un dataset bilingue en combinant les données anglaises nettoyées,
