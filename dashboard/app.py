@@ -1092,8 +1092,7 @@ def _page_single_analysis(detector, emo, v6_data, v7_data, cam_classifier, stage
                             unsafe_allow_html=True,
                         )
                         st.caption(
-                            "Poids d'attention du token [CLS] (derniere couche, moyenne sur 12 tetes). "
-                            "Rouge intense = le modele concentre son attention sur ce token."
+                            "Plus un mot est rouge, plus le modele s'y est appuye pour sa prediction."
                         )
                 except Exception as e:
                     logging.debug("Attention CamemBERT non disponible: %s", e)

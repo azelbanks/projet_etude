@@ -2,10 +2,10 @@ credentials:
   usernames:
     admin:
       name: Administrateur
-      password: "$2b$12$1.AOtpQacaA2ILKQhjO6Iug8Zyd2hh/h4VR3PO4KBfdtm40P4lgK."
+      password: "$2b$12$5TDGB05QZ8ZtgN1HazViKeqDTy6DVDOcR1tfcX5hpl3qvCgjnFQy."
     viewer:
       name: Lecteur
-      password: "$2b$12$1.AOtpQacaA2ILKQhjO6Iug8Zyd2hh/h4VR3PO4KBfdtm40P4lgK."
+      password: "$2b$12$bHxsmcf7kZlLfKzo9C5NvOvcE6g2kgCXANVF1BoaQAoxALheNo3hK"
 cookie:
   expiry_days: 7
   key: "thumalien_auth_cookie_key_2026"

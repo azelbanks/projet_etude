@@ -5,6 +5,7 @@ import json
 import time
 import datetime
 import random
+import hashlib
 import logging
 from pathlib import Path
 from atproto import Client
@@ -97,6 +98,14 @@ def load_excluded_handles():
         return {line.strip() for line in f if line.strip()}
 
 EXCLUDED_HANDLES = load_excluded_handles()
+
+# --- RGPD : Pseudonymisation des identifiants auteurs ---
+_PSEUDO_SALT = os.environ.get('PSEUDO_SALT', 'thumacheck_2026_default_salt')
+
+
+def pseudonymize(value: str) -> str:
+    """Hash SHA-256 tronqué (16 car.) — pseudonymisation irréversible RGPD."""
+    return hashlib.sha256(f'{_PSEUDO_SALT}:{value}'.encode()).hexdigest()[:16]
 
 
 def reload_excluded_handles():
@@ -313,9 +322,9 @@ def run_collection_cycle(collection, client, monitor=None):
                                 "search_term": kw,
                                 "search_lang": lang,
                                 "collected_at": datetime.datetime.now(),
-                                "author_did": post.author.did,
-                                "author_handle": post.author.handle,
-                                "author_display_name": post.author.display_name,
+                                "author_did": pseudonymize(post.author.did),
+                                "author_handle": pseudonymize(post.author.handle),
+                                "author_display_name": pseudonymize(post.author.display_name or ''),
                                 "has_image": has_image,
                                 "image_url": image_url,
                                 "reply_count": getattr(post, 'reply_count', 0),
