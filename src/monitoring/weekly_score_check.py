@@ -2,7 +2,7 @@
 ThumaCheck — Weekly Score Monitoring
 ====================================
 
-Connects to MongoDB, samples recent posts, runs the ExpertFakeNewsDetector V2,
+Connects to MongoDB, samples recent posts, runs the ExpertFakeNewsDetector V5,
 computes key metrics, and writes a JSONL report to logs/weekly_scores.jsonl.
 
 Usage:
@@ -187,8 +187,8 @@ def main() -> None:
     # 2. Load model
     model_dir = os.path.join(PROJECT_ROOT, 'models')
     detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
-    v2_path = os.path.join(model_dir, 'model_expert_v2.pkl')
-    suffix = 'expert_v2' if os.path.exists(v2_path) else 'expert'
+    v5_path = os.path.join(model_dir, 'model_expert_v5.pkl')
+    suffix = 'expert_v5' if os.path.exists(v5_path) else 'expert'
     detector.load(suffix=suffix)
     logger.info('Model loaded (suffix=%s).', suffix)
 

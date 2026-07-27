@@ -234,7 +234,7 @@ LIMITES CONNUES :
   - Le modele peut evoluer dans le temps (concept drift)
 USAGE PREVU : Aide a la decision pour analystes, journalistes, chercheurs
 USAGE PROSCRIT : Censure automatisee, profilage individuel, decisions juridiques
-EMPREINTE CARBONE : 6.14 g CO2 (total entrainements V1-V9 + Transformers)
+EMPREINTE CARBONE : 8.86 g CO2 (total entrainements V1-V9 + Transformers)
 DATE D'ENTRAINEMENT : Decembre 2025 — Mai 2026 (9 iterations)
 RESPONSABLE : Azelie Bernard
 ```

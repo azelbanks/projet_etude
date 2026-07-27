@@ -34,7 +34,7 @@ FIELDNAMES = ['timestamp', 'model_version', 'description',
               'equivalent_voiture_m', 'note']
 
 def fmt_g(kg): return f"{kg * 1000:.4f} g"
-def fmt_m(kg): return f"{(kg / 0.18) * 1000:.1f} m"
+def fmt_m(kg): return f"{(kg / 0.170) * 1000:.1f} m"
 
 def read_last_emission(csv_path):
     try:

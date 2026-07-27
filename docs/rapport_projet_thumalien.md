@@ -801,13 +801,13 @@ CodeCarbon mesure la consommation électrique (CPU + RAM) pendant l'entraînemen
 | CamemBERT fine-tune | 10.7 min | 0.48 g | Textes FR courts |
 | RoBERTa EN V1 | 37.4 min | 1.69 g | Fine-tune anglais |
 | RoBERTa EN V2 | 39.3 min | 1.78 g | +10K EN synthétiques |
-| **Total projet** | **~2h16** | **6.14 g** | |
+| **Total projet** | **~2h16** | **8.86 g** | |
 
 ### Contexte
 
 - Un email envoyé : ~4 g CO2
 - Une recherche Google : ~7 g CO2
-- **Tous nos entraînements cumulés : 6.14 g CO2** (moins qu'une recherche Google)
+- **Tous nos entraînements cumulés : 8.86 g CO2** (moins qu'une recherche Google)
 
 Le pipeline de production (V5 LogReg) ne consomme que 0.73 g. Les modèles Transformer (CamemBERT, RoBERTa) représentent 64% des émissions mais n'interviennent qu'en complément pour les textes courts.
 
@@ -1527,7 +1527,7 @@ Cette phase d'audit et de correction démontre une **maturité dans la gestion d
 
 6. **CamemBERT : signal utile mais non déployé en production standalone** : CamemBERT (443 MB de checkpoint, F1=0.957 sur textes FR ultra-courts) est intégré dans le méta-learner V8 comme 3e signal, mais le pipeline V9 en production utilise la cascade Stage 1 + V5 LogReg (1.5 ms/texte) comme architecture principale. Ce choix est délibéré :
    - **Frugalité** : V5 LogReg infère en 1.5 ms vs ~200 ms pour CamemBERT (ratio 130x)
-   - **Empreinte carbone** : le fine-tuning CamemBERT a coûté 0.48 g CO2 sur les 6.14 g totaux du projet (8%), mais les Transformers combinés (CamemBERT + RoBERTa) représentent 3.95 g (64%). Le ROI GreenIT ne justifie pas un déploiement systématique de CamemBERT
+   - **Empreinte carbone** : le fine-tuning CamemBERT a coûté 0.48 g CO2 sur les 8.86 g totaux du projet (8%), mais les Transformers combinés (CamemBERT + RoBERTa) représentent 3.95 g (64%). Le ROI GreenIT ne justifie pas un déploiement systématique de CamemBERT
    - **Robustesse** : V5 est entraîné sur 197 782 textes bilingues, CamemBERT sur ~5 000 textes FR — le modèle frugal est plus robuste hors distribution
    - **Usage réel** : CamemBERT est mobilisé dans V8 lorsque V5 et V6 divergent (désaccord) et pour le pipeline XAI (attention, Integrated Gradients). C'est un **complément d'analyse**, pas un classifieur autonome
 

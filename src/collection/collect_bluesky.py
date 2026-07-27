@@ -152,7 +152,8 @@ def detect_language_hint(text):
 
     # Methode principale : langdetect (probabiliste, fiable)
     try:
-        from langdetect import detect
+        from langdetect import detect, DetectorFactory
+        DetectorFactory.seed = 0
         lang = detect(text_without_urls[:500])
         if lang == 'fr':
             return 'fr'
@@ -255,7 +256,7 @@ def run_collection_cycle(collection, client, monitor=None):
                 alert_path.parent.mkdir(parents=True, exist_ok=True)
                 import json as _json
                 alert_data = {
-                    'timestamp': datetime.now().isoformat(),
+                    'timestamp': datetime.datetime.now().isoformat(),
                     'event': 'circuit_breaker_open',
                     'consecutive_failures': consecutive_failures,
                     'timeout_seconds': CIRCUIT_BREAKER_TIMEOUT,

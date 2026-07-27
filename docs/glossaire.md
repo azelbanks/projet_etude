@@ -59,7 +59,7 @@ Les definitions sont volontairement concises et contextualisees au projet.
 
 **Gold test set** — Jeu de test de reference annote manuellement par des experts. ThumaCheck utilise 500 posts Bluesky annotes par 2 annotateurs independants (kappa de Cohen = 0.498).
 
-**Green IT** — Demarche visant a reduire l'empreinte environnementale du numerique. ThumaCheck privilegie des modeles frugaux (LogReg en production) et mesure ses emissions via CodeCarbon (6.14 g CO2 total).
+**Green IT** — Demarche visant a reduire l'empreinte environnementale du numerique. ThumaCheck privilegie des modeles frugaux (LogReg en production) et mesure ses emissions via CodeCarbon (8.86 g CO2 total).
 
 **Integrated Gradients** — Methode d'attribution qui mesure la contribution de chaque feature d'entree a la prediction d'un modele en integrant les gradients le long d'un chemin de reference. Implementee via Captum dans ThumaCheck pour CamemBERT.
 

@@ -233,5 +233,5 @@ python3 -m pytest tests/test_benchmark_latence.py -v -s
 ## Green IT
 
 L'empreinte carbone de l'ensemble des entraînements est suivie via **CodeCarbon** :
-- **Total CO2** : 6.14 g (6 sessions d'entraînement V1-V9 + CamemBERT + RoBERTa)
+- **Total CO2** : 8.86 g (6 sessions d'entraînement V1-V9 + CamemBERT + RoBERTa)
 - Equivalent à moins d'une recherche Google (~7 g). Le choix de modèles frugaux (LogReg + fine-tuning court) limite l'empreinte

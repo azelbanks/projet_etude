@@ -67,7 +67,7 @@ def fmt_g(kg):
     return f"{kg * 1000:.4f} g"
 
 def fmt_m(kg):
-    m = (kg / 0.18) * 1000
+    m = (kg / 0.170) * 1000
     return f"{m:.1f} m"
 
 def read_last_emission(csv_path):
@@ -89,7 +89,7 @@ def write_audit_row(writer, name, desc, kg, duration_s, note=""):
         'duration_min': f"{duration_s / 60:.1f}",
         'emissions_kg': f"{kg:.8f}",
         'emissions_g': f"{kg * 1000:.4f}",
-        'equivalent_voiture_m': f"{(kg / 0.18) * 1000:.1f}",
+        'equivalent_voiture_m': f"{(kg / 0.170) * 1000:.1f}",
         'note': note,
     })
 

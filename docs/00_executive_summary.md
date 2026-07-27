@@ -28,7 +28,7 @@ Le systeme inclut un dashboard Streamlit 5 pages avec explicabilite SHAP integre
 | CamemBERT FR (ultra-court) | F1 = 0.957 |
 | Latence inference | 1.5 ms/texte (728 textes/sec) |
 | Tests unitaires | 342 tests, 49% couverture |
-| Empreinte CO2 totale | 6.14 g (< 1 recherche Google) |
+| Empreinte CO2 totale | 8.86 g (< 1 recherche Google) |
 | Gold standard | 500 posts, 2 annotateurs, kappa = 0.498 |
 | Versions iterees | 9 versions documentees (V1 a V9) |
 
@@ -54,7 +54,7 @@ Le systeme inclut un dashboard Streamlit 5 pages avec explicabilite SHAP integre
 - **Scientifique** : pipeline cascade fait/opinion original reduisant les FP de 67% (valide statistiquement par bootstrap)
 - **Technique** : architecture Docker micro-services reproductible, CI/CD, 342 tests
 - **Ethique** : conformite RGPD + AI Act, explicabilite multi-niveaux (SHAP, attention, IG), Model Card
-- **Environnemental** : 6.14 g CO2 total, choix delibere de modeles frugaux (LogReg en prod, CamemBERT reserve au FR)
+- **Environnemental** : 8.86 g CO2 total, choix delibere de modeles frugaux (LogReg en prod, CamemBERT reserve au FR)
 - **Pedagogique** : 9 iterations documentees avec echecs (self-training) et pivots (debiaisage Reuters)
 
 ---

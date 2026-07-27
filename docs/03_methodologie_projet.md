@@ -193,7 +193,7 @@ Un modele ne peut etre deploye en production que s'il satisfait TOUS les critere
 | Ecart F1 FR-EN | < 15 points | 5.0 points |
 | % fiable sur Bluesky | 60-85% | 73.4% |
 | Pas de regression vs version precedente | F1 articles longs stable | 0.988 (identique V1.5) |
-| Empreinte carbone | < 10 g CO2 (total projet) | 6.14 g |
+| Empreinte carbone | < 10 g CO2 (total projet) | 8.86 g |
 | Temps d'inference | < 100ms/texte | ~50ms |
 
 ### 3.3 Qualite du code
@@ -292,7 +292,7 @@ Le projet a atteint le pipeline V9 (cascade fait/opinion + meta-learner V8). Les
 | Volume de posts collectes | `db.raw_posts.countDocuments()` | Quotidien | > 1 000/jour | ~2 000/jour |
 | Uptime collecteur | Logs de collecte | Mensuel | > 95% | ~90% (estimé) |
 | Temps d'inference | Benchmark sur 1 000 textes | A chaque version | < 100ms/texte | ~50ms |
-| Empreinte carbone | CodeCarbon | A chaque entrainement | < 10 g CO2 (cumul) | 6.14 g |
+| Empreinte carbone | CodeCarbon | A chaque entrainement | < 10 g CO2 (cumul) | 8.86 g |
 | Taille du dataset d'entrainement | Comptage | A chaque version | > 100 000 | 197 782 |
 
 ### 6.2 KPI projet

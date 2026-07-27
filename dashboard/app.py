@@ -1549,7 +1549,7 @@ def _section_carbon():
         c3.markdown(metric_card('', 'Durée totale', f'{total_duration/60:.1f} min', '#00D4FF'), unsafe_allow_html=True)
         c4.markdown(metric_card('', 'Runs', f'{len(em_df)} mesurés + 3 estimés', '#E0E0E0'), unsafe_allow_html=True)
 
-        km_voiture = total_co2_g / 120  # 120g CO2/km
+        km_voiture = total_co2_g / 170  # 170g CO2/km (ADEME 2024)
         smartphones = total_energy * 1000 / 12
         st.markdown(
             '<div class="glass-card" role="region" aria-label="Equivalences ecologiques">'
