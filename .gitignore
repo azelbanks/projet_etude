@@ -37,6 +37,7 @@ models/roberta_en_v2.pt
 # Logs et Monitoring
 .codecarbon.config
 logs/
+mlruns/
 
 # Exception : garder emissions CodeCarbon pour le bilan carbone
 !emissions.csv

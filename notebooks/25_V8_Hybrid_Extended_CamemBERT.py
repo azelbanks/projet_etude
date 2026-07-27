@@ -32,6 +32,7 @@ sys.path.insert(0, os.path.join(_proj, 'src'))
 
 from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
 from pipeline.camembert_classifier import CamemBERTClassifier
+from monitoring.mlflow_tracker import track_experiment
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import (
@@ -535,6 +536,20 @@ if best_meta_model is not None and best_f1_suspect > 0:
 
     # Garder aussi le V7 comme backup
     print(f"  V7 conservé comme backup : model_hybrid_v7.joblib")
+
+    # --- MLFlow logging ---
+    with track_experiment("V8_MetaLearner_CamemBERT", params={
+        "architecture": "V5+V6+CamemBERT meta-learner",
+        "meta_features": str(best_names),
+        "best_config": best_config_name,
+        "uses_camembert": True,
+    }) as mlf_run:
+        mlf_run.log_metrics({
+            "gold_f1_suspect": best_f1_suspect,
+            "gold_f1_macro": max(r['f1_macro'] for r in results_table),
+        })
+        mlf_run.log_artifact(save_path)
+        print(f"  MLFlow run logged: {mlf_run.run_id}")
 
 elapsed = time.time() - t0
 print(f"\n  Temps total : {elapsed:.0f}s ({elapsed/60:.1f}min)")

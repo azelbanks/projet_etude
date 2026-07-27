@@ -42,6 +42,7 @@ from pipeline.expert_detector import (
     ExpertFakeNewsDetector,
     LinguisticFeatureExtractor,
 )
+from monitoring.mlflow_tracker import track_experiment
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     classification_report,
@@ -229,6 +230,28 @@ print("\n[6/7] Sauvegarde du modele V5...")
 
 detector_v5.save('expert_v5')
 print(f"  Modele sauvegarde dans {MODEL_DIR} (suffix=expert_v5)")
+
+# --- MLFlow logging ---
+with track_experiment("V5_TF-IDF_LogReg", params={
+    "model_type": "logreg",
+    "max_features": 30000,
+    "ngram_range": "(1,3)",
+    "C": 1.0,
+    "threshold": 0.44,
+    "n_folds": 5,
+    "n_train": len(df_train),
+    "n_test": len(df_test),
+}) as mlf_run:
+    mlf_run.log_metrics({
+        "accuracy": eval_results['accuracy'],
+        "f1": eval_results['f1'],
+        "precision": eval_results['precision'],
+        "recall": eval_results['recall'],
+    })
+    if 'roc_auc' in eval_results:
+        mlf_run.log_metrics({"roc_auc": eval_results['roc_auc']})
+    mlf_run.log_artifact(os.path.join(MODEL_DIR, 'model_expert_v5.pkl'))
+    print(f"  MLFlow run logged: {mlf_run.run_id}")
 
 # ============================================================
 #  7. HEALTH CHECK + COMPARAISON V4 vs V5
