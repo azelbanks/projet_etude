@@ -123,19 +123,6 @@ services:
     networks:
       - thumalien_network
 
-# -----------------------------------------------------------------
-#  API FastAPI (lancement manuel) :
-#    docker compose run --rm -p 8000:8000 collector \
-#      uvicorn src.api.main:app --host 0.0.0.0 --port 8000
-# -----------------------------------------------------------------
-
-# -----------------------------------------------------------------
-#  Reseau interne
-# -----------------------------------------------------------------
-networks:
-  thumalien_network:
-    driver: bridge
-
   # -----------------------------------------------------------------
   #  Service 6 (optional) : MLflow UI — Experiment Tracking
   # -----------------------------------------------------------------
@@ -155,3 +142,16 @@ networks:
       - thumalien_network
     profiles:
       - mlops
+
+# -----------------------------------------------------------------
+#  API FastAPI (lancement manuel) :
+#    docker compose run --rm -p 8000:8000 collector \
+#      uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+# -----------------------------------------------------------------
+
+# -----------------------------------------------------------------
+#  Reseau interne
+# -----------------------------------------------------------------
+networks:
+  thumalien_network:
+    driver: bridge
