@@ -1,6 +1,6 @@
 # ThumaCheck — Social Media Intelligence & AI Monitor
 
-> **Développé par [Niamato Consulting](https://github.com/azelbanks/thumacheck) (Azélie Bernard & Sébastien Lazcanotegui) pour [Thumalien](https://thumalien.com), entreprise spécialisée en fact-checking et veille média.**
+> **Built by [Niamato Consulting](https://github.com/azelbanks/thumacheck) (Azélie Bernard & Sébastien Lazcanotegui) for [Thumalien](https://thumalien.com), a fact-checking and media monitoring company.**
 
 ![CI](https://github.com/azelbanks/thumacheck/actions/workflows/ci.yml/badge.svg)
 ![Coverage](https://img.shields.io/badge/Coverage-80%25-brightgreen?style=for-the-badge)
@@ -11,13 +11,26 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=for-the-badge&logo=streamlit)
 ![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-EE4C2C?style=for-the-badge&logo=pytorch)
 
-## Description du Projet
+
+> **English summary below** — Detailed documentation in French follows.
+
+### TL;DR (English)
+
+ThumaCheck is a **real-time misinformation detection system** for Bluesky, built for Thumalien (fact-checking firm). It combines a V9 cascade NLP pipeline (CamemBERT FR F1: 0.957, RoBERTa EN F1: 0.874) with 7-class emotion analysis. The system processes **728 texts/second** at 1.5ms latency, includes **8 explainability mechanisms** (SHAP, attention, Integrated Gradients), and is backed by **537 tests at 80% coverage**. Architecture: FastAPI + Streamlit + MongoDB + Docker Compose.
+
+**Quick start:** `git clone → cp .env.example .env → docker-compose up -d`
+
+**Key commands:** `make test` · `make lint` · `make dashboard` · `make api`
+
+---
+
+## Project Description
 
 **ThumaCheck** est une solution complète de surveillance et d'analyse des réseaux sociaux (Bluesky) en temps réel, développée par **Niamato Consulting** pour le compte de **Thumalien**. Le projet intègre un pipeline Data Engineering complet et deux modèles d'Intelligence Artificielle pour qualifier l'information.
 
 L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et d'analyser l'**ambiance émotionnelle** des discussions en ligne.
 
-### Fonctionnalités Clés
+### Key Features
 * **Collecte en temps réel :** Ingestion continue des posts Bluesky via l'API AT Protocol.
 * **Détection de Fake News (V9) :** Pipeline cascade 2 étapes : filtre fait/opinion puis analyse V8 (meta-learner V5+V6+CamemBERT) + RoBERTa EN cascade (60/40 blend textes courts). Bilingue FR/EN, 17 features linguistiques (dont emoji) + 28 features stylistiques.
 * **Analyse Émotionnelle (Deep Learning) :** Réseau de neurones MLP (PyTorch) classifiant les textes selon 7 émotions (Colère, Dégoût, Joie, Neutre, Peur, Surprise, Tristesse).
@@ -39,7 +52,7 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon (entraînement + API en temps réel).
 * **Tests :** 537 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
 
-### Métriques clés (V9)
+### Key Metrics (V9)
 * **537 845 posts** collectés depuis décembre 2025 (collecte finalisée — Juil 2026)
 * **197 782 textes** d'entraînement (7 datasets, FR+EN)
 * **F1-score V5** : 0.913 (CV), seuil de décision : 0.44
@@ -52,7 +65,7 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 
 ---
 
-## Architecture Technique
+## Technical Architecture
 
 
 ### Baselines & Comparisons
@@ -81,7 +94,7 @@ graph LR
 
 ---
 
-## Structure du Projet
+## Project Structure
 
 ```
 thumacheck/
@@ -146,7 +159,7 @@ thumacheck/
 
 ---
 
-## Documentation PDF
+## PDF Documentation
 
 Tous les documents sont disponibles dans [`docs/pdf/`](docs/pdf/) :
 
@@ -172,7 +185,7 @@ Tous les documents sont disponibles dans [`docs/pdf/`](docs/pdf/) :
 
 ---
 
-## Historique des versions
+## Version History
 
 | Version | Date | F1 global | F1 FR court | F1 EN court | Innovation clé |
 |---------|------|-----------|-------------|-------------|----------------|
@@ -194,7 +207,7 @@ Tous les documents sont disponibles dans [`docs/pdf/`](docs/pdf/) :
 
 ---
 
-## Installation & Lancement
+## Installation & Usage
 
 ```bash
 # Cloner le projet
