@@ -40,7 +40,7 @@ logs/
 mlruns/
 
 # Exception : garder emissions CodeCarbon pour le bilan carbone
-!emissions.csv
+!data/emissions.csv
 
 # Backups et fichiers temporaires
 *.bak
@@ -53,5 +53,3 @@ backups/
 .mutmut-cache
 # Rushes vidéo bruts (trop lourds pour git)
 *.mov
-video_mvp/capcut/
-video_mvp/ThumaCheck_slides_CLIENT_v2.pptx

@@ -1,0 +1,58 @@
+# ThumaCheck — Model Hyperparameters
+# ===================================
+# Centralized configuration for all ML pipeline parameters.
+# Edit this file instead of modifying source code.
+
+# --- Training ---
+training:
+  random_seed: 42
+  n_folds: 5
+  test_size: 0.2
+
+# --- Detection thresholds ---
+thresholds:
+  default: 0.44
+  fr: null  # Use per-language threshold (null = use default)
+  en: null
+
+# --- TF-IDF ---
+tfidf:
+  max_features: 15000
+  ngram_range: [1, 2]
+  sublinear_tf: true
+  min_df: 2
+
+# --- CamemBERT ---
+camembert:
+  max_length: 128
+  batch_size: 16
+  learning_rate: 0.00002
+  epochs: 3
+  warmup_ratio: 0.1
+
+# --- RoBERTa ---
+roberta:
+  max_length: 128
+  batch_size: 16
+  learning_rate: 0.00002
+  epochs: 3
+
+# --- Emotion MLP ---
+emotion:
+  vocab_size: 10000
+  embed_dim: 64
+  max_length: 100
+  num_classes: 7
+
+# --- API ---
+api:
+  rate_limit_requests: 60
+  rate_limit_window_seconds: 60
+  cors_origins:
+    - "http://localhost:8501"
+
+# --- V9 Cascade ---
+cascade:
+  camembert_weight: 0.6
+  roberta_weight: 0.4
+  false_positive_reduction_target: 0.67

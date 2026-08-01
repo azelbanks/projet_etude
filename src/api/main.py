@@ -60,7 +60,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.window_seconds = window_seconds
         self._requests: Dict[str, collections.deque] = {}
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: object) -> JSONResponse:
         client_ip = request.client.host if request.client else 'unknown'
         now = time.monotonic()
 
@@ -85,7 +85,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 class EnergyTrackingMiddleware(BaseHTTPMiddleware):
     """Middleware that tracks inference time per request for energy accounting."""
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: object) -> JSONResponse:
         _energy_metrics['total_requests'] += 1
         start = time.monotonic()
         response = await call_next(request)
@@ -235,7 +235,7 @@ class HealthResponse(BaseModel):
 #  Endpoints
 # ---------------------------------------------------------------------------
 @app.get("/health", response_model=HealthResponse)
-def health():
+def health() -> Dict[str, object]:
     return HealthResponse(
         status="ok",
         model_loaded=detector is not None,
@@ -245,7 +245,7 @@ def health():
 
 
 @app.get("/energy", response_model=EnergyResponse)
-def energy():
+def energy() -> Dict[str, object]:
     """Return cumulative energy metrics for the API session."""
     # Update CO2 from tracker if available
     if _energy_tracker is not None:
@@ -265,7 +265,7 @@ def energy():
 
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(req: PredictRequest):
+def predict(req: PredictRequest) -> Dict[str, object]:
     if detector is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -319,7 +319,7 @@ class ExplainResponse(BaseModel):
 
 
 @app.post("/explain", response_model=ExplainResponse)
-def explain(req: ExplainRequest):
+def explain(req: ExplainRequest) -> Dict[str, object]:
     """Return word-level explainability for a given text."""
     if detector is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
