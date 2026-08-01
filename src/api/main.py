@@ -181,7 +181,12 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 #  App
 # ---------------------------------------------------------------------------
-app = FastAPI(title="ThumaCheck API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="ThumaCheck API",
+    version="1.0.0",
+    description="Real-time misinformation detection API. CamemBERT (FR F1: 0.957), RoBERTa (EN F1: 0.874), V9 cascade pipeline.",
+    lifespan=lifespan,
+)
 
 # CORS restrictif — origines explicites uniquement
 app.add_middleware(
