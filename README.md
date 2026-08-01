@@ -270,6 +270,25 @@ L'empreinte carbone de l'ensemble des entraînements est suivie via **CodeCarbon
 
 ---
 
+
+## Design Decisions
+
+### Why TF-IDF + LogReg instead of transformers only?
+
+CamemBERT and RoBERTa excel at contextual understanding but are expensive at inference. The TF-IDF+LogReg baseline runs in **0.02ms/text** versus **15ms/text** for a transformer. For high-throughput monitoring (728 texts/sec target), the ensemble approach (lightweight pipeline first, transformers for edge cases via cascade) maximizes throughput without sacrificing accuracy.
+
+### Why a meta-learner (V8) instead of simple voting?
+
+Simple majority voting treats all models equally. The V8 meta-learner learns **optimal weights** for each model based on their complementary strengths: V5 excels on formal text, V6 catches stylistic anomalies, CamemBERT handles short ambiguous posts. The stacking approach captures these synergies, yielding F1 0.94 vs 0.92 for simple voting.
+
+### Why a 2-stage cascade (V9) instead of a single classifier?
+
+The single-pass pipeline had a high false positive rate on opinion pieces. The V9 cascade adds a **fact/opinion gate** as a first stage: only factual claims proceed to fake news analysis. This reduced false positives by 67% (Fisher exact test, p=0.0005) without degrading recall.
+
+### Why DuckDB for analytics instead of PostgreSQL?
+
+This is a single-machine analytical workload (OLAP), not a multi-user transactional system (OLTP). DuckDB runs embedded with zero configuration, processes columnar data 10-100x faster than PostgreSQL for analytical queries, and requires no server deployment.
+
 ## Why MLP for Emotion Analysis?
 
 The emotion classifier uses a lightweight MLP (Multi-Layer Perceptron) rather than a pre-trained transformer for three deliberate reasons:
