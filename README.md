@@ -256,6 +256,42 @@ The fake news pipeline uses CamemBERT/RoBERTa where contextual understanding is 
 
 ---
 
+
+---
+
+## Visual Results
+
+### SHAP Feature Importance (V6 Pipeline)
+
+<p align="center">
+  <img src="docs/figures/xai/shap_beeswarm_v6.png" width="700" alt="SHAP Beeswarm — Global feature importance" />
+</p>
+
+### CamemBERT Attention Heatmap
+
+<p align="center">
+  <img src="docs/figures/xai/camembert_attention_fp_demo.png" width="700" alt="CamemBERT attention on a false positive" />
+</p>
+
+### Integrated Gradients (Word-level Attribution)
+
+<p align="center">
+  <img src="docs/figures/xai/ig_suspect_demo.png" width="700" alt="Integrated Gradients attribution" />
+</p>
+
+### Meta-Learner V8 Decomposition
+
+<p align="center">
+  <img src="docs/figures/xai/meta_decomposition_v8_example.png" width="700" alt="V8 meta-learner decision decomposition" />
+</p>
+
+### Model Performance
+
+<p align="center">
+  <img src="docs/confusion_matrices_v2.png" width="600" alt="Confusion matrices" />
+  <img src="docs/learning_curves.png" width="600" alt="Learning curves" />
+</p>
+
 ## My Contributions (Azélie Bernard)
 
 This project was developed as a two-person team. Here is my specific scope:
