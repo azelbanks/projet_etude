@@ -337,6 +337,52 @@ The fake news pipeline uses CamemBERT/RoBERTa where contextual understanding is 
   <img src="docs/learning_curves.png" width="600" alt="Learning curves" />
 </p>
 
+## Deployment
+
+### Local (development)
+```bash
+docker-compose up -d              # all services
+docker-compose up -d mongodb collector dashboard  # minimal
+```
+
+### Production
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Adds resource limits, restart policies, and log rotation. See `docker-compose.prod.yml`.
+
+### Cloud deployment (architecture)
+
+```
+┌─────────────────────────────────────────────────┐
+│                   Cloud Provider                │
+│                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────┐  │
+│  │ Cloud Run│  │ Cloud Run│  │  Streamlit   │  │
+│  │  (API)   │  │(Collector)│  │    Cloud     │  │
+│  │ :8000    │  │          │  │   :8501      │  │
+│  └────┬─────┘  └────┬─────┘  └──────┬───────┘  │
+│       │              │               │          │
+│       └──────────┬───┘───────────────┘          │
+│                  │                              │
+│         ┌────────▼────────┐                     │
+│         │  MongoDB Atlas  │                     │
+│         │  (managed DB)   │                     │
+│         └─────────────────┘                     │
+└─────────────────────────────────────────────────┘
+```
+
+The architecture is decoupled — each service can be deployed independently:
+- **API** → Cloud Run / Azure Container Apps / Railway
+- **Collector** → Cloud Run Job (scheduled) or always-on container
+- **Dashboard** → Streamlit Community Cloud (free) or container
+- **Database** → MongoDB Atlas (free tier available)
+
+No code changes needed — just swap environment variables.
+
+---
+
 ## My Contributions (Azélie Bernard)
 
 This project was developed as a two-person team. Here is my specific scope:

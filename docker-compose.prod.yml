@@ -1,0 +1,50 @@
+# Production-ready Docker Compose — ThumaCheck
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  mongodb:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  collector:
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  dashboard:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  backup:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
