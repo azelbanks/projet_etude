@@ -1,7 +1,10 @@
 # ThumaCheck — Social Media Intelligence & AI Monitor
 
-> **Développé par [Niamato Consulting](https://github.com/azelbanks/projet_etude) (Azélie Bernard & Sébastien Lazcanotegui) pour [Thumalien](https://thumalien.com), entreprise spécialisée en fact-checking et veille média.**
+> **Développé par [Niamato Consulting](https://github.com/azelbanks/thumacheck) (Azélie Bernard & Sébastien Lazcanotegui) pour [Thumalien](https://thumalien.com), entreprise spécialisée en fact-checking et veille média.**
 
+![CI](https://github.com/azelbanks/thumacheck/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/Coverage-80%25-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-537%20passing-brightgreen?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb)
@@ -68,14 +71,17 @@ graph LR
 ## Structure du Projet
 
 ```
-projet_etude/
+thumacheck/
 ├── dashboard/              # Application Streamlit (Dashboard V5, 5 pages)
 ├── data/training/          # Datasets d'entraînement (FR+EN, 6 sources)
 ├── docs/                   # Documentation complète du projet
 │   ├── pdf/                # Documents PDF exportés
 │   └── references/         # Cadre pédagogique et cahier des charges institutionnel
 ├── models/                 # Modèles entraînés (.joblib, .pt)
-├── notebooks/              # Notebooks d'exploration, entraînement et analyse
+├── notebooks/
+│   ├── exploration/        # Data audits, Bluesky exploration, dataset integration
+│   ├── training/           # Model training V1-V9, CamemBERT, RoBERTa fine-tuning
+│   └── analysis/           # Error analysis, benchmarks, statistical tests, carbon audit
 ├── src/
 │   ├── api/                # API FastAPI (predict, explain, energy, health)
 │   ├── app/                # Point d'entrée application
@@ -179,8 +185,8 @@ Tous les documents sont disponibles dans [`docs/pdf/`](docs/pdf/) :
 
 ```bash
 # Cloner le projet
-git clone https://github.com/azelbanks/projet_etude.git
-cd projet_etude
+git clone https://github.com/azelbanks/thumacheck.git
+cd thumacheck
 
 # Lancer avec Docker Compose
 docker-compose up -d
@@ -235,3 +241,33 @@ python3 -m pytest tests/test_benchmark_latence.py -v -s
 L'empreinte carbone de l'ensemble des entraînements est suivie via **CodeCarbon** :
 - **Total CO2** : 8.86 g (6 sessions d'entraînement V1-V9 + CamemBERT + RoBERTa)
 - Equivalent à moins d'une recherche Google (~7 g). Le choix de modèles frugaux (LogReg + fine-tuning court) limite l'empreinte
+
+---
+
+## Why MLP for Emotion Analysis?
+
+The emotion classifier uses a lightweight MLP (Multi-Layer Perceptron) rather than a pre-trained transformer for three deliberate reasons:
+
+1. **Latency constraint**: The MLP processes emotions in <0.5ms/text, keeping the total pipeline under 1.5ms. A transformer would add 10-50ms per inference, breaking real-time requirements.
+2. **Task simplicity**: 7-class emotion classification on pre-extracted TF-IDF features doesn't benefit from contextual embeddings the way fake news detection does. The MLP achieves sufficient accuracy for the use case.
+3. **Carbon footprint**: Fine-tuning a second transformer model would have multiplied the CO2 cost. The MLP trains in seconds vs. hours.
+
+The fake news pipeline uses CamemBERT/RoBERTa where contextual understanding is critical — the architecture matches the right model to the right task.
+
+---
+
+## My Contributions (Azélie Bernard)
+
+This project was developed as a two-person team. Here is my specific scope:
+
+- **Full NLP pipeline architecture** (V1→V9): feature engineering (45+ linguistic/stylistic features), model selection, cascade design, meta-learner ensemble
+- **CamemBERT fine-tuning** (FR): dataset curation, training loop, evaluation on ultra-short texts (F1: 0.957)
+- **Explainability pipeline**: SHAP integration, attention heatmaps, Layer Integrated Gradients, faithfulness validation (AOPC/Comprehensiveness)
+- **API design & implementation**: FastAPI endpoints, rate limiting, energy monitoring
+- **Testing strategy**: 537 tests architecture, pytest fixtures, coverage configuration
+- **Dashboard logic**: Streamlit pages (Dashboard, AI Analysis, Explorer, Performance), uncertainty visualization
+- **Data engineering**: MongoDB aggregation pipelines, data quality controls, DuckDB integration
+- **Documentation**: Technical specifications, GDPR/AI Act compliance analysis, model cards
+- **Green IT**: CodeCarbon integration and carbon footprint tracking
+
+Sébastien Lazcanotegui contributed to: RoBERTa EN fine-tuning, Bluesky data collection infrastructure, Kafka scalability prototype, and deployment configuration.
