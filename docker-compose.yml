@@ -135,3 +135,23 @@ services:
 networks:
   thumalien_network:
     driver: bridge
+
+  # -----------------------------------------------------------------
+  #  Service 6 (optional) : MLflow UI — Experiment Tracking
+  # -----------------------------------------------------------------
+  mlflow:
+    image: python:3.13-slim
+    container_name: thumalien_mlflow
+    restart: unless-stopped
+    command: >
+      bash -c "pip install mlflow && mlflow ui
+      --host 0.0.0.0 --port 5000
+      --backend-store-uri file:///app/mlruns"
+    volumes:
+      - ./mlruns:/app/mlruns
+    ports:
+      - "127.0.0.1:5000:5000"
+    networks:
+      - thumalien_network
+    profiles:
+      - mlops
