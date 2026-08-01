@@ -123,7 +123,7 @@ _FR_COMMON_WORDS = {"le", "la", "les", "de", "un", "une", "est", "et", "des",
                     "pas", "sur", "il", "elle", "je", "tu", "nous", "vous", "sont"}
 
 
-def validate_text(text):
+def validate_text(text: str) -> bool:
     """
     Valide le texte d'un post avant insertion.
     Retourne (True, cleaned_text) si le texte est acceptable, (False, reason) sinon.
@@ -143,14 +143,14 @@ def validate_text(text):
     return True, stripped
 
 
-def compute_word_count(text):
+def compute_word_count(text: str) -> int:
     """Retourne le nombre de mots dans le texte (hors URLs)."""
     text_without_urls = _URL_PATTERN.sub('', text).strip()
     words = text_without_urls.split()
     return len(words)
 
 
-def detect_language_hint(text):
+def detect_language_hint(text: str) -> str:
     """
     Detection de langue via langdetect (probabiliste) avec fallback heuristique.
     Retourne 'fr', 'en', ou 'other'.
@@ -181,7 +181,7 @@ def detect_language_hint(text):
     return "fr" if ratio > 0.30 else "en"
 
 
-def connect_db():
+def connect_db() -> object:
     if MONGO_USER and MONGO_PASSWORD:
         from urllib.parse import quote_plus
         uri = f"mongodb://{quote_plus(MONGO_USER)}:{quote_plus(MONGO_PASSWORD)}@{MONGO_HOST}:27017/?authSource=admin"
@@ -214,7 +214,7 @@ def get_bluesky_client():
         logger.critical('Echec authentification Bluesky : %s', e)
         return None
 
-def extract_metadata(post):
+def extract_metadata(post: object) -> dict:
     """
     Fonction d'ingénierie pour extraire proprement les métadonnées complexes.
     Indispensable pour l'IA (multimodalité).

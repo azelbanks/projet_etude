@@ -15,7 +15,7 @@ class PipelineMonitor:
     LOGS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "logs")
     METRICS_FILE = os.path.join(LOGS_DIR, "collection_metrics.jsonl")
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._start_time = None
         self._reset()
 
@@ -23,7 +23,7 @@ class PipelineMonitor:
     # Public API
     # ------------------------------------------------------------------
 
-    def start_cycle(self):
+    def start_cycle(self) -> None:
         """Call at the beginning of each collection cycle."""
         self._start_time = datetime.datetime.now()
         self._reset()
@@ -37,7 +37,7 @@ class PipelineMonitor:
         if error_msg:
             self.error_details.append({"keyword": keyword, "lang": lang, "error": str(error_msg)})
 
-    def end_cycle(self):
+    def end_cycle(self) -> dict:
         """Finalize the cycle: compute duration and write the JSONL report."""
         end_time = datetime.datetime.now()
         duration = (end_time - self._start_time).total_seconds() if self._start_time else 0.0
@@ -131,7 +131,7 @@ class PipelineMonitor:
                 continue
         return reports
 
-    def _reset(self):
+    def _reset(self) -> None:
         self.posts_new = 0
         self.duplicates_skipped = 0
         self.errors = 0

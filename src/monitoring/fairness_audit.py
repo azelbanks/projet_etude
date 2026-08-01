@@ -110,7 +110,7 @@ def compute_fairness_metrics(texts, labels_true, languages, text_lengths, detect
     return metrics
 
 
-def write_fairness_report(report, path=None):
+def write_fairness_report(report: dict, path: str = None) -> None:
     if path is None:
         path = os.path.join(PROJECT_ROOT, 'logs', 'fairness_audit.jsonl')
     os.makedirs(os.path.dirname(path), exist_ok=True)

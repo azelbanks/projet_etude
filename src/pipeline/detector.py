@@ -89,7 +89,7 @@ class ExpertFakeNewsDetector:
         ("The weather is nice today.", 0, 0.70, 1.0),
     ]
 
-    def __init__(self, model_dir: str = '../models', use_emotions: bool = False,
+    def __init__(self, model_dir: str = '../models', use_emotions: bool = False,  # -> None
                  threshold: float = 0.44,
                  threshold_fr: Optional[float] = None,
                  threshold_en: Optional[float] = None):
@@ -817,7 +817,7 @@ class ExpertFakeNewsDetector:
 
     # ---- Persistance ----
 
-    def save(self, suffix: str = 'expert'):
+    def save(self, suffix: str = 'expert') -> None:
         """Sauvegarde modèle + vectorizer + métriques."""
         os.makedirs(self.model_dir, exist_ok=True)
         joblib.dump(
@@ -834,7 +834,7 @@ class ExpertFakeNewsDetector:
         )
         logger.info("Modèle sauvegardé: %s (suffix=%s)", self.model_dir, suffix)
 
-    def load(self, suffix: str = 'expert'):
+    def load(self, suffix: str = 'expert') -> bool:
         """Charge un modèle sauvegardé."""
         self.model = joblib.load(
             os.path.join(self.model_dir, f'model_{suffix}.pkl')

@@ -31,7 +31,7 @@ def _connect():
     return client[DB_NAME][COLLECTION_NAME]
 
 
-def run_quality_check(collection):
+def run_quality_check(collection: object) -> dict:
     """Run all quality checks and return a report dict."""
     report = {}
 
@@ -88,7 +88,7 @@ def run_quality_check(collection):
     return report
 
 
-def print_report(report):
+def print_report(report: dict) -> None:
     """Pretty-print the quality report to stdout."""
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sep = "=" * 60
@@ -146,7 +146,7 @@ def print_report(report):
     print(sep)
 
 
-def main():
+def main() -> None:
     try:
         collection = _connect()
         print(f"Connected to MongoDB ({MONGO_HOST}) - {DB_NAME}.{COLLECTION_NAME}")

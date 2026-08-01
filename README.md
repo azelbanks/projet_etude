@@ -54,6 +54,19 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 
 ## Architecture Technique
 
+
+### Baselines & Comparisons
+
+| Model | F1 (FR short) | F1 (EN short) | Note |
+|-------|:---:|:---:|------|
+| Majority class | 0.50 | 0.50 | Naive baseline |
+| V1 TF-IDF (biased) | 0.996* | — | *Reuters attribution leak |
+| V2 TF-IDF (debiased) | 0.89 | — | Bias removed |
+| **V5 Expert** | **0.904** | **0.774** | Production pipeline |
+| **CamemBERT V2** | **0.957** | — | Fine-tuned on short texts |
+| **RoBERTa EN V2** | — | **0.874** | Fine-tuned on short texts |
+| **V9 Cascade** | — | — | FP reduced by 67% (p=0.0005) |
+
 Le projet repose sur une architecture micro-services conteneurisée avec Docker.
 
 ```mermaid
