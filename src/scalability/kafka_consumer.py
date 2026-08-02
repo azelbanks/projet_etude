@@ -120,7 +120,7 @@ class ThumaCheckKafkaConsumer:
                 }
             )
         except Exception:
-            logger.warning("Producer Kafka non disponible — resultats non publies")
+            logger.exception("Producer Kafka non disponible — resultats non publies")
             self._producer = None
 
     def start(self):
@@ -221,7 +221,7 @@ class ThumaCheckKafkaConsumer:
             )
             self._producer.poll(0)
         except Exception:
-            logger.warning("Publication du resultat echouee pour %s", result.get("id"))
+            logger.exception("Publication du resultat echouee pour %s", result.get("id"))
 
     def stop(self):
         """Arrete le consumer proprement."""

@@ -159,7 +159,7 @@ class IGExplainer:
                 self.clf.head.to(self._original_device)
                 self.clf.device = self._original_device
         except Exception:
-            pass
+            logger.debug("Restauration du device echouee", exc_info=True)
 
     # ------------------------------------------------------------------
     #  Construction du forward

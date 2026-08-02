@@ -241,7 +241,7 @@ def detect_language_hint(text: str) -> str:
             return "en"
         return "other"
     except Exception:
-        pass
+        logger.debug("langdetect a echoue, bascule sur l'heuristique", exc_info=True)
 
     # Fallback heuristique si langdetect echoue
     words = text_without_urls.lower().split()
@@ -293,10 +293,14 @@ def get_bluesky_client():
         return None
 
 
-def extract_metadata(post: object) -> dict:
+def extract_metadata(post: object) -> tuple[bool, str | None, list[str]]:
     """
     Fonction d'ingénierie pour extraire proprement les métadonnées complexes.
     Indispensable pour l'IA (multimodalité).
+
+    Returns
+    -------
+    (has_image, image_url, langs)
     """
     # 1. Détection des Images
     has_image = False
@@ -630,7 +634,7 @@ def run_inference_cycle(collection):
                     post_type_probas[i] = round(pf, 4)
                     post_types[i] = "factuel" if pf >= _stage1_threshold else "opinion"
             except Exception:
-                pass
+                logger.debug("Classification stage 1 indisponible", exc_info=True)
 
         ops = []
         for i, _id in enumerate(ids):

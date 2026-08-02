@@ -77,6 +77,7 @@ def get_mongo_collection(
             db = client[db_name]
             return db[collection_name]
         except Exception:
+            logger.debug("URI MongoDB %s injoignable", uri, exc_info=True)
             continue
 
     logger.info("Could not connect to MongoDB on any candidate URI.")

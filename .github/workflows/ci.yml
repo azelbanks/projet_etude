@@ -17,9 +17,13 @@ jobs:
           cache: pip
       # Version epinglee : ruff active de nouvelles regles a chaque release,
       # une version flottante fait echouer la CI sans changement de code.
-      - run: pip install ruff==0.16.1
+      - run: pip install ruff==0.16.1 mypy==2.3.0
       - run: ruff check src/ tests/
       - run: ruff format --check src/ tests/
+      # Cliquet de typage : actif sur les 18 modules propres, voir [tool.mypy]
+      # dans pyproject.toml pour la dette restante et la marche a suivre.
+      - name: Type check
+        run: mypy
 
   test:
     runs-on: ubuntu-latest
@@ -34,10 +38,7 @@ jobs:
       # pipefail obligatoire : sans lui le `| tail` masque l'echec de collecte.
       - name: Collect tests
         run: set -o pipefail && pytest tests/ --tb=short -q --co 2>&1 | tail -1
+      # Suite complete : les exclusions historiques ont ete levees, les 5
+      # fichiers concernes passent (46 tests, ~5 s) et couvrent l'integration.
       - name: Run unit tests
-        run: |
-          pytest tests/ -x --tb=short -q \
-            --ignore=tests/test_benchmark_latence.py \
-            --ignore=tests/test_pipeline_integration.py \
-            --ignore=tests/test_inference_cycle.py \
-            --ignore=tests/test_collection_cycle.py
+        run: pytest tests/ -x --tb=short -q

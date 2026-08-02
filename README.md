@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/azelbanks/thumacheck/actions/workflows/ci.yml/badge.svg)
 ![Coverage](https://img.shields.io/badge/Coverage-80%25-brightgreen?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-537%20passing-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-575%20passing-brightgreen?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb)
@@ -16,7 +16,7 @@
 
 ### TL;DR (English)
 
-ThumaCheck is a **real-time misinformation detection system** for Bluesky, built for Thumalien (fact-checking firm). It combines a V9 cascade NLP pipeline (CamemBERT FR F1: 0.957, RoBERTa EN F1: 0.874) with 7-class emotion analysis. The system processes **728 texts/second** at 1.5ms latency, includes **8 explainability mechanisms** (SHAP, attention, Integrated Gradients), and is backed by **537 tests at 80% coverage**. Architecture: FastAPI + Streamlit + MongoDB + Docker Compose.
+ThumaCheck is a **real-time misinformation detection system** for Bluesky, built for Thumalien (fact-checking firm). It combines a V9 cascade NLP pipeline (CamemBERT FR F1: 0.957, RoBERTa EN F1: 0.874) with 7-class emotion analysis. The system processes **728 texts/second** at 1.5ms latency, includes **8 explainability mechanisms** (SHAP, attention, Integrated Gradients), and is backed by **575 tests at 80% coverage**. Architecture: FastAPI + Streamlit + MongoDB + Docker Compose.
 
 **Quick start:** `git clone → cp .env.example .env → docker-compose up -d`
 
@@ -50,7 +50,7 @@ L'objectif est de détecter les potentiels signaux faibles, les **Fake News** et
 * **API REST :** FastAPI avec endpoints `/predict`, `/explain` (XAI mot-par-mot), `/health`, `/energy`. Rate limiting (60 req/min), monitoring énergétique continu (CodeCarbon).
 * **Scalabilité :** Prototype Kafka consumer pour architecture événementielle (batch processing, métriques, topic de sortie).
 * **Green IT :** Monitoring de l'empreinte carbone des calculs IA via CodeCarbon (entraînement + API en temps réel).
-* **Tests :** 537 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
+* **Tests :** 575 tests unitaires et d'intégration (pytest, 80% couverture), benchmark latence automatisé.
 
 ### Key Metrics (V9)
 * **537 845 posts** collectés depuis décembre 2025 (collecte finalisée — Juil 2026)
@@ -227,6 +227,32 @@ pip install -r requirements.txt
 - MongoDB
 - GPU recommandé pour le fine-tuning des modèles Transformer
 
+### Modèles non versionnés — mode dégradé
+
+Les poids CamemBERT et RoBERTa dépassent la limite de 100 Mo de GitHub et sont
+donc exclus du dépôt (voir `.gitignore`) :
+
+```
+models/camembert_fr.pt      models/camembert_best.pt    models/camembert_fr_v2.pt
+models/roberta_en.pt        models/roberta_en_v2.pt
+```
+
+**Un clone frais démarre donc en cascade dégradée**, sans erreur : le
+meta-learner TF-IDF + features linguistiques et le modèle d'émotions
+fonctionnent, mais les étages transformer sont désactivés et la précision est
+inférieure aux F1 annoncés plus haut (0.957 FR / 0.874 EN).
+
+L'état est exposé sur `/health` — pas seulement dans les logs :
+
+```json
+{"status": "ok", "model_loaded": true, "cascade_full": false,
+ "cascade_missing": ["camembert_fr.pt", "roberta_en.pt"]}
+```
+
+Pour la cascade complète, déposez les poids dans `models/` (ou pointez
+`THUMALIEN_MODEL_DIR` vers leur emplacement) ; `cascade_full` passe alors à
+`true`.
+
 ---
 
 ## Tests
@@ -391,7 +417,7 @@ This project was developed as a two-person team. Here is my specific scope:
 - **CamemBERT fine-tuning** (FR): dataset curation, training loop, evaluation on ultra-short texts (F1: 0.957)
 - **Explainability pipeline**: SHAP integration, attention heatmaps, Layer Integrated Gradients, faithfulness validation (AOPC/Comprehensiveness)
 - **API design & implementation**: FastAPI endpoints, rate limiting, energy monitoring
-- **Testing strategy**: 537 tests architecture, pytest fixtures, coverage configuration
+- **Testing strategy**: 575 tests architecture, pytest fixtures, coverage configuration
 - **Dashboard logic**: Streamlit pages (Dashboard, AI Analysis, Explorer, Performance), uncertainty visualization
 - **Data engineering**: MongoDB aggregation pipelines, data quality controls, DuckDB integration
 - **Documentation**: Technical specifications, GDPR/AI Act compliance analysis, model cards

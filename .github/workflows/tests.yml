@@ -23,13 +23,9 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Run tests with coverage
-        run: >
-          python3 -m pytest tests/ -v
-          --ignore=tests/test_benchmark_latence.py
-          --ignore=tests/test_pipeline_integration.py
-          --ignore=tests/test_expert_detector.py
-          --cov=src --cov-report=term-missing
+        run: python3 -m pytest tests/ -v --cov=src --cov-report=term-missing
 
-      - name: Coverage gate (fail if under 75%)
-        run: |
-          coverage report --fail-under=75
+      # Cliquet de couverture : 80,0 % mesure, barriere a 78 % pour absorber
+      # les variations. La relever au fil des ajouts, jamais l'abaisser.
+      - name: Coverage gate (fail if under 78%)
+        run: coverage report --fail-under=78

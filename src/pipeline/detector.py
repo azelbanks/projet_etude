@@ -860,6 +860,7 @@ class ExpertFakeNewsDetector:
             else:
                 self._roberta_en = None
         except Exception:
+            logger.debug("Cascade RoBERTa EN indisponible", exc_info=True)
             self._roberta_en = None
 
     # ---- Health check ----

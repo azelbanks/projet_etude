@@ -5,6 +5,38 @@ tests_dir = "tests/"
 [tool.pytest.ini_options]
 pythonpath = ["src", "dashboard"]
 
+[tool.mypy]
+python_version = "3.13"
+files = ["src"]
+ignore_missing_imports = true      # stubs absents pour atproto, codecarbon, shap...
+warn_unused_configs = true
+warn_redundant_casts = true
+
+# Cliquet de typage : la barriere est active sur les 18 modules deja propres,
+# ce qui empeche toute regression. Les 15 modules ci-dessous portent 135 erreurs
+# heritees (majoritairement le motif `self.model = None` puis usage direct dans
+# les classes ML). Retirer un module de cette liste au fur et a mesure de
+# l'assainissement — ne jamais en ajouter.
+[[tool.mypy.overrides]]
+module = [
+    "src.api.main",
+    "src.collection.collect_bluesky",
+    "src.collection.data_quality_check",
+    "src.collection.pipeline_monitor",
+    "src.explainability.faithfulness",
+    "src.explainability.integrated_gradients",
+    "src.explainability.meta_decomposition",
+    "src.explainability.shap_global",
+    "src.monitoring.weekly_score_check",
+    "src.pipeline.camembert_classifier",
+    "src.pipeline.detector",
+    "src.pipeline.emotion_classifier",
+    "src.pipeline.mongo_aggregations",
+    "src.pipeline.roberta_en_classifier",
+    "src.scalability.kafka_consumer",
+]
+ignore_errors = true
+
 [tool.ruff]
 target-version = "py313"
 line-length = 100

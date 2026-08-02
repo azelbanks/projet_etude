@@ -122,6 +122,27 @@ def _load_detector() -> ExpertFakeNewsDetector | None:
     return None
 
 
+def _missing_cascade_models() -> list[str]:
+    """
+    Poids optionnels de la cascade absents du disque.
+
+    CamemBERT (FR) et RoBERTa (EN) pesent plus de 100 Mo et ne sont pas
+    versionnes — voir .gitignore. Leur absence degrade la precision sans
+    empecher le service de repondre.
+    """
+    model_dir = os.path.abspath(
+        os.environ.get(
+            "THUMALIEN_MODEL_DIR",
+            os.path.join(os.path.dirname(__file__), "..", "..", "models"),
+        )
+    )
+    return [
+        name
+        for name in ("camembert_fr.pt", "roberta_en.pt")
+        if not os.path.exists(os.path.join(model_dir, name))
+    ]
+
+
 def _load_emotion_extractor() -> EmotionFeatureExtractor | None:
     """Load emotion feature extractor for API responses."""
     model_dir = os.environ.get(
@@ -135,7 +156,9 @@ def _load_emotion_extractor() -> EmotionFeatureExtractor | None:
             logger.info("Emotion extractor loaded")
             return emo
     except Exception:
-        logger.warning("Emotion extractor not available")
+        # exception() et non warning() : un bug de code (import manquant,
+        # attribut absent) doit rester lisible dans les logs.
+        logger.exception("Emotion extractor not available")
     return None
 
 
@@ -163,7 +186,7 @@ async def lifespan(app: FastAPI):
             _energy_metrics["tracker_active"] = True
             logger.info("CodeCarbon API tracker started")
         except Exception:
-            logger.warning("CodeCarbon tracker failed to start")
+            logger.exception("CodeCarbon tracker failed to start")
             _energy_tracker = None
 
     yield
@@ -176,7 +199,7 @@ async def lifespan(app: FastAPI):
                 _energy_metrics["co2_emissions_kg"] = float(emissions)
             logger.info("CodeCarbon API tracker stopped: %.6f kg CO2", emissions or 0)
         except Exception:
-            pass
+            logger.debug("CodeCarbon tracker stop failed", exc_info=True)
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +256,11 @@ class HealthResponse(BaseModel):
     model_loaded: bool
     emotions_loaded: bool
     energy_tracking: bool
+    # Les poids CamemBERT/RoBERTa depassent la limite de 100 Mo de GitHub et ne
+    # sont donc pas versionnes : un clone frais tourne en cascade degradee.
+    # Expose ici pour qu'un operateur puisse le constater sans lire les logs.
+    cascade_full: bool
+    cascade_missing: list[str]
 
 
 # ---------------------------------------------------------------------------
@@ -240,11 +268,14 @@ class HealthResponse(BaseModel):
 # ---------------------------------------------------------------------------
 @app.get("/health", response_model=HealthResponse)
 def health() -> dict[str, object]:
+    missing = _missing_cascade_models()
     return HealthResponse(
         status="ok",
         model_loaded=detector is not None,
         emotions_loaded=emotion_extractor is not None,
         energy_tracking=_energy_metrics["tracker_active"],
+        cascade_full=not missing,
+        cascade_missing=missing,
     )
 
 
@@ -258,7 +289,7 @@ def energy() -> dict[str, object]:
             if interim is not None:
                 _energy_metrics["energy_kwh"] = float(interim)
         except Exception:
-            pass
+            logger.debug("Interim energy read failed", exc_info=True)
     return EnergyResponse(
         total_requests=_energy_metrics["total_requests"],
         total_predict_requests=_energy_metrics["total_predict_requests"],
@@ -292,7 +323,7 @@ def predict(req: PredictRequest) -> dict[str, object]:
                 EMOTION_LABELS[i]: round(float(probas[i]), 4) for i in range(len(EMOTION_LABELS))
             }
         except Exception:
-            logger.warning("Emotion extraction failed for predict request")
+            logger.exception("Emotion extraction failed for predict request")
 
     return PredictResponse(
         score=score,

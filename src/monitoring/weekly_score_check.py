@@ -105,6 +105,7 @@ def run_scoring(
             )
             tracker.start()
         except Exception:
+            logger.debug("CodeCarbon indisponible", exc_info=True)
             tracker = None
 
     results = detector.predict(pd.Series(df["text"].values))
@@ -150,7 +151,7 @@ def run_scoring(
             }
             logger.info("Energy tracked: %.6f kg CO2", emissions)
         except Exception:
-            pass
+            logger.debug("Mesure energetique indisponible", exc_info=True)
 
     return {
         "timestamp": datetime.now(UTC).isoformat(),
