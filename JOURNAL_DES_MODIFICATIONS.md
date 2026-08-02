@@ -1,8 +1,8 @@
 # Journal des modifications — remise en état de la chaîne qualité
 
 **Période :** 1er – 2 août 2026
-**Périmètre :** `azelbanks/thumacheck`, de `22d52fc` à `f40862d`
-**Volumétrie :** 86 fichiers modifiés, 5 611 insertions, 3 196 suppressions
+**Périmètre :** `azelbanks/thumacheck`, de `22d52fc` à `f6fdd76`
+**Volumétrie :** 88 fichiers modifiés, 6 150 insertions, 3 198 suppressions
 
 Ce document recense chaque modification et sa justification. Il est destiné à
 servir de trace : ce qui a été changé, pourquoi, et ce qui a été délibérément
@@ -24,6 +24,7 @@ laissé de côté.
 10. [Ce qui n'a pas été traité](#10-ce-qui-na-pas-été-traité)
 11. [Journal des commits](#11-journal-des-commits)
 12. [État avant / après](#12-état-avant--après)
+13. [Ce que cette session a révélé](#13-ce-que-cette-session-a-révélé)
 
 ---
 
@@ -324,11 +325,65 @@ Construit l'image de l'API et la publie sur GitHub Container Registry :
 - push sur `main` → tags `main` et `sha-<court>`
 - tag git `v*` → tags semver + `latest`
 
-Un job **smoke-test** démarre ensuite l'image *publiée*, attend `/health` et
-vérifie que `/version` annonce bien la révision attendue. **Une image cassée ne
-peut pas atteindre un déploiement sans que la CI le signale.**
+Un job **smoke-test** démarre ensuite l'image *publiée*, vérifie qu'elle devient
+prête, qu'elle rend réellement une prédiction, et que `/version` annonce la
+révision attendue. **Une image cassée ne peut pas atteindre un déploiement sans
+que la CI le signale.**
 
-### 6.2 Endpoints d'exploitation
+### 6.2 Deux défauts trouvés par le smoke-test dès sa première exécution
+
+Le CD a rentabilisé son écriture immédiatement : il a révélé deux défauts
+**préexistants** que rien d'autre ne pouvait voir.
+
+**L'API ne démarrait pas dans le conteneur.**
+
+```
+File "/app/src/api/main.py", line 22
+    from pipeline.expert_detector import ...
+ModuleNotFoundError: No module named 'pipeline'
+```
+
+Les modules internes s'importent par leur nom court. pytest le permet via
+`pythonpath` dans `pyproject.toml` ; dans l'image, rien ne le fournissait.
+**L'image n'a jamais pu servir l'API depuis qu'elle existe** — les 626 tests
+passaient sans le voir, et l'image n'avait jamais été démarrée
+automatiquement. Corrigé par `ENV PYTHONPATH=/app/src`.
+
+**L'image ne pouvait rien prédire.** Une fois le démarrage réparé :
+
+```json
+{"status": "ok", "model_loaded": false, "emotions_loaded": false}
+```
+
+`.dockerignore` excluait `models/*.pt` et `models/*.pkl` : l'image publiée était
+une coquille vide, capable de répondre mais pas de classifier. Les modèles
+entraînés pèsent 15 Mo et sont versionnés — ils doivent être embarqués. Seuls
+les poids transformer (> 100 Mo) restent exclus, désormais nommés un à un
+plutôt que par joker.
+
+> **Le smoke-test initial était trop faible pour détecter le second défaut.**
+> Il sondait `/health`, qui rend 200 dès que le processus vit — même sans aucun
+> modèle. L'image vide l'aurait donc passé sans broncher. `/ready` avait été
+> ajouté précisément pour cette distinction, puis la mauvaise sonde a été
+> testée.
+>
+> Il vérifie maintenant `/ready` (503 tant que le modèle n'est pas chargé) **et**
+> appelle `/predict` pour confirmer qu'un label est rendu.
+>
+> **Leçon retenue :** la valeur d'un test tient à ce qu'il vérifie, pas à son
+> existence. Un test qui ne peut pas échouer est un test décoratif — c'est le
+> même défaut que l'étape `| tail` de la section 3.2.
+
+**Résultat après correctifs** (run `30749515376`, commit `f6fdd76`) :
+
+```
+build-and-push: success
+smoke-test:     success
+                Instance prete apres 20s
+                label rendu : suspect
+```
+
+### 6.3 Endpoints d'exploitation
 
 | Endpoint | Rôle |
 |---|---|
@@ -343,7 +398,7 @@ encore chargé. Le `HEALTHCHECK` de l'image sonde `/ready`.
 Sans `/version`, **il est impossible de vérifier qu'un déploiement ou un
 rollback a pris effet** — on ne sait pas quelle révision sert le trafic.
 
-### 6.3 Mode dégradé rendu explicite
+### 6.4 Mode dégradé rendu explicite
 
 Les poids CamemBERT et RoBERTa dépassent la limite de 100 Mo de GitHub et sont
 gitignorés. **Tout clone frais démarrait donc en cascade dégradée, en silence**,
@@ -462,7 +517,7 @@ commanditaire en était retiré.
 
 | Point | Raison |
 |---|---|
-| **Déploiement effectif** vers un hébergeur | nécessite des identifiants. L'image est construite, publiée et testée — seule la cible manque. |
+| **Déploiement effectif** vers un hébergeur | nécessite des identifiants. L'image est construite, publiée sur GHCR, démarrée et vérifiée par le smoke-test — seule la cible de déploiement manque. |
 | **Publication des poids** CamemBERT / RoBERTa | absents du disque. Le manifeste les liste explicitement : l'absence est traçable plutôt que subie. |
 | **Étude de transfert hors domaine** | nécessite de nouveaux jeux de données et du calcul d'entraînement. Travail de recherche, hors périmètre. |
 | **Couverture de `roberta_en_classifier.py`** (33 %) | le reste exige le modèle transformer réel. |
@@ -483,6 +538,8 @@ commanditaire en était retiré.
 | `38082b2` | `Revert` du précédent |
 | `91ac524` | `docs:` signale le cadre fictif, copyright à Azélie Bernard — **PR #14** |
 | `f40862d` | `feat:` CD, endpoints d'exploitation et manifeste d'artefacts — **PR #15** |
+| `8c9cbbe` | `docs:` journal des modifications — **PR #16** |
+| `f6fdd76` | `fix:` l'image Docker ne pouvait ni démarrer ni prédire — **PR #17** |
 
 ---
 
@@ -499,12 +556,36 @@ commanditaire en était retiré.
 | `except: pass` muets | 14 | **0** |
 | Licence | aucune | MIT, © Azélie Bernard |
 | Branche `main` | libre | protégée, admins inclus, **vérifiée** |
-| Déploiement continu | aucun | image GHCR + smoke-test |
+| Déploiement continu | aucun | image GHCR publiée, **smoke-test vert** |
+| Image Docker | ne démarrait pas, sans modèles | démarre, prête en 20 s, **prédit** |
 | Artefacts de modèles | non vérifiables | 29 empreintés, contrôlés en CI |
 | Mode dégradé | silencieux | exposé sur `/health` et documenté |
 | Cadre fictif | présenté comme réel | signalé en tête de README |
 
 ---
 
+## 13. Ce que cette session a révélé
+
+Trois défauts partagent la même racine, et c'est le fil conducteur de ce
+journal : **un contrôle qui ne peut pas échouer ne contrôle rien.**
+
+| Contrôle | Pourquoi il ne servait à rien |
+|---|---|
+| `pytest --co \| tail -1` | le code de sortie était celui de `tail` |
+| `mypy` en CI | installé, jamais exécuté |
+| smoke-test sur `/health` | rend 200 même sans aucun modèle chargé |
+
+À chaque fois, le dispositif existait et donnait l'apparence du contrôle. Ce
+qui manquait, c'était qu'il puisse dire non.
+
+Deuxième constat, issu de deux incidents de la session : **vérifier sur le
+poste de travail ne suffit pas.** Le manifeste avait été validé sur disque sans
+être suivi par git ; l'image avait été validée par `docker build --check` sans
+jamais être démarrée. Dans les deux cas la vérification était réelle, mais elle
+ne portait pas sur ce qui serait effectivement livré.
+
+---
+
 *Document rédigé le 2 août 2026. Chaque affirmation chiffrée a été vérifiée par
-exécution — lint, typage, tests, couverture — et non estimée.*
+exécution — lint, typage, tests, couverture, démarrage effectif de l'image — et
+non estimée.*
