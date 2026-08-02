@@ -10,6 +10,7 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+from typing import Any
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
@@ -39,7 +40,7 @@ detector: ExpertFakeNewsDetector | None = None
 emotion_extractor: EmotionFeatureExtractor | None = None
 
 # Cumulative energy metrics for the API session
-_energy_metrics = {
+_energy_metrics: dict[str, Any] = {
     "total_requests": 0,
     "total_predict_requests": 0,
     "total_inference_time_s": 0.0,
@@ -47,7 +48,7 @@ _energy_metrics = {
     "energy_kwh": 0.0,
     "tracker_active": False,
 }
-_energy_tracker: object | None = None
+_energy_tracker: Any = None
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -59,7 +60,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.window_seconds = window_seconds
         self._requests: dict[str, collections.deque] = {}
 
-    async def dispatch(self, request: Request, call_next: object) -> JSONResponse:
+    async def dispatch(self, request: Request, call_next: Any) -> JSONResponse:
         client_ip = request.client.host if request.client else "unknown"
         now = time.monotonic()
 
@@ -86,7 +87,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 class EnergyTrackingMiddleware(BaseHTTPMiddleware):
     """Middleware that tracks inference time per request for energy accounting."""
 
-    async def dispatch(self, request: Request, call_next: object) -> JSONResponse:
+    async def dispatch(self, request: Request, call_next: Any) -> JSONResponse:
         _energy_metrics["total_requests"] += 1
         start = time.monotonic()
         response = await call_next(request)
@@ -267,7 +268,7 @@ class HealthResponse(BaseModel):
 #  Endpoints
 # ---------------------------------------------------------------------------
 @app.get("/health", response_model=HealthResponse)
-def health() -> dict[str, object]:
+def health() -> HealthResponse:
     missing = _missing_cascade_models()
     return HealthResponse(
         status="ok",
@@ -280,7 +281,7 @@ def health() -> dict[str, object]:
 
 
 @app.get("/energy", response_model=EnergyResponse)
-def energy() -> dict[str, object]:
+def energy() -> EnergyResponse:
     """Return cumulative energy metrics for the API session."""
     # Update CO2 from tracker if available
     if _energy_tracker is not None:
@@ -300,7 +301,7 @@ def energy() -> dict[str, object]:
 
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(req: PredictRequest) -> dict[str, object]:
+def predict(req: PredictRequest) -> PredictResponse:
     if detector is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -352,7 +353,7 @@ class ExplainResponse(BaseModel):
 
 
 @app.post("/explain", response_model=ExplainResponse)
-def explain(req: ExplainRequest) -> dict[str, object]:
+def explain(req: ExplainRequest) -> ExplainResponse:
     """Return word-level explainability for a given text."""
     if detector is None:
         raise HTTPException(status_code=503, detail="Model not loaded")

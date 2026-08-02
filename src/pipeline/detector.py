@@ -15,6 +15,7 @@ Auteur : Niamato Consulting (pour Thumalien)
 
 import logging
 import os
+from typing import Any
 
 import joblib
 import numpy as np
@@ -96,8 +97,8 @@ class ExpertFakeNewsDetector:
         threshold_en: float | None = None,
     ):
         self.model_dir = model_dir
-        self.vectorizer: TfidfVectorizer | None = None
-        self.model = None
+        self.vectorizer: Any = None
+        self.model: Any = None
         self.is_trained = False
         self.training_metrics: dict = {}
         self.use_emotions = use_emotions
@@ -111,7 +112,7 @@ class ExpertFakeNewsDetector:
         self.threshold_en = threshold_en
 
         # V9 cascade: optional RoBERTa EN for short English texts
-        self._roberta_en = None
+        self._roberta_en: Any = None
 
         if use_emotions:
             self.emotion_extractor = EmotionFeatureExtractor(model_dir)
@@ -252,7 +253,7 @@ class ExpertFakeNewsDetector:
 
             if bilingual and sample_weights is not None:
                 # CV manuelle pour passer sample_weight à fit()
-                cv_scores = {
+                cv_scores: dict[str, Any] = {
                     "test_accuracy": [],
                     "test_f1": [],
                     "test_precision": [],
@@ -348,7 +349,7 @@ class ExpertFakeNewsDetector:
                 )
 
     @staticmethod
-    def _get_model(model_type: str) -> object:
+    def _get_model(model_type: str) -> Any:
         if model_type == "logreg":
             return LogisticRegression(
                 C=1.0,
@@ -734,7 +735,7 @@ class ExpertFakeNewsDetector:
         ling_names = LinguisticFeatureExtractor.FEATURE_NAMES[:n_ling]
         ling_vals = X_ling[0]
         ling_coef = coef[n_tfidf : n_tfidf + n_ling]
-        ling_detail = []
+        ling_detail: list[dict[str, Any]] = []
         for j, name in enumerate(ling_names):
             c = float(ling_coef[j] * ling_vals[j])
             ling_detail.append(
@@ -789,7 +790,9 @@ class ExpertFakeNewsDetector:
             sens = ", ".join(f'"{s["word"]}"' for s in found_sensationalist[:5])
             summary_parts.append(f"Sensationnalisme : {sens}")
 
-        notable_ling = sorted(ling_detail, key=lambda x: abs(x["contribution"]), reverse=True)[:3]
+        notable_ling = sorted(
+            ling_detail, key=lambda x: abs(float(x["contribution"])), reverse=True
+        )[:3]
         if notable_ling:
             ling_strs = [
                 f"{f['feature']}={f['value']:.2f} ({f['direction']})" for f in notable_ling
@@ -848,6 +851,7 @@ class ExpertFakeNewsDetector:
             self.use_emotions = False
         self.is_trained = True
         logger.info("Modèle chargé depuis %s (suffix=%s)", self.model_dir, suffix)
+        return True
 
         # V9 cascade: try loading RoBERTa EN for short English texts
         try:

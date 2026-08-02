@@ -8,6 +8,7 @@ import re
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 from atproto import Client
 from dotenv import load_dotenv
@@ -193,7 +194,7 @@ _FR_COMMON_WORDS = {
 }
 
 
-def validate_text(text: str) -> bool:
+def validate_text(text: str) -> tuple[bool, str]:
     """
     Valide le texte d'un post avant insertion.
     Retourne (True, cleaned_text) si le texte est acceptable, (False, reason) sinon.
@@ -264,7 +265,7 @@ def connect_db() -> object:
     retries = 0
     while retries < MAX_RETRIES:
         try:
-            client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+            client: MongoClient = MongoClient(uri, serverSelectionTimeoutMS=5000)
             client.admin.command("ping")
             logger.info("MongoDB connecte (Database: thumalien_db)")
             return client["thumalien_db"]["raw_posts"]
@@ -293,7 +294,7 @@ def get_bluesky_client():
         return None
 
 
-def extract_metadata(post: object) -> tuple[bool, str | None, list[str]]:
+def extract_metadata(post: Any) -> tuple[bool, str | None, list[str]]:
     """
     Fonction d'ingénierie pour extraire proprement les métadonnées complexes.
     Indispensable pour l'IA (multimodalité).

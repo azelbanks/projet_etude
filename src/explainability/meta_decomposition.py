@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -128,7 +129,11 @@ class MetaLearnerDecomposer:
         self.meta_data = meta_data
         self.threshold = threshold
 
-        self.meta_model = meta_data.get("meta_model") or meta_data.get("model") or meta_data
+        # Estimateur sklearn arbitraire (linearite verifiee juste apres par
+        # hasattr). La variable intermediaire evite que mypy affine le type
+        # depuis la chaine de `or` et signale de faux acces sur dict.
+        meta_model: Any = meta_data.get("meta_model") or meta_data.get("model") or meta_data
+        self.meta_model = meta_model
         if not hasattr(self.meta_model, "coef_"):
             raise ValueError(
                 "Le méta-learner ne semble pas linéaire (pas de `coef_`). "
@@ -145,7 +150,7 @@ class MetaLearnerDecomposer:
             else [f"f_{i}" for i in range(n)]
         )
 
-        self.coef = self.meta_model.coef_[0].copy()
+        self.coef: np.ndarray = self.meta_model.coef_[0].copy()
         self.intercept = float(self.meta_model.intercept_[0])
 
     @staticmethod
@@ -157,18 +162,18 @@ class MetaLearnerDecomposer:
         Décompose une prédiction. `x` doit avoir la même dimension que
         `self.feature_names`.
         """
-        x = np.asarray(x, dtype=float)
-        if x.shape[0] != len(self.feature_names):
-            raise ValueError(f"x a {x.shape[0]} features, attendu {len(self.feature_names)}")
+        x_arr = np.asarray(x, dtype=float)
+        if x_arr.shape[0] != len(self.feature_names):
+            raise ValueError(f"x a {x_arr.shape[0]} features, attendu {len(self.feature_names)}")
 
-        contribs = self.coef * x  # β_i * x_i
+        contribs = self.coef * x_arr  # β_i * x_i
         z = float(self.intercept + contribs.sum())
         p_suspect = float(self._sigmoid(z))
         label = "SUSPECT" if p_suspect >= self.threshold else "FIABLE"
 
         return MetaDecomposition(
             feature_names=list(self.feature_names),
-            feature_values=x.tolist(),
+            feature_values=x_arr.tolist(),
             coefficients=self.coef.tolist(),
             contributions=contribs.tolist(),
             intercept=self.intercept,

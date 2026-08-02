@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -86,11 +87,13 @@ class ThumaCheckKafkaConsumer:
         self._running = False
 
         # Metrics
-        self.metrics = {
+        # dict heterogene (compteurs int + horodatage float|None) : Any evite
+        # de fausses erreurs de typage sur les operations arithmetiques.
+        self.metrics: dict[str, Any] = {
             "messages_consumed": 0,
             "messages_processed": 0,
             "errors": 0,
-            "start_time": None,
+            "start_time": None,  # float une fois start() appele
         }
 
     def _load_detector(self):

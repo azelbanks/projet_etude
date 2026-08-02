@@ -70,7 +70,7 @@ def _build_mongo_uri() -> str:
 def fetch_recent_posts(n: int = SAMPLE_SIZE) -> pd.DataFrame:
     """Fetch the *n* most recent posts from MongoDB."""
     uri = _build_mongo_uri()
-    client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+    client: MongoClient = MongoClient(uri, serverSelectionTimeoutMS=5000)
     client.server_info()  # fail fast if unreachable
 
     db = client["thumalien_db"]

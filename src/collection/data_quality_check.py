@@ -8,6 +8,7 @@ Usage:
 import datetime
 import os
 import sys
+from typing import Any
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -33,7 +34,7 @@ def _connect():
     return client[DB_NAME][COLLECTION_NAME]
 
 
-def run_quality_check(collection: object) -> dict:
+def run_quality_check(collection: Any) -> dict:
     """Run all quality checks and return a report dict."""
     report = {}
 

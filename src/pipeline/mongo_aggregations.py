@@ -72,7 +72,7 @@ def get_mongo_collection(
 
     for uri in candidates:
         try:
-            client = MongoClient(uri, serverSelectionTimeoutMS=timeout_ms)
+            client: MongoClient = MongoClient(uri, serverSelectionTimeoutMS=timeout_ms)
             client.server_info()  # force connection check
             db = client[db_name]
             return db[collection_name]

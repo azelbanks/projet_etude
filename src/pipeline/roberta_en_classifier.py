@@ -26,6 +26,7 @@ Auteur : Niamato Consulting (pour Thumalien)
 import contextlib
 import logging
 import os
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -137,9 +138,9 @@ class RoBERTaENClassifier:
 
     def __init__(self, model_dir: str = "models"):
         self.model_dir = model_dir
-        self.tokenizer = None
-        self.base_model = None
-        self.head = None
+        self.tokenizer: Any = None
+        self.base_model: Any = None
+        self.head: Any = None
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
         self._loaded = False
         self.training_metrics: dict = {}
@@ -377,7 +378,7 @@ class RoBERTaENClassifier:
         loader = DataLoader(dataset, batch_size=32)
 
         all_preds = []
-        all_probas = []
+        all_probas: list[np.ndarray] = []
 
         with torch.no_grad():
             for batch in loader:

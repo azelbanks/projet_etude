@@ -3,6 +3,7 @@
 > **Built by [Niamato Consulting](https://github.com/azelbanks/thumacheck) (Azélie Bernard & Sébastien Lazcanotegui) for [Thumalien](https://thumalien.com), a fact-checking and media monitoring company.**
 
 ![CI](https://github.com/azelbanks/thumacheck/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 ![Coverage](https://img.shields.io/badge/Coverage-80%25-brightgreen?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Tests-575%20passing-brightgreen?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python)
@@ -424,3 +425,17 @@ This project was developed as a two-person team. Here is my specific scope:
 - **Green IT**: CodeCarbon integration and carbon footprint tracking
 
 Sébastien Lazcanotegui contributed to: RoBERTa EN fine-tuning, Bluesky data collection infrastructure, Kafka scalability prototype, and deployment configuration.
+
+---
+
+## Licence & contribution
+
+Code sous licence [MIT](LICENSE). La licence couvre le code source, **pas** les
+poids de modèles ni les jeux de données — voir la section « Portée » du fichier
+`LICENSE`.
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — mise en route, flux de PR, conventions
+- [SECURITY.md](SECURITY.md) — signalement de faille, gestion des secrets, RGPD
+
+`main` est protégée : toute modification passe par une pull request dont la CI
+doit être verte (lint, formatage, types, 575 tests, couverture ≥ 78 %).
