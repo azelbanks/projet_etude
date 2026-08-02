@@ -5,7 +5,7 @@ import sys
 
 import pandas as pd
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from pipeline.expert_detector import DatasetCleaner
 
 
@@ -93,44 +93,50 @@ class TestCleanForML:
 
 class TestGenerateFrShortAugmentation:
     def test_generates_short_texts(self):
-        df = pd.DataFrame({
-            'text_original': [
-                "Ceci est une première phrase. Et voici la seconde phrase avec plus de mots.",
-                "Un article long avec beaucoup de contenu. La deuxième phrase aussi.",
-            ],
-            'text_clean': ["ceci est une premiere phrase", "un article long"],
-            'label': [0, 1],
-        })
+        df = pd.DataFrame(
+            {
+                "text_original": [
+                    "Ceci est une première phrase. Et voici la seconde phrase avec plus de mots.",
+                    "Un article long avec beaucoup de contenu. La deuxième phrase aussi.",
+                ],
+                "text_clean": ["ceci est une premiere phrase", "un article long"],
+                "label": [0, 1],
+            }
+        )
         result = DatasetCleaner.generate_fr_short_augmentation(df)
         assert len(result) > 0
-        assert 'label' in result.columns
-        assert 'text_original' in result.columns
+        assert "label" in result.columns
+        assert "text_original" in result.columns
 
     def test_preserves_labels(self):
-        df = pd.DataFrame({
-            'text_original': [
-                "Phrase un. Phrase deux. Phrase trois.",
-            ],
-            'text_clean': ["phrase un phrase deux phrase trois"],
-            'label': [1],
-        })
+        df = pd.DataFrame(
+            {
+                "text_original": [
+                    "Phrase un. Phrase deux. Phrase trois.",
+                ],
+                "text_clean": ["phrase un phrase deux phrase trois"],
+                "label": [1],
+            }
+        )
         result = DatasetCleaner.generate_fr_short_augmentation(df)
         if len(result) > 0:
-            assert all(result['label'] == 1)
+            assert all(result["label"] == 1)
 
 
 class TestQuantifyLeakage:
     def test_quantify_on_sample(self):
-        df_true = pd.DataFrame({
-            'text': [
-                "WASHINGTON (Reuters) - The president said something important today.",
-                "Normal article text without Reuters markers at all here.",
-                "NEW YORK (Reuters) - Markets surged. Reporting by John Smith",
-            ]
-        })
+        df_true = pd.DataFrame(
+            {
+                "text": [
+                    "WASHINGTON (Reuters) - The president said something important today.",
+                    "Normal article text without Reuters markers at all here.",
+                    "NEW YORK (Reuters) - Markets surged. Reporting by John Smith",
+                ]
+            }
+        )
         result = DatasetCleaner.audit_reuters_leakage(df_true)
-        assert 'total_articles' in result
-        assert result['total_articles'] == 3
-        assert result['has_reuters_marker'] >= 2
-        assert 'has_reuters_pct' in result
-        assert result['has_reuters_pct'] > 50
+        assert "total_articles" in result
+        assert result["total_articles"] == 3
+        assert result["has_reuters_marker"] >= 2
+        assert "has_reuters_pct" in result
+        assert result["has_reuters_pct"] > 50

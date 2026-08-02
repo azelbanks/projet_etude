@@ -4,7 +4,7 @@ import os
 import sys
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from collection.collect_bluesky import extract_metadata, run_collection_cycle
 
 
@@ -13,16 +13,16 @@ class TestExtractMetadata:
         post = MagicMock()
         post.embed = MagicMock()
         post.embed.images = [MagicMock(fullsize="https://img.example.com/1.jpg")]
-        post.record.langs = ['en']
+        post.record.langs = ["en"]
         has_image, image_url, langs = extract_metadata(post)
         assert has_image is True
         assert image_url == "https://img.example.com/1.jpg"
-        assert langs == ['en']
+        assert langs == ["en"]
 
     def test_post_without_image(self):
         post = MagicMock()
         post.embed = None
-        post.record.langs = ['fr']
+        post.record.langs = ["fr"]
         has_image, image_url, langs = extract_metadata(post)
         assert has_image is False
         assert image_url is None
@@ -39,17 +39,17 @@ class TestExtractMetadata:
     def test_post_without_embed_images(self):
         post = MagicMock()
         post.embed = MagicMock(spec=[])  # no 'images' attribute
-        post.record.langs = ['en', 'fr']
+        post.record.langs = ["en", "fr"]
         has_image, image_url, langs = extract_metadata(post)
         assert has_image is False
-        assert langs == ['en', 'fr']
+        assert langs == ["en", "fr"]
 
 
 class TestRunCollectionCycle:
-    @patch('collection.collect_bluesky.time')
-    @patch('collection.collect_bluesky.random')
-    @patch('collection.collect_bluesky.SEARCH_CONFIG', {'en': ['test_kw']})
-    @patch('collection.collect_bluesky.reload_excluded_handles')
+    @patch("collection.collect_bluesky.time")
+    @patch("collection.collect_bluesky.random")
+    @patch("collection.collect_bluesky.SEARCH_CONFIG", {"en": ["test_kw"]})
+    @patch("collection.collect_bluesky.reload_excluded_handles")
     def test_basic_cycle(self, mock_reload, mock_random, mock_time):
         mock_random.uniform.return_value = 1.0
         mock_time.sleep = MagicMock()
@@ -72,7 +72,7 @@ class TestRunCollectionCycle:
         mock_post.author.handle = "test.bsky.social"
         mock_post.author.display_name = "Test User"
         mock_post.embed = None
-        mock_post.record.langs = ['en']
+        mock_post.record.langs = ["en"]
         mock_post.reply_count = 0
         mock_post.repost_count = 0
         mock_post.like_count = 0
@@ -82,10 +82,10 @@ class TestRunCollectionCycle:
         mock_collection.bulk_write.assert_called_once()
         mock_reload.assert_called_once()
 
-    @patch('collection.collect_bluesky.time')
-    @patch('collection.collect_bluesky.random')
-    @patch('collection.collect_bluesky.SEARCH_CONFIG', {'en': ['test_kw']})
-    @patch('collection.collect_bluesky.reload_excluded_handles')
+    @patch("collection.collect_bluesky.time")
+    @patch("collection.collect_bluesky.random")
+    @patch("collection.collect_bluesky.SEARCH_CONFIG", {"en": ["test_kw"]})
+    @patch("collection.collect_bluesky.reload_excluded_handles")
     def test_cycle_with_monitor(self, mock_reload, mock_random, mock_time):
         mock_random.uniform.return_value = 1.0
         mock_time.sleep = MagicMock()
@@ -106,7 +106,7 @@ class TestRunCollectionCycle:
         mock_post.author.handle = "user.bsky.social"
         mock_post.author.display_name = "User"
         mock_post.embed = None
-        mock_post.record.langs = ['en']
+        mock_post.record.langs = ["en"]
         mock_post.reply_count = 0
         mock_post.repost_count = 0
         mock_post.like_count = 0
@@ -118,10 +118,10 @@ class TestRunCollectionCycle:
         mock_monitor.record_keyword.assert_called()
         mock_monitor.end_cycle.assert_called_once()
 
-    @patch('collection.collect_bluesky.time')
-    @patch('collection.collect_bluesky.random')
-    @patch('collection.collect_bluesky.SEARCH_CONFIG', {'en': ['error_kw']})
-    @patch('collection.collect_bluesky.reload_excluded_handles')
+    @patch("collection.collect_bluesky.time")
+    @patch("collection.collect_bluesky.random")
+    @patch("collection.collect_bluesky.SEARCH_CONFIG", {"en": ["error_kw"]})
+    @patch("collection.collect_bluesky.reload_excluded_handles")
     def test_cycle_handles_api_error(self, mock_reload, mock_random, mock_time):
         mock_random.uniform.return_value = 1.0
         mock_time.sleep = MagicMock()
@@ -133,10 +133,10 @@ class TestRunCollectionCycle:
         # Should not raise
         run_collection_cycle(mock_collection, mock_client)
 
-    @patch('collection.collect_bluesky.time')
-    @patch('collection.collect_bluesky.random')
-    @patch('collection.collect_bluesky.SEARCH_CONFIG', {'en': ['rate_kw']})
-    @patch('collection.collect_bluesky.reload_excluded_handles')
+    @patch("collection.collect_bluesky.time")
+    @patch("collection.collect_bluesky.random")
+    @patch("collection.collect_bluesky.SEARCH_CONFIG", {"en": ["rate_kw"]})
+    @patch("collection.collect_bluesky.reload_excluded_handles")
     def test_cycle_handles_rate_limit(self, mock_reload, mock_random, mock_time):
         mock_random.uniform.return_value = 30.0
         mock_time.sleep = MagicMock()
@@ -149,11 +149,11 @@ class TestRunCollectionCycle:
         # Should have slept for rate limit
         assert mock_time.sleep.called
 
-    @patch('collection.collect_bluesky.time')
-    @patch('collection.collect_bluesky.random')
-    @patch('collection.collect_bluesky.SEARCH_CONFIG', {'en': ['test']})
-    @patch('collection.collect_bluesky.EXCLUDED_HANDLES', {'excluded.bsky.social'})
-    @patch('collection.collect_bluesky.reload_excluded_handles')
+    @patch("collection.collect_bluesky.time")
+    @patch("collection.collect_bluesky.random")
+    @patch("collection.collect_bluesky.SEARCH_CONFIG", {"en": ["test"]})
+    @patch("collection.collect_bluesky.EXCLUDED_HANDLES", {"excluded.bsky.social"})
+    @patch("collection.collect_bluesky.reload_excluded_handles")
     def test_excluded_handles_skipped(self, mock_reload, mock_random, mock_time):
         mock_random.uniform.return_value = 1.0
         mock_time.sleep = MagicMock()

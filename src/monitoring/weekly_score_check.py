@@ -27,13 +27,14 @@ from pymongo import MongoClient
 # ---------------------------------------------------------------------------
 #  Project root = 2 levels up from this file  (src/monitoring/ -> project root)
 # ---------------------------------------------------------------------------
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, 'src'))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(PROJECT_ROOT, "src"))
 
 from pipeline.expert_detector import ExpertFakeNewsDetector
 
 try:
     from codecarbon import EmissionsTracker
+
     CODECARBON_AVAILABLE = True
 except ImportError:
     CODECARBON_AVAILABLE = False
@@ -41,7 +42,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s — %(message)s',
+    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
 )
 
 SAMPLE_SIZE = 1000
@@ -52,16 +53,18 @@ SUSPECT_RATE_ALERT_THRESHOLD = 0.40
 #  MongoDB connection
 # ---------------------------------------------------------------------------
 
+
 def _build_mongo_uri() -> str:
     """Build a MongoDB URI from env vars, supporting both auth and no-auth."""
-    user = os.environ.get('MONGO_USER', '')
-    password = os.environ.get('MONGO_PASSWORD', '')
-    host = os.environ.get('MONGO_HOST', 'localhost:27017')
+    user = os.environ.get("MONGO_USER", "")
+    password = os.environ.get("MONGO_PASSWORD", "")
+    host = os.environ.get("MONGO_HOST", "localhost:27017")
 
     if user and password:
         from urllib.parse import quote_plus
-        return f'mongodb://{quote_plus(user)}:{quote_plus(password)}@{host}/'
-    return f'mongodb://{host}/'
+
+        return f"mongodb://{quote_plus(user)}:{quote_plus(password)}@{host}/"
+    return f"mongodb://{host}/"
 
 
 def fetch_recent_posts(n: int = SAMPLE_SIZE) -> pd.DataFrame:
@@ -70,15 +73,15 @@ def fetch_recent_posts(n: int = SAMPLE_SIZE) -> pd.DataFrame:
     client = MongoClient(uri, serverSelectionTimeoutMS=5000)
     client.server_info()  # fail fast if unreachable
 
-    db = client['thumalien_db']
+    db = client["thumalien_db"]
     docs = list(
-        db['raw_posts']
-        .find({'text': {'$exists': True}}, {'_id': 0, 'text': 1, 'collected_at': 1})
-        .sort('collected_at', -1)
+        db["raw_posts"]
+        .find({"text": {"$exists": True}}, {"_id": 0, "text": 1, "collected_at": 1})
+        .sort("collected_at", -1)
         .limit(n)
     )
     if not docs:
-        raise RuntimeError('No posts found in MongoDB collection raw_posts.')
+        raise RuntimeError("No posts found in MongoDB collection raw_posts.")
     return pd.DataFrame(docs)
 
 
@@ -86,25 +89,28 @@ def fetch_recent_posts(n: int = SAMPLE_SIZE) -> pd.DataFrame:
 #  Scoring
 # ---------------------------------------------------------------------------
 
-def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector, track_emissions: bool = True) -> dict:
+
+def run_scoring(
+    df: pd.DataFrame, detector: ExpertFakeNewsDetector, track_emissions: bool = True
+) -> dict:
     """Run predict() and compute aggregate metrics, optionally tracking energy."""
     tracker = None
     if track_emissions and CODECARBON_AVAILABLE:
         try:
             tracker = EmissionsTracker(
-                project_name='ThumaCheck_WeeklyScoring',
-                output_dir=os.path.join(PROJECT_ROOT, 'logs'),
-                output_file='weekly_emissions.csv',
-                log_level='error',
+                project_name="ThumaCheck_WeeklyScoring",
+                output_dir=os.path.join(PROJECT_ROOT, "logs"),
+                output_file="weekly_emissions.csv",
+                log_level="error",
             )
             tracker.start()
         except Exception:
             tracker = None
 
-    results = detector.predict(pd.Series(df['text'].values))
+    results = detector.predict(pd.Series(df["text"].values))
 
-    labels = results['prediction_label'].values
-    scores = results['ai_score_credibility'].values
+    labels = results["prediction_label"].values
+    scores = results["ai_score_credibility"].values
 
     n_total = len(labels)
     n_suspect = int((labels == 1).sum())
@@ -114,24 +120,24 @@ def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector, track_emissi
 
     # Score percentiles
     percentiles = {
-        'p10': round(float(np.percentile(scores, 10)), 4),
-        'p25': round(float(np.percentile(scores, 25)), 4),
-        'p50': round(float(np.percentile(scores, 50)), 4),
-        'p75': round(float(np.percentile(scores, 75)), 4),
-        'p90': round(float(np.percentile(scores, 90)), 4),
+        "p10": round(float(np.percentile(scores, 10)), 4),
+        "p25": round(float(np.percentile(scores, 25)), 4),
+        "p50": round(float(np.percentile(scores, 50)), 4),
+        "p75": round(float(np.percentile(scores, 75)), 4),
+        "p90": round(float(np.percentile(scores, 90)), 4),
     }
 
     # Language breakdown
-    languages = results['language'].values
+    languages = results["language"].values
     lang_counts = pd.Series(languages).value_counts(normalize=True)
     language_breakdown = {
-        'pct_fr': round(float(lang_counts.get('fr', 0)) * 100, 2),
-        'pct_en': round(float(lang_counts.get('en', 0)) * 100, 2),
-        'pct_other': round(float(lang_counts.get('other', 0)) * 100, 2),
+        "pct_fr": round(float(lang_counts.get("fr", 0)) * 100, 2),
+        "pct_en": round(float(lang_counts.get("en", 0)) * 100, 2),
+        "pct_other": round(float(lang_counts.get("other", 0)) * 100, 2),
     }
 
     # Average text length
-    avg_text_length = round(float(df['text'].str.len().mean()), 1)
+    avg_text_length = round(float(df["text"].str.len().mean()), 1)
 
     # Stop energy tracking
     energy_metrics = {}
@@ -139,24 +145,24 @@ def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector, track_emissi
         try:
             emissions = tracker.stop()
             energy_metrics = {
-                'co2_emissions_kg': round(float(emissions), 8),
-                'energy_kwh': round(float(getattr(tracker, '_total_energy', 0)), 8),
+                "co2_emissions_kg": round(float(emissions), 8),
+                "energy_kwh": round(float(getattr(tracker, "_total_energy", 0)), 8),
             }
-            logger.info('Energy tracked: %.6f kg CO2', emissions)
+            logger.info("Energy tracked: %.6f kg CO2", emissions)
         except Exception:
             pass
 
     return {
-        'timestamp': datetime.now(UTC).isoformat(),
-        'n_sampled': n_total,
-        'n_suspect': n_suspect,
-        'suspect_rate': suspect_rate,
-        'mean_credibility': mean_credibility,
-        'std_credibility': std_credibility,
-        'score_percentiles': percentiles,
-        'language_breakdown': language_breakdown,
-        'avg_text_length': avg_text_length,
-        'energy': energy_metrics,
+        "timestamp": datetime.now(UTC).isoformat(),
+        "n_sampled": n_total,
+        "n_suspect": n_suspect,
+        "suspect_rate": suspect_rate,
+        "mean_credibility": mean_credibility,
+        "std_credibility": std_credibility,
+        "score_percentiles": percentiles,
+        "language_breakdown": language_breakdown,
+        "avg_text_length": avg_text_length,
+        "energy": energy_metrics,
     }
 
 
@@ -164,64 +170,72 @@ def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector, track_emissi
 #  Report writing
 # ---------------------------------------------------------------------------
 
+
 def write_report(report: dict, path: str) -> None:
     """Append a single JSONL line to *path*, creating parent dirs if needed."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'a', encoding='utf-8') as f:
-        f.write(json.dumps(report, ensure_ascii=False) + '\n')
-    logger.info('Report written to %s', path)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(report, ensure_ascii=False) + "\n")
+    logger.info("Report written to %s", path)
 
 
 # ---------------------------------------------------------------------------
 #  Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
-    logger.info('=== Weekly Score Check — start ===')
+    logger.info("=== Weekly Score Check — start ===")
 
     # 1. Fetch posts
-    logger.info('Connecting to MongoDB ...')
+    logger.info("Connecting to MongoDB ...")
     df = fetch_recent_posts(SAMPLE_SIZE)
-    logger.info('Fetched %d posts.', len(df))
+    logger.info("Fetched %d posts.", len(df))
 
     # 2. Load model
-    model_dir = os.path.join(PROJECT_ROOT, 'models')
+    model_dir = os.path.join(PROJECT_ROOT, "models")
     detector = ExpertFakeNewsDetector(model_dir=model_dir, threshold=0.44)
-    v5_path = os.path.join(model_dir, 'model_expert_v5.pkl')
-    suffix = 'expert_v5' if os.path.exists(v5_path) else 'expert'
+    v5_path = os.path.join(model_dir, "model_expert_v5.pkl")
+    suffix = "expert_v5" if os.path.exists(v5_path) else "expert"
     detector.load(suffix=suffix)
-    logger.info('Model loaded (suffix=%s).', suffix)
+    logger.info("Model loaded (suffix=%s).", suffix)
 
     # 3. Score
     report = run_scoring(df, detector)
     logger.info(
-        'Results — suspect_rate=%.2f%%, mean_cred=%.4f, std_cred=%.4f',
-        report['suspect_rate'] * 100,
-        report['mean_credibility'],
-        report['std_credibility'],
+        "Results — suspect_rate=%.2f%%, mean_cred=%.4f, std_cred=%.4f",
+        report["suspect_rate"] * 100,
+        report["mean_credibility"],
+        report["std_credibility"],
     )
-    p = report['score_percentiles']
+    p = report["score_percentiles"]
     logger.info(
-        'Score percentiles — p10=%.4f, p25=%.4f, p50=%.4f, p75=%.4f, p90=%.4f',
-        p['p10'], p['p25'], p['p50'], p['p75'], p['p90'],
+        "Score percentiles — p10=%.4f, p25=%.4f, p50=%.4f, p75=%.4f, p90=%.4f",
+        p["p10"],
+        p["p25"],
+        p["p50"],
+        p["p75"],
+        p["p90"],
     )
-    lb = report['language_breakdown']
+    lb = report["language_breakdown"]
     logger.info(
-        'Language breakdown — FR=%.1f%%, EN=%.1f%%, other=%.1f%%',
-        lb['pct_fr'], lb['pct_en'], lb['pct_other'],
+        "Language breakdown — FR=%.1f%%, EN=%.1f%%, other=%.1f%%",
+        lb["pct_fr"],
+        lb["pct_en"],
+        lb["pct_other"],
     )
-    logger.info('Average text length: %.1f chars', report['avg_text_length'])
+    logger.info("Average text length: %.1f chars", report["avg_text_length"])
 
     # 4. Write JSONL
-    report_path = os.path.join(PROJECT_ROOT, 'logs', 'weekly_scores.jsonl')
+    report_path = os.path.join(PROJECT_ROOT, "logs", "weekly_scores.jsonl")
     write_report(report, report_path)
 
     # 5. Alert
-    if report['suspect_rate'] > SUSPECT_RATE_ALERT_THRESHOLD:
+    if report["suspect_rate"] > SUSPECT_RATE_ALERT_THRESHOLD:
         logger.warning(
-            'ALERT: suspect_rate %.2f%% exceeds threshold %.0f%%. '
-            'Investigate potential model drift or data quality issue.',
-            report['suspect_rate'] * 100,
+            "ALERT: suspect_rate %.2f%% exceeds threshold %.0f%%. "
+            "Investigate potential model drift or data quality issue.",
+            report["suspect_rate"] * 100,
             SUSPECT_RATE_ALERT_THRESHOLD * 100,
         )
         print(
@@ -229,10 +243,10 @@ def main() -> None:
             f"> {SUSPECT_RATE_ALERT_THRESHOLD:.0%} threshold\n"
         )
     else:
-        logger.info('suspect_rate within normal range.')
+        logger.info("suspect_rate within normal range.")
 
-    logger.info('=== Weekly Score Check — done ===')
+    logger.info("=== Weekly Score Check — done ===")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

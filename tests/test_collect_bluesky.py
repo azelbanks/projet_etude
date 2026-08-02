@@ -8,12 +8,13 @@ without requiring any external service (no Bluesky API, no MongoDB).
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from collection.collect_bluesky import compute_word_count, detect_language_hint, validate_text
 
 # -----------------------------------------------------------------------
 #  validate_text
 # -----------------------------------------------------------------------
+
 
 class TestValidateText:
     """Tests for the validate_text() function."""
@@ -73,6 +74,7 @@ class TestValidateText:
 #  compute_word_count
 # -----------------------------------------------------------------------
 
+
 class TestComputeWordCount:
     """Tests for the compute_word_count() function."""
 
@@ -98,6 +100,7 @@ class TestComputeWordCount:
 # -----------------------------------------------------------------------
 #  detect_language_hint
 # -----------------------------------------------------------------------
+
 
 class TestDetectLanguageHint:
     """Tests for the detect_language_hint() heuristic."""

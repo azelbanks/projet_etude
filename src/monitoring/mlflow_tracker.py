@@ -26,9 +26,7 @@ except ImportError:
     MLFLOW_AVAILABLE = False
 
 EXPERIMENT_NAME = "ThumaCheck"
-TRACKING_URI = os.path.join(
-    os.path.dirname(__file__), '..', '..', 'mlruns'
-)
+TRACKING_URI = os.path.join(os.path.dirname(__file__), "..", "..", "mlruns")
 
 
 class _RunProxy:

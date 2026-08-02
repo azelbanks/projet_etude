@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from collection.collect_bluesky import (
     SEARCH_CONFIG,
     compute_word_count,
@@ -104,25 +104,25 @@ class TestDetectLanguageHintExtended:
 
 class TestSearchConfig:
     def test_has_en_and_fr(self):
-        assert 'en' in SEARCH_CONFIG
-        assert 'fr' in SEARCH_CONFIG
+        assert "en" in SEARCH_CONFIG
+        assert "fr" in SEARCH_CONFIG
 
     def test_en_terms_non_empty(self):
-        assert len(SEARCH_CONFIG['en']) > 0
+        assert len(SEARCH_CONFIG["en"]) > 0
 
     def test_fr_terms_non_empty(self):
-        assert len(SEARCH_CONFIG['fr']) > 0
+        assert len(SEARCH_CONFIG["fr"]) > 0
 
     def test_no_emotional_bias_terms(self):
         """Verify 'happy', 'amazing', 'joie' were removed (collecteur V3)."""
-        all_terms = SEARCH_CONFIG['en'] + SEARCH_CONFIG['fr']
-        for term in ['happy', 'amazing', 'thank you', 'joie']:
+        all_terms = SEARCH_CONFIG["en"] + SEARCH_CONFIG["fr"]
+        for term in ["happy", "amazing", "thank you", "joie"]:
             assert term not in all_terms, f"Biased term '{term}' should be removed"
 
     def test_has_desinformation_terms(self):
-        en_terms = SEARCH_CONFIG['en']
-        assert 'conspiracy' in en_terms
-        assert 'vaccine' in en_terms
+        en_terms = SEARCH_CONFIG["en"]
+        assert "conspiracy" in en_terms
+        assert "vaccine" in en_terms
 
 
 class TestLoadExcludedHandles:
@@ -132,19 +132,21 @@ class TestLoadExcludedHandles:
 
     def test_nonexistent_file_returns_empty(self, tmp_path, monkeypatch):
         import collection.collect_bluesky as cb
-        monkeypatch.setattr(cb, '_EXCLUDED_HANDLES_FILE', str(tmp_path / 'nope.txt'))
+
+        monkeypatch.setattr(cb, "_EXCLUDED_HANDLES_FILE", str(tmp_path / "nope.txt"))
         result = cb.load_excluded_handles()
         assert result == set()
 
 
 class TestConnectDbMaxRetries:
-    @patch('collection.collect_bluesky.MongoClient')
-    @patch('collection.collect_bluesky.time')
+    @patch("collection.collect_bluesky.MongoClient")
+    @patch("collection.collect_bluesky.time")
     def test_raises_after_max_retries(self, mock_time, mock_client):
         mock_time.sleep = MagicMock()
         mock_client.return_value.admin.command.side_effect = Exception("connection refused")
 
         from collection.collect_bluesky import connect_db
+
         with pytest.raises(ConnectionError, match="inaccessible"):
             connect_db()
 

@@ -22,6 +22,7 @@ from pipeline.expert_detector import EmotionFeatureExtractor, ExpertFakeNewsDete
 
 try:
     from codecarbon import EmissionsTracker
+
     CODECARBON_AVAILABLE = True
 except ImportError:
     CODECARBON_AVAILABLE = False
@@ -29,7 +30,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Emotion labels for API response
-EMOTION_LABELS = ['colere', 'degout', 'joie', 'neutre', 'peur', 'surprise', 'tristesse']
+EMOTION_LABELS = ["colere", "degout", "joie", "neutre", "peur", "surprise", "tristesse"]
 
 # ---------------------------------------------------------------------------
 #  Global detector + emotion + energy instances
@@ -39,12 +40,12 @@ emotion_extractor: EmotionFeatureExtractor | None = None
 
 # Cumulative energy metrics for the API session
 _energy_metrics = {
-    'total_requests': 0,
-    'total_predict_requests': 0,
-    'total_inference_time_s': 0.0,
-    'co2_emissions_kg': 0.0,
-    'energy_kwh': 0.0,
-    'tracker_active': False,
+    "total_requests": 0,
+    "total_predict_requests": 0,
+    "total_inference_time_s": 0.0,
+    "co2_emissions_kg": 0.0,
+    "energy_kwh": 0.0,
+    "tracker_active": False,
 }
 _energy_tracker: object | None = None
 
@@ -59,7 +60,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._requests: dict[str, collections.deque] = {}
 
     async def dispatch(self, request: Request, call_next: object) -> JSONResponse:
-        client_ip = request.client.host if request.client else 'unknown'
+        client_ip = request.client.host if request.client else "unknown"
         now = time.monotonic()
 
         if client_ip not in self._requests:
@@ -73,7 +74,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if len(dq) >= self.max_requests:
             return JSONResponse(
                 status_code=429,
-                content={'detail': f'Rate limit exceeded ({self.max_requests} req/{self.window_seconds}s)'},
+                content={
+                    "detail": f"Rate limit exceeded ({self.max_requests} req/{self.window_seconds}s)"
+                },
             )
 
         dq.append(now)
@@ -84,14 +87,14 @@ class EnergyTrackingMiddleware(BaseHTTPMiddleware):
     """Middleware that tracks inference time per request for energy accounting."""
 
     async def dispatch(self, request: Request, call_next: object) -> JSONResponse:
-        _energy_metrics['total_requests'] += 1
+        _energy_metrics["total_requests"] += 1
         start = time.monotonic()
         response = await call_next(request)
         elapsed = time.monotonic() - start
 
-        if request.url.path == '/predict':
-            _energy_metrics['total_predict_requests'] += 1
-            _energy_metrics['total_inference_time_s'] += elapsed
+        if request.url.path == "/predict":
+            _energy_metrics["total_predict_requests"] += 1
+            _energy_metrics["total_inference_time_s"] += elapsed
 
         return response
 
@@ -148,16 +151,16 @@ async def lifespan(app: FastAPI):
     # Start continuous energy tracker for the API session
     if CODECARBON_AVAILABLE:
         try:
-            logs_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'logs')
+            logs_dir = os.path.join(os.path.dirname(__file__), "..", "..", "logs")
             os.makedirs(logs_dir, exist_ok=True)
             _energy_tracker = EmissionsTracker(
-                project_name='ThumaCheck_API',
+                project_name="ThumaCheck_API",
                 output_dir=logs_dir,
-                output_file='api_emissions.csv',
-                log_level='error',
+                output_file="api_emissions.csv",
+                log_level="error",
             )
             _energy_tracker.start()
-            _energy_metrics['tracker_active'] = True
+            _energy_metrics["tracker_active"] = True
             logger.info("CodeCarbon API tracker started")
         except Exception:
             logger.warning("CodeCarbon tracker failed to start")
@@ -170,7 +173,7 @@ async def lifespan(app: FastAPI):
         try:
             emissions = _energy_tracker.stop()
             if emissions is not None:
-                _energy_metrics['co2_emissions_kg'] = float(emissions)
+                _energy_metrics["co2_emissions_kg"] = float(emissions)
             logger.info("CodeCarbon API tracker stopped: %.6f kg CO2", emissions or 0)
         except Exception:
             pass
@@ -189,9 +192,7 @@ app = FastAPI(
 # CORS restrictif — origines explicites uniquement
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get(
-        "THUMACHECK_CORS_ORIGINS", "http://localhost:8501"
-    ).split(","),
+    allow_origins=os.environ.get("THUMACHECK_CORS_ORIGINS", "http://localhost:8501").split(","),
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
@@ -199,7 +200,7 @@ app.add_middleware(
 app.add_middleware(EnergyTrackingMiddleware)
 app.add_middleware(
     RateLimitMiddleware,
-    max_requests=int(os.environ.get('THUMACHECK_RATE_LIMIT', '60')),
+    max_requests=int(os.environ.get("THUMACHECK_RATE_LIMIT", "60")),
     window_seconds=60,
 )
 
@@ -243,7 +244,7 @@ def health() -> dict[str, object]:
         status="ok",
         model_loaded=detector is not None,
         emotions_loaded=emotion_extractor is not None,
-        energy_tracking=_energy_metrics['tracker_active'],
+        energy_tracking=_energy_metrics["tracker_active"],
     )
 
 
@@ -253,17 +254,17 @@ def energy() -> dict[str, object]:
     # Update CO2 from tracker if available
     if _energy_tracker is not None:
         try:
-            interim = getattr(_energy_tracker, '_total_energy', None)
+            interim = getattr(_energy_tracker, "_total_energy", None)
             if interim is not None:
-                _energy_metrics['energy_kwh'] = float(interim)
+                _energy_metrics["energy_kwh"] = float(interim)
         except Exception:
             pass
     return EnergyResponse(
-        total_requests=_energy_metrics['total_requests'],
-        total_predict_requests=_energy_metrics['total_predict_requests'],
-        total_inference_time_s=round(_energy_metrics['total_inference_time_s'], 4),
-        co2_emissions_kg=round(_energy_metrics['co2_emissions_kg'], 8),
-        tracker_active=_energy_metrics['tracker_active'],
+        total_requests=_energy_metrics["total_requests"],
+        total_predict_requests=_energy_metrics["total_predict_requests"],
+        total_inference_time_s=round(_energy_metrics["total_inference_time_s"], 4),
+        co2_emissions_kg=round(_energy_metrics["co2_emissions_kg"], 8),
+        tracker_active=_energy_metrics["tracker_active"],
     )
 
 
@@ -288,8 +289,7 @@ def predict(req: PredictRequest) -> dict[str, object]:
         try:
             probas = emotion_extractor.get_emotion_features([text])[0]
             emotions = {
-                EMOTION_LABELS[i]: round(float(probas[i]), 4)
-                for i in range(len(EMOTION_LABELS))
+                EMOTION_LABELS[i]: round(float(probas[i]), 4) for i in range(len(EMOTION_LABELS))
             }
         except Exception:
             logger.warning("Emotion extraction failed for predict request")
@@ -333,21 +333,19 @@ def explain(req: ExplainRequest) -> dict[str, object]:
     explanation = detector.explain_prediction(text)
 
     top_suspect = [
-        WordContribution(word=w['word'], contribution=round(w['contribution'], 6))
-        for w in explanation.get('top_suspect_words', [])[:10]
+        WordContribution(word=w["word"], contribution=round(w["contribution"], 6))
+        for w in explanation.get("top_suspect_words", [])[:10]
     ]
     top_fiable = [
-        WordContribution(word=w['word'], contribution=round(w['contribution'], 6))
-        for w in explanation.get('top_fiable_words', [])[:10]
+        WordContribution(word=w["word"], contribution=round(w["contribution"], 6))
+        for w in explanation.get("top_fiable_words", [])[:10]
     ]
-    sensationalist = [
-        w['word'] for w in explanation.get('sensationalist_words', [])
-    ]
+    sensationalist = [w["word"] for w in explanation.get("sensationalist_words", [])]
 
     return ExplainResponse(
-        explainable=explanation.get('explainable', False),
-        score=round(explanation.get('score', 0.0), 4),
-        label=explanation.get('label', 'unknown'),
+        explainable=explanation.get("explainable", False),
+        score=round(explanation.get("score", 0.0), 4),
+        label=explanation.get("label", "unknown"),
         top_suspect_words=top_suspect,
         top_fiable_words=top_fiable,
         sensationalist_words=sensationalist,

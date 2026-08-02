@@ -88,9 +88,7 @@ def test_predict_no_model(client):
     original = api_module.detector
     api_module.detector = None
     try:
-        resp = client.post(
-            "/predict", json={"text": "Some text.", "lang": "auto"}
-        )
+        resp = client.post("/predict", json={"text": "Some text.", "lang": "auto"})
         assert resp.status_code == 503
     finally:
         api_module.detector = original

@@ -228,8 +228,9 @@ class GlobalShapExplainer:
         plt.close()
         return path
 
-    def _plot_bar_global(self, mean_abs: np.ndarray, sorted_idx: np.ndarray,
-                        max_display: int = 20) -> str:
+    def _plot_bar_global(
+        self, mean_abs: np.ndarray, sorted_idx: np.ndarray, max_display: int = 20
+    ) -> str:
         """Bar plot d'importance globale (figure 'classique')."""
         import matplotlib.pyplot as plt
 
@@ -270,8 +271,7 @@ class GlobalShapExplainer:
             show=False,
         )
         plt.title(
-            f"Dependence — {fname}\n"
-            f"effet marginal + interaction la plus forte (auto-détectée)",
+            f"Dependence — {fname}\neffet marginal + interaction la plus forte (auto-détectée)",
             fontsize=10,
         )
         plt.tight_layout()

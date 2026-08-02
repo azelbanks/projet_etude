@@ -38,17 +38,22 @@ __all__ = [
 def __getattr__(name):  # lazy imports — évite de charger torch si pas utilisé
     if name == "GlobalShapExplainer":
         from .shap_global import GlobalShapExplainer
+
         return GlobalShapExplainer
     if name == "CamembertAttentionExplainer":
         from .attention_viz import CamembertAttentionExplainer
+
         return CamembertAttentionExplainer
     if name == "IGExplainer":
         from .integrated_gradients import IGExplainer
+
         return IGExplainer
     if name == "MetaLearnerDecomposer":
         from .meta_decomposition import MetaLearnerDecomposer
+
         return MetaLearnerDecomposer
     if name == "FaithfulnessEvaluator":
         from .faithfulness import FaithfulnessEvaluator
+
         return FaithfulnessEvaluator
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -11,7 +11,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 torch = pytest.importorskip("torch", reason="PyTorch required")
 
@@ -24,6 +24,7 @@ from pipeline.camembert_classifier import (
 # -----------------------------------------------------------------------
 #  CamemBERTHead
 # -----------------------------------------------------------------------
+
 
 class TestCamemBERTHead:
     """Tests for the CamemBERTHead classification module."""
@@ -59,12 +60,13 @@ class TestCamemBERTHead:
 #  CamemBERTClassifier
 # -----------------------------------------------------------------------
 
+
 class TestCamemBERTClassifier:
     """Tests for CamemBERTClassifier initialization and error handling."""
 
     def test_init_default_values(self):
-        clf = CamemBERTClassifier(model_dir='/tmp/test_models')
-        assert clf.model_dir == '/tmp/test_models'
+        clf = CamemBERTClassifier(model_dir="/tmp/test_models")
+        assert clf.model_dir == "/tmp/test_models"
         assert clf._loaded is False
         assert clf.tokenizer is None
 
@@ -74,21 +76,22 @@ class TestCamemBERTClassifier:
             clf.predict(["test text"])
 
     def test_load_returns_false_when_file_missing(self):
-        clf = CamemBERTClassifier(model_dir='/tmp/nonexistent_dir')
+        clf = CamemBERTClassifier(model_dir="/tmp/nonexistent_dir")
         if TRANSFORMERS_AVAILABLE:
-            result = clf.load(suffix='nonexistent_model')
+            result = clf.load(suffix="nonexistent_model")
             assert result is False
 
     def test_max_length_constant(self):
         assert CamemBERTClassifier.MAX_LENGTH == 128
 
     def test_model_name_constant(self):
-        assert CamemBERTClassifier.MODEL_NAME == 'camembert-base'
+        assert CamemBERTClassifier.MODEL_NAME == "camembert-base"
 
 
 # -----------------------------------------------------------------------
 #  TextDataset (requires transformers)
 # -----------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not TRANSFORMERS_AVAILABLE, reason="transformers not installed")
 class TestTextDataset:
@@ -97,31 +100,36 @@ class TestTextDataset:
     @pytest.fixture
     def tokenizer(self):
         from transformers import AutoTokenizer
-        return AutoTokenizer.from_pretrained('camembert-base')
+
+        return AutoTokenizer.from_pretrained("camembert-base")
 
     def test_dataset_length(self, tokenizer):
         from pipeline.camembert_classifier import TextDataset
+
         ds = TextDataset(["text1", "text2", "text3"], [0, 1, 0], tokenizer)
         assert len(ds) == 3
 
     def test_dataset_item_keys(self, tokenizer):
         from pipeline.camembert_classifier import TextDataset
+
         ds = TextDataset(["Ceci est un test"], [1], tokenizer)
         item = ds[0]
-        assert 'input_ids' in item
-        assert 'attention_mask' in item
-        assert 'label' in item
+        assert "input_ids" in item
+        assert "attention_mask" in item
+        assert "label" in item
 
     def test_dataset_item_shapes(self, tokenizer):
         from pipeline.camembert_classifier import TextDataset
+
         ds = TextDataset(["Ceci est un test"], [1], tokenizer, max_length=64)
         item = ds[0]
-        assert item['input_ids'].shape == (64,)
-        assert item['attention_mask'].shape == (64,)
-        assert item['label'].shape == ()
+        assert item["input_ids"].shape == (64,)
+        assert item["attention_mask"].shape == (64,)
+        assert item["label"].shape == ()
 
     def test_label_value(self, tokenizer):
         from pipeline.camembert_classifier import TextDataset
+
         ds = TextDataset(["text"], [1], tokenizer)
         item = ds[0]
-        assert item['label'].item() == 1
+        assert item["label"].item() == 1

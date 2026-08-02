@@ -15,6 +15,7 @@ class TestGlobalShapExplainerWithModel:
     @pytest.fixture
     def mock_model(self):
         from sklearn.ensemble import GradientBoostingClassifier
+
         np.random.seed(42)
         X = np.random.rand(50, 5)
         y = (X[:, 0] > 0.5).astype(int)
@@ -24,7 +25,7 @@ class TestGlobalShapExplainerWithModel:
 
     @pytest.fixture
     def feature_names(self):
-        return ['feat_a', 'feat_b', 'feat_c', 'feat_d', 'feat_e']
+        return ["feat_a", "feat_b", "feat_c", "feat_d", "feat_e"]
 
     def test_init(self, mock_model, feature_names):
         explainer = GlobalShapExplainer(
@@ -57,8 +58,8 @@ class TestGlobalShapExplainerWithModel:
         )
         result = explainer.explain(X)
         j = json.loads(result.to_json())
-        assert 'feature_names' in j
-        assert len(j['feature_names']) == 5
+        assert "feature_names" in j
+        assert len(j["feature_names"]) == 5
 
     def test_sorted_indices_descending(self, mock_model, feature_names):
         X = np.random.rand(30, 5)
@@ -85,12 +86,16 @@ class TestGlobalShapResultSerialization:
             model_name="TestModel",
         )
         j = json.loads(r.to_json())
-        assert j['model_name'] == 'TestModel'
-        assert j['n_samples'] == 10
+        assert j["model_name"] == "TestModel"
+        assert j["n_samples"] == 10
 
     def test_figures_default_empty(self):
         r = GlobalShapResult(
-            feature_names=[], mean_abs_shap=[], sorted_indices=[],
-            n_samples=0, n_features=0, model_name="test",
+            feature_names=[],
+            mean_abs_shap=[],
+            sorted_indices=[],
+            n_samples=0,
+            n_features=0,
+            model_name="test",
         )
         assert r.figures == {}

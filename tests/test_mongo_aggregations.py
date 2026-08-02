@@ -11,12 +11,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from pipeline.mongo_aggregations import get_overview_stats, get_recent_posts, get_score_distribution
 
 # -----------------------------------------------------------------------
 #  Fixtures
 # -----------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_collection():
@@ -28,26 +29,29 @@ def mock_collection():
 #  get_overview_stats
 # -----------------------------------------------------------------------
 
+
 class TestGetOverviewStats:
     """Tests for the get_overview_stats() aggregation."""
 
     def test_returns_all_expected_keys(self, mock_collection):
-        mock_collection.aggregate.return_value = [{
-            "total": [{"count": 1000}],
-            "by_label": [
-                {"_id": "FIABLE", "count": 800},
-                {"_id": "SUSPECT", "count": 200},
-            ],
-            "by_emotion": [
-                {"_id": "neutre", "count": 500},
-                {"_id": "colere", "count": 300},
-            ],
-            "by_language": [
-                {"_id": "fr", "count": 600},
-                {"_id": "en", "count": 400},
-            ],
-            "avg_cred": [{"_id": None, "avg": 0.72}],
-        }]
+        mock_collection.aggregate.return_value = [
+            {
+                "total": [{"count": 1000}],
+                "by_label": [
+                    {"_id": "FIABLE", "count": 800},
+                    {"_id": "SUSPECT", "count": 200},
+                ],
+                "by_emotion": [
+                    {"_id": "neutre", "count": 500},
+                    {"_id": "colere", "count": 300},
+                ],
+                "by_language": [
+                    {"_id": "fr", "count": 600},
+                    {"_id": "en", "count": 400},
+                ],
+                "avg_cred": [{"_id": None, "avg": 0.72}],
+            }
+        ]
 
         stats = get_overview_stats(mock_collection)
 
@@ -59,13 +63,15 @@ class TestGetOverviewStats:
         assert abs(stats["avg_credibility"] - 0.72) < 0.001
 
     def test_empty_collection(self, mock_collection):
-        mock_collection.aggregate.return_value = [{
-            "total": [],
-            "by_label": [],
-            "by_emotion": [],
-            "by_language": [],
-            "avg_cred": [],
-        }]
+        mock_collection.aggregate.return_value = [
+            {
+                "total": [],
+                "by_label": [],
+                "by_emotion": [],
+                "by_language": [],
+                "avg_cred": [],
+            }
+        ]
 
         stats = get_overview_stats(mock_collection)
 
@@ -74,16 +80,18 @@ class TestGetOverviewStats:
         assert stats["avg_credibility"] is None
 
     def test_null_ids_excluded(self, mock_collection):
-        mock_collection.aggregate.return_value = [{
-            "total": [{"count": 100}],
-            "by_label": [
-                {"_id": "FIABLE", "count": 90},
-                {"_id": None, "count": 10},
-            ],
-            "by_emotion": [],
-            "by_language": [],
-            "avg_cred": [],
-        }]
+        mock_collection.aggregate.return_value = [
+            {
+                "total": [{"count": 100}],
+                "by_label": [
+                    {"_id": "FIABLE", "count": 90},
+                    {"_id": None, "count": 10},
+                ],
+                "by_emotion": [],
+                "by_language": [],
+                "avg_cred": [],
+            }
+        ]
 
         stats = get_overview_stats(mock_collection)
         assert None not in stats["by_label"]
@@ -103,15 +111,20 @@ class TestGetOverviewStats:
 #  get_recent_posts
 # -----------------------------------------------------------------------
 
+
 class TestGetRecentPosts:
     """Tests for the get_recent_posts() query."""
 
     def test_returns_list_of_dicts(self, mock_collection):
         mock_cursor = MagicMock()
-        mock_cursor.__iter__ = MagicMock(return_value=iter([
-            {"text": "Post 1", "ai_emotion": "neutre"},
-            {"text": "Post 2", "ai_emotion": "colere"},
-        ]))
+        mock_cursor.__iter__ = MagicMock(
+            return_value=iter(
+                [
+                    {"text": "Post 1", "ai_emotion": "neutre"},
+                    {"text": "Post 2", "ai_emotion": "colere"},
+                ]
+            )
+        )
         mock_collection.find.return_value.sort.return_value.limit.return_value = mock_cursor
 
         result = get_recent_posts(mock_collection, limit=2)
@@ -139,6 +152,7 @@ class TestGetRecentPosts:
 # -----------------------------------------------------------------------
 #  get_score_distribution
 # -----------------------------------------------------------------------
+
 
 class TestGetScoreDistribution:
     """Tests for the get_score_distribution() histogram."""

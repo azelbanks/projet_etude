@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from confluent_kafka import Consumer, KafkaError
+
     KAFKA_AVAILABLE = True
 except ImportError:
     KAFKA_AVAILABLE = False
@@ -48,39 +49,36 @@ class ThumaCheckKafkaConsumer:
     """
 
     DEFAULT_CONFIG = {
-        'bootstrap.servers': 'localhost:9092',
-        'group.id': 'thumacheck-consumer-group',
-        'auto.offset.reset': 'earliest',
-        'enable.auto.commit': True,
-        'max.poll.interval.ms': 300000,
+        "bootstrap.servers": "localhost:9092",
+        "group.id": "thumacheck-consumer-group",
+        "auto.offset.reset": "earliest",
+        "enable.auto.commit": True,
+        "max.poll.interval.ms": 300000,
     }
 
     def __init__(
         self,
-        topic: str = 'thumacheck-texts',
-        output_topic: str | None = 'thumacheck-results',
-        bootstrap_servers: str = 'localhost:9092',
-        group_id: str = 'thumacheck-consumer-group',
+        topic: str = "thumacheck-texts",
+        output_topic: str | None = "thumacheck-results",
+        bootstrap_servers: str = "localhost:9092",
+        group_id: str = "thumacheck-consumer-group",
         batch_size: int = 10,
         model_dir: str | None = None,
     ):
         if not KAFKA_AVAILABLE:
             raise RuntimeError(
-                "confluent-kafka non installe. "
-                "Installez-le avec : pip install confluent-kafka"
+                "confluent-kafka non installe. Installez-le avec : pip install confluent-kafka"
             )
 
         self.topic = topic
         self.output_topic = output_topic
         self.batch_size = batch_size
-        self.model_dir = model_dir or os.path.join(
-            os.path.dirname(__file__), '..', '..', 'models'
-        )
+        self.model_dir = model_dir or os.path.join(os.path.dirname(__file__), "..", "..", "models")
 
         self._config = {
             **self.DEFAULT_CONFIG,
-            'bootstrap.servers': bootstrap_servers,
-            'group.id': group_id,
+            "bootstrap.servers": bootstrap_servers,
+            "group.id": group_id,
         }
         self._consumer = None
         self._producer = None
@@ -89,20 +87,20 @@ class ThumaCheckKafkaConsumer:
 
         # Metrics
         self.metrics = {
-            'messages_consumed': 0,
-            'messages_processed': 0,
-            'errors': 0,
-            'start_time': None,
+            "messages_consumed": 0,
+            "messages_processed": 0,
+            "errors": 0,
+            "start_time": None,
         }
 
     def _load_detector(self):
         """Load the ExpertFakeNewsDetector pipeline."""
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
         from pipeline.expert_detector import ExpertFakeNewsDetector
 
         detector = ExpertFakeNewsDetector(model_dir=self.model_dir)
-        for suffix in ['expert_v5', 'expert_v4', 'expert_v3', 'expert']:
-            model_path = os.path.join(self.model_dir, f'model_{suffix}.pkl')
+        for suffix in ["expert_v5", "expert_v4", "expert_v3", "expert"]:
+            model_path = os.path.join(self.model_dir, f"model_{suffix}.pkl")
             if os.path.exists(model_path):
                 detector.load(suffix=suffix)
                 logger.info("Kafka consumer: modele charge (%s)", suffix)
@@ -115,9 +113,12 @@ class ThumaCheckKafkaConsumer:
             return
         try:
             from confluent_kafka import Producer
-            self._producer = Producer({
-                'bootstrap.servers': self._config['bootstrap.servers'],
-            })
+
+            self._producer = Producer(
+                {
+                    "bootstrap.servers": self._config["bootstrap.servers"],
+                }
+            )
         except Exception:
             logger.warning("Producer Kafka non disponible — resultats non publies")
             self._producer = None
@@ -132,7 +133,7 @@ class ThumaCheckKafkaConsumer:
         self._init_producer()
 
         self._running = True
-        self.metrics['start_time'] = time.time()
+        self.metrics["start_time"] = time.time()
 
         try:
             self._consume_loop()
@@ -160,18 +161,18 @@ class ThumaCheckKafkaConsumer:
                 if msg.error().code() == KafkaError._PARTITION_EOF:
                     continue
                 logger.error("Kafka error: %s", msg.error())
-                self.metrics['errors'] += 1
+                self.metrics["errors"] += 1
                 continue
 
             try:
-                payload = json.loads(msg.value().decode('utf-8'))
-                text = payload.get('text', '').strip()
-                msg_id = payload.get('id', f'msg-{self.metrics["messages_consumed"]}')
+                payload = json.loads(msg.value().decode("utf-8"))
+                text = payload.get("text", "").strip()
+                msg_id = payload.get("id", f"msg-{self.metrics['messages_consumed']}")
 
                 if text:
                     batch_texts.append(text)
                     batch_ids.append(msg_id)
-                    self.metrics['messages_consumed'] += 1
+                    self.metrics["messages_consumed"] += 1
 
                 if len(batch_texts) >= self.batch_size:
                     self._process_batch(batch_texts, batch_ids)
@@ -179,7 +180,7 @@ class ThumaCheckKafkaConsumer:
 
             except (json.JSONDecodeError, UnicodeDecodeError) as e:
                 logger.warning("Message mal forme: %s", e)
-                self.metrics['errors'] += 1
+                self.metrics["errors"] += 1
 
     def _process_batch(self, texts, ids):
         """Analyse un batch de textes via le detector."""
@@ -189,21 +190,24 @@ class ThumaCheckKafkaConsumer:
             results = self._detector.predict(pd.Series(texts))
             for i, msg_id in enumerate(ids):
                 result = {
-                    'id': msg_id,
-                    'score': float(results['ai_score_credibility'].iloc[i]),
-                    'label': 'FIABLE' if int(results['prediction_label'].iloc[i]) == 0 else 'SUSPECT',
-                    'language': str(results['language'].iloc[i]),
+                    "id": msg_id,
+                    "score": float(results["ai_score_credibility"].iloc[i]),
+                    "label": "FIABLE"
+                    if int(results["prediction_label"].iloc[i]) == 0
+                    else "SUSPECT",
+                    "language": str(results["language"].iloc[i]),
                 }
                 self._publish_result(result)
-                self.metrics['messages_processed'] += 1
+                self.metrics["messages_processed"] += 1
 
             logger.info(
                 "Batch de %d messages traite (total: %d)",
-                len(texts), self.metrics['messages_processed'],
+                len(texts),
+                self.metrics["messages_processed"],
             )
         except Exception:
             logger.exception("Erreur lors du traitement du batch")
-            self.metrics['errors'] += len(texts)
+            self.metrics["errors"] += len(texts)
 
     def _publish_result(self, result: dict):
         """Publie un resultat sur le topic de sortie."""
@@ -212,12 +216,12 @@ class ThumaCheckKafkaConsumer:
         try:
             self._producer.produce(
                 self.output_topic,
-                value=json.dumps(result).encode('utf-8'),
-                key=result.get('id', '').encode('utf-8'),
+                value=json.dumps(result).encode("utf-8"),
+                key=result.get("id", "").encode("utf-8"),
             )
             self._producer.poll(0)
         except Exception:
-            logger.warning("Publication du resultat echouee pour %s", result.get('id'))
+            logger.warning("Publication du resultat echouee pour %s", result.get("id"))
 
     def stop(self):
         """Arrete le consumer proprement."""
@@ -229,37 +233,36 @@ class ThumaCheckKafkaConsumer:
             self._producer.flush(timeout=5)
             self._producer = None
 
-        elapsed = time.time() - (self.metrics['start_time'] or time.time())
+        elapsed = time.time() - (self.metrics["start_time"] or time.time())
         logger.info(
             "Consumer arrete — %d messages traites en %.1fs (%.1f msg/s)",
-            self.metrics['messages_processed'],
+            self.metrics["messages_processed"],
             elapsed,
-            self.metrics['messages_processed'] / max(elapsed, 1),
+            self.metrics["messages_processed"] / max(elapsed, 1),
         )
 
     def get_metrics(self) -> dict:
         """Retourne les metriques du consumer."""
-        elapsed = time.time() - (self.metrics['start_time'] or time.time())
+        elapsed = time.time() - (self.metrics["start_time"] or time.time())
         return {
             **self.metrics,
-            'uptime_s': round(elapsed, 1),
-            'throughput_msg_per_s': round(
-                self.metrics['messages_processed'] / max(elapsed, 1), 2
-            ),
+            "uptime_s": round(elapsed, 1),
+            "throughput_msg_per_s": round(self.metrics["messages_processed"] / max(elapsed, 1), 2),
         }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)s %(levelname)s %(message)s')
 
-    parser = argparse.ArgumentParser(description='ThumaCheck Kafka Consumer')
-    parser.add_argument('--topic', default='thumacheck-texts')
-    parser.add_argument('--output-topic', default='thumacheck-results')
-    parser.add_argument('--bootstrap-servers', default='localhost:9092')
-    parser.add_argument('--group-id', default='thumacheck-consumer-group')
-    parser.add_argument('--batch-size', type=int, default=10)
-    parser.add_argument('--model-dir', default=None)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+
+    parser = argparse.ArgumentParser(description="ThumaCheck Kafka Consumer")
+    parser.add_argument("--topic", default="thumacheck-texts")
+    parser.add_argument("--output-topic", default="thumacheck-results")
+    parser.add_argument("--bootstrap-servers", default="localhost:9092")
+    parser.add_argument("--group-id", default="thumacheck-consumer-group")
+    parser.add_argument("--batch-size", type=int, default=10)
+    parser.add_argument("--model-dir", default=None)
     args = parser.parse_args()
 
     consumer = ThumaCheckKafkaConsumer(

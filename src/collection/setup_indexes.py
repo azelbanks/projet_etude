@@ -110,7 +110,9 @@ def setup_schema_validation(db):
         validator=validator,
         validationLevel="moderate",
     )
-    print("Schema validation appliquee (moderate) — champs requis : uri, text, collected_at, author_did")
+    print(
+        "Schema validation appliquee (moderate) — champs requis : uri, text, collected_at, author_did"
+    )
 
 
 if __name__ == "__main__":

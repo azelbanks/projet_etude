@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from collection.pipeline_monitor import PipelineMonitor
 
 
@@ -24,13 +24,13 @@ class TestPipelineMonitorCycle:
         monitor.start_cycle()
         monitor.record_keyword("test", "en", added=5, duplicates=2)
         report = monitor.end_cycle()
-        assert report['posts_new'] == 5
-        assert report['duplicates_skipped'] == 2
-        assert report['keywords_processed'] == 1
-        assert report['errors'] == 0
-        assert 'cycle_start' in report
-        assert 'cycle_end' in report
-        assert report['duration_seconds'] >= 0
+        assert report["posts_new"] == 5
+        assert report["duplicates_skipped"] == 2
+        assert report["keywords_processed"] == 1
+        assert report["errors"] == 0
+        assert "cycle_start" in report
+        assert "cycle_end" in report
+        assert report["duration_seconds"] >= 0
 
     def test_multiple_keywords(self, monitor):
         monitor.start_cycle()
@@ -38,12 +38,12 @@ class TestPipelineMonitorCycle:
         monitor.record_keyword("vaccin", "fr", added=7, duplicates=1)
         monitor.record_keyword("error_kw", "en", errors=1, error_msg="timeout")
         report = monitor.end_cycle()
-        assert report['posts_new'] == 17
-        assert report['duplicates_skipped'] == 4
-        assert report['keywords_processed'] == 3
-        assert report['errors'] == 1
-        assert len(report['error_details']) == 1
-        assert report['error_details'][0]['keyword'] == 'error_kw'
+        assert report["posts_new"] == 17
+        assert report["duplicates_skipped"] == 4
+        assert report["keywords_processed"] == 3
+        assert report["errors"] == 1
+        assert len(report["error_details"]) == 1
+        assert report["error_details"][0]["keyword"] == "error_kw"
 
     def test_writes_jsonl_file(self, monitor):
         monitor.start_cycle()
@@ -53,7 +53,7 @@ class TestPipelineMonitorCycle:
         with open(PipelineMonitor.METRICS_FILE) as f:
             line = f.readline()
             data = json.loads(line)
-            assert data['posts_new'] == 1
+            assert data["posts_new"] == 1
 
     def test_appends_multiple_cycles(self, monitor):
         for i in range(3):
@@ -70,8 +70,8 @@ class TestPipelineMonitorCycle:
         monitor.end_cycle()
         monitor.start_cycle()
         report = monitor.end_cycle()
-        assert report['posts_new'] == 0
-        assert report['keywords_processed'] == 0
+        assert report["posts_new"] == 0
+        assert report["keywords_processed"] == 0
 
 
 class TestHealthStatus:
@@ -81,10 +81,10 @@ class TestHealthStatus:
             monitor.record_keyword("kw", "en", added=10)
             monitor.end_cycle()
         health = monitor.get_health_status(5)
-        assert health['status'] == 'healthy'
-        assert health['avg_posts_new'] == 10.0
-        assert health['error_rate'] == 0.0
-        assert health['cycles_analysed'] == 5
+        assert health["status"] == "healthy"
+        assert health["avg_posts_new"] == 10.0
+        assert health["error_rate"] == 0.0
+        assert health["cycles_analysed"] == 5
 
     def test_degraded_status(self, monitor):
         for _ in range(3):
@@ -93,12 +93,12 @@ class TestHealthStatus:
             monitor.record_keyword("kw2", "en", errors=1, error_msg="fail")
             monitor.end_cycle()
         health = monitor.get_health_status(3)
-        assert health['status'] == 'degraded'
+        assert health["status"] == "degraded"
 
     def test_unhealthy_no_file(self, monitor):
         health = monitor.get_health_status(5)
-        assert health['status'] == 'unhealthy'
-        assert health['cycles_analysed'] == 0
+        assert health["status"] == "unhealthy"
+        assert health["cycles_analysed"] == 0
 
     def test_all_errors_unhealthy(self, monitor):
         for _ in range(3):
@@ -106,4 +106,4 @@ class TestHealthStatus:
             monitor.record_keyword("kw", "en", errors=1, error_msg="fail")
             monitor.end_cycle()
         health = monitor.get_health_status(3)
-        assert health['status'] == 'unhealthy'
+        assert health["status"] == "unhealthy"

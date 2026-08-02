@@ -128,11 +128,7 @@ class MetaLearnerDecomposer:
         self.meta_data = meta_data
         self.threshold = threshold
 
-        self.meta_model = (
-            meta_data.get("meta_model")
-            or meta_data.get("model")
-            or meta_data
-        )
+        self.meta_model = meta_data.get("meta_model") or meta_data.get("model") or meta_data
         if not hasattr(self.meta_model, "coef_"):
             raise ValueError(
                 "Le méta-learner ne semble pas linéaire (pas de `coef_`). "
@@ -141,11 +137,12 @@ class MetaLearnerDecomposer:
 
         # Inférence du nombre de features
         n = self.meta_model.coef_.shape[1]
-        self.feature_names = (
-            meta_data.get("feature_names")
-            or (self.DEFAULT_FEATURE_NAMES_V8 if n == 7
-                else self.DEFAULT_FEATURE_NAMES_V7 if n == 4
-                else [f"f_{i}" for i in range(n)])
+        self.feature_names = meta_data.get("feature_names") or (
+            self.DEFAULT_FEATURE_NAMES_V8
+            if n == 7
+            else self.DEFAULT_FEATURE_NAMES_V7
+            if n == 4
+            else [f"f_{i}" for i in range(n)]
         )
 
         self.coef = self.meta_model.coef_[0].copy()
@@ -162,9 +159,7 @@ class MetaLearnerDecomposer:
         """
         x = np.asarray(x, dtype=float)
         if x.shape[0] != len(self.feature_names):
-            raise ValueError(
-                f"x a {x.shape[0]} features, attendu {len(self.feature_names)}"
-            )
+            raise ValueError(f"x a {x.shape[0]} features, attendu {len(self.feature_names)}")
 
         contribs = self.coef * x  # β_i * x_i
         z = float(self.intercept + contribs.sum())
@@ -213,8 +208,10 @@ class MetaLearnerDecomposer:
         contribs = np.asarray(decomposition.contributions)
         # Ordonner par magnitude
         order = np.argsort(np.abs(contribs))[::-1]
-        names = [labels_fr.get(decomposition.feature_names[i],
-                               decomposition.feature_names[i]) for i in order]
+        names = [
+            labels_fr.get(decomposition.feature_names[i], decomposition.feature_names[i])
+            for i in order
+        ]
         vals = contribs[order]
         colors = ["#FF1744" if v > 0 else "#00E676" for v in vals]
 
@@ -224,8 +221,8 @@ class MetaLearnerDecomposer:
         colors = colors[::-1]
 
         hover = [
-            f"{n}<br>x={decomposition.feature_values[order[len(order)-1-i]]:.3f}"
-            f"<br>β={decomposition.coefficients[order[len(order)-1-i]]:+.3f}"
+            f"{n}<br>x={decomposition.feature_values[order[len(order) - 1 - i]]:.3f}"
+            f"<br>β={decomposition.coefficients[order[len(order) - 1 - i]]:+.3f}"
             f"<br>β·x={v:+.4f}"
             for i, (n, v) in enumerate(zip(names, vals, strict=False))
         ]
@@ -248,11 +245,13 @@ class MetaLearnerDecomposer:
                     f"P(suspect)={decomposition.proba_suspect:.2f} → "
                     f"{decomposition.label}"
                 ),
-                "x": 0.5, "font": {"color": "#E0E0E0", "size": 14},
+                "x": 0.5,
+                "font": {"color": "#E0E0E0", "size": 14},
             },
             xaxis={
                 "title": "Contribution β·x au logit (+ = pousse vers SUSPECT)",
-                "zeroline": True, "zerolinecolor": "rgba(255,255,255,0.2)",
+                "zeroline": True,
+                "zerolinecolor": "rgba(255,255,255,0.2)",
             },
             margin={"t": 60, "b": 40, "l": 200, "r": 20},
             paper_bgcolor="rgba(0,0,0,0)",

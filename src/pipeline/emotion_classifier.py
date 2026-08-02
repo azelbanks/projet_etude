@@ -23,12 +23,15 @@ logger = logging.getLogger(__name__)
 
 try:
     from codecarbon import EmissionsTracker  # noqa: F401  (sonde de disponibilite)
+
     CODECARBON_AVAILABLE = True
 except ImportError:
     CODECARBON_AVAILABLE = False
 
+
 class _EmotionMLP(nn.Module):
     """Architecture MLP identique au notebook 02."""
+
     def __init__(self, vocab_size: int, embed_dim: int, num_classes: int) -> None:
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
@@ -73,42 +76,47 @@ class EmotionFeatureExtractor:
     NUM_CLASSES = 7
 
     FEATURE_NAMES = [
-        'emo_colere', 'emo_degout', 'emo_joie', 'emo_neutre',
-        'emo_peur', 'emo_surprise', 'emo_tristesse',
+        "emo_colere",
+        "emo_degout",
+        "emo_joie",
+        "emo_neutre",
+        "emo_peur",
+        "emo_surprise",
+        "emo_tristesse",
     ]
 
-    def __init__(self, model_dir: str = '../models'):
+    def __init__(self, model_dir: str = "../models"):
         self.model_dir = model_dir
         self.model = None
         self.vocab = None
         self.label_encoder = None
-        self.device = torch.device('cpu')  # CPU pour inference en production
+        self.device = torch.device("cpu")  # CPU pour inference en production
         self._loaded = False
 
     def load(self) -> bool:
         """Charge le modèle émotions. Retourne True si OK, False si fichiers absents."""
-        pt_path = os.path.join(self.model_dir, 'emotion_bilingual.pt')
-        vocab_path = os.path.join(self.model_dir, 'emotion_vocab_bilingual.pickle')
-        le_path = os.path.join(self.model_dir, 'emotion_label_encoder_bilingual.pickle')
+        pt_path = os.path.join(self.model_dir, "emotion_bilingual.pt")
+        vocab_path = os.path.join(self.model_dir, "emotion_vocab_bilingual.pickle")
+        le_path = os.path.join(self.model_dir, "emotion_label_encoder_bilingual.pickle")
 
         if not all(os.path.exists(p) for p in [pt_path, vocab_path, le_path]):
             logger.warning("Modèle émotions non trouvé dans %s", self.model_dir)
             return False
 
-        with open(vocab_path, 'rb') as f:
+        with open(vocab_path, "rb") as f:
             self.vocab = pickle.load(f)
-        with open(le_path, 'rb') as f:
+        with open(le_path, "rb") as f:
             self.label_encoder = pickle.load(f)
 
         cp = torch.load(pt_path, map_location=self.device, weights_only=True)
-        if isinstance(cp, dict) and 'model_state_dict' in cp:
-            sd = cp['model_state_dict']
-            self.MAX_LENGTH = cp.get('max_len', 100)
+        if isinstance(cp, dict) and "model_state_dict" in cp:
+            sd = cp["model_state_dict"]
+            self.MAX_LENGTH = cp.get("max_len", 100)
         else:
             sd = cp
-        vs = sd['embedding.weight'].shape[0]
-        ed = sd['embedding.weight'].shape[1]
-        nc = sd['fc3.weight'].shape[0]
+        vs = sd["embedding.weight"].shape[0]
+        ed = sd["embedding.weight"].shape[1]
+        nc = sd["fc3.weight"].shape[0]
         self.model = _EmotionMLP(vs, ed, nc).to(self.device)
         self.model.load_state_dict(sd)
         self.model.eval()
@@ -131,11 +139,11 @@ class EmotionFeatureExtractor:
         if not self._loaded:
             raise RuntimeError("Modèle émotions non chargé. Appelez load() d'abord.")
 
-        oov_idx = self.vocab.get('<OOV>', self.vocab.get('<UNK>', 1))
+        oov_idx = self.vocab.get("<OOV>", self.vocab.get("<UNK>", 1))
         sequences = []
         for text in texts:
             tokens = str(text).lower().split()
-            seq = [self.vocab.get(t, oov_idx) for t in tokens[:self.MAX_LENGTH]]
+            seq = [self.vocab.get(t, oov_idx) for t in tokens[: self.MAX_LENGTH]]
             seq = seq + [0] * (self.MAX_LENGTH - len(seq))
             sequences.append(seq)
 
@@ -173,13 +181,13 @@ class EmotionFeatureExtractor:
             logger.warning("shap non installe, explain_emotions indisponible")
             return None
 
-        oov_idx = self.vocab.get('<OOV>', self.vocab.get('<UNK>', 1))
+        oov_idx = self.vocab.get("<OOV>", self.vocab.get("<UNK>", 1))
 
         def _texts_to_matrix(text_list):
             sequences = []
             for text in text_list:
                 tokens = str(text).lower().split()
-                seq = [self.vocab.get(t, oov_idx) for t in tokens[:self.MAX_LENGTH]]
+                seq = [self.vocab.get(t, oov_idx) for t in tokens[: self.MAX_LENGTH]]
                 seq = seq + [0] * (self.MAX_LENGTH - len(seq))
                 sequences.append(seq)
             return np.array(sequences, dtype=np.int64)
@@ -205,14 +213,12 @@ class EmotionFeatureExtractor:
         # Extract word tokens for each text for readability
         feature_words = []
         for text in texts:
-            tokens = str(text).lower().split()[:self.MAX_LENGTH]
-            tokens += ['[PAD]'] * (self.MAX_LENGTH - len(tokens))
+            tokens = str(text).lower().split()[: self.MAX_LENGTH]
+            tokens += ["[PAD]"] * (self.MAX_LENGTH - len(tokens))
             feature_words.append(tokens)
 
         return {
-            'shap_values': shap_values,  # list of 7 arrays (n, MAX_LENGTH)
-            'feature_words': feature_words,
-            'emotion_names': emotion_names,
+            "shap_values": shap_values,  # list of 7 arrays (n, MAX_LENGTH)
+            "feature_words": feature_words,
+            "emotion_names": emotion_names,
         }
-
-

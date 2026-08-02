@@ -95,9 +95,7 @@ class CamembertAttentionExplainer:
         os.makedirs(output_dir, exist_ok=True)
 
         if not getattr(self.clf, "_loaded", False):
-            raise RuntimeError(
-                "CamemBERT classifier non chargé. Appeler `.load()` d'abord."
-            )
+            raise RuntimeError("CamemBERT classifier non chargé. Appeler `.load()` d'abord.")
 
     # ------------------------------------------------------------------
     #  Extraction des attention weights
@@ -188,7 +186,7 @@ class CamembertAttentionExplainer:
         )
 
         if tag is None:
-            tag = f"{abs(hash(text)) % (16 ** 8):08x}"
+            tag = f"{abs(hash(text)) % (16**8):08x}"
 
         result.figures["heatmap"] = self._plot_heatmap(result, tag)
         result.figures["per_layer"] = self._plot_per_layer_heatmap(result, tag)
@@ -230,7 +228,8 @@ class CamembertAttentionExplainer:
 
         # Filtrer [CLS] et [SEP]/<s>/</s> de la viz
         keep_idx = [
-            i for i, t in enumerate(result.tokens)
+            i
+            for i, t in enumerate(result.tokens)
             if t not in {"<s>", "</s>", "[CLS]", "[SEP]", "<pad>"}
         ]
         if not keep_idx:
@@ -260,9 +259,7 @@ class CamembertAttentionExplainer:
             f"(P_suspect={result.prediction_proba_suspect:.2f})",
         ]
         if result.error_type:
-            title_parts.append(
-                f"Vérité: {result.ground_truth} → {result.error_type}"
-            )
+            title_parts.append(f"Vérité: {result.ground_truth} → {result.error_type}")
         ax.set_title("\n".join(title_parts), fontsize=10, loc="left")
 
         cbar = plt.colorbar(im, ax=ax, fraction=0.04, pad=0.02)
@@ -282,7 +279,8 @@ class CamembertAttentionExplainer:
         tokens = [self._clean_token(t) for t in result.tokens]
 
         keep_idx = [
-            i for i, t in enumerate(result.tokens)
+            i
+            for i, t in enumerate(result.tokens)
             if t not in {"<s>", "</s>", "[CLS]", "[SEP]", "<pad>"}
         ]
         if not keep_idx:
@@ -331,7 +329,7 @@ class CamembertAttentionExplainer:
             spans.append(
                 f'<span title="attn={a:.3f}" '
                 f'style="background:rgb({r},{g},{b});padding:2px 4px;'
-                f'margin:1px;border-radius:3px;display:inline-block;'
+                f"margin:1px;border-radius:3px;display:inline-block;"
                 f'font-family:monospace;font-size:13px">{tok}</span>'
             )
         body = "".join(spans)
@@ -339,7 +337,7 @@ class CamembertAttentionExplainer:
             f'<div style="line-height:2.2em;padding:12px;'
             f'background:#1a1f2e;border-radius:8px;color:#E8E8E8">'
             f'<div style="font-size:11px;color:#B0B0B0;margin-bottom:6px">'
-            f'Pred: {result.prediction_label} '
-            f'(P_suspect={result.prediction_proba_suspect:.2f})'
-            f'</div>{body}</div>'
+            f"Pred: {result.prediction_label} "
+            f"(P_suspect={result.prediction_proba_suspect:.2f})"
+            f"</div>{body}</div>"
         )

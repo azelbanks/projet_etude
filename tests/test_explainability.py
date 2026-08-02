@@ -25,6 +25,7 @@ from explainability import MetaLearnerDecomposer
 #  MetaLearnerDecomposer
 # =====================================================================
 
+
 class _MockLogReg:
     def __init__(self, coef, intercept):
         self.coef_ = np.array([coef])
@@ -64,9 +65,7 @@ class TestMetaLearnerDecomposer:
         d = MetaLearnerDecomposer(meta).decompose([0.4, 0.4, 0.4, 0.4])
         top = d.top_drivers(3)
         contribs = [t["contribution"] for t in top]
-        assert all(
-            abs(contribs[i]) >= abs(contribs[i + 1]) for i in range(len(contribs) - 1)
-        )
+        assert all(abs(contribs[i]) >= abs(contribs[i + 1]) for i in range(len(contribs) - 1))
 
     def test_v7_default_feature_names_4_features(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
@@ -74,7 +73,10 @@ class TestMetaLearnerDecomposer:
         mock = _MockLogReg([1.0, 1.0, 1.0, 1.0], 0.0)
         d = MetaLearnerDecomposer({"meta_model": mock})
         assert d.feature_names == [
-            "score_v5_fiable", "score_v6_suspect", "disagreement", "interaction",
+            "score_v5_fiable",
+            "score_v6_suspect",
+            "disagreement",
+            "interaction",
         ]
 
     def test_v8_default_feature_names_7_features(self):
@@ -116,6 +118,7 @@ class TestMetaLearnerDecomposer:
 #  FaithfulnessEvaluator
 # =====================================================================
 
+
 class TestFaithfulnessEvaluator:
     @staticmethod
     def _linear_pred(w, b):
@@ -123,6 +126,7 @@ class TestFaithfulnessEvaluator:
             z = X @ w + b
             p = 1 / (1 + np.exp(-z))
             return np.column_stack([1 - p, p])
+
         return fn
 
     def test_aopc_higher_for_correct_attribution(self, tmp_path):
@@ -180,6 +184,7 @@ class TestFaithfulnessEvaluator:
 #  Sérialisation JSON
 # =====================================================================
 
+
 class TestSerialization:
     def test_meta_decomposition_to_json(self):
         import json
@@ -219,6 +224,7 @@ class TestSerialization:
 #  Smoke test : imports lazy
 # =====================================================================
 
+
 class TestLazyImports:
     def test_package_imports_without_torch(self):
         """Vérifie que importer le paquet ne charge pas torch/captum."""
@@ -227,12 +233,14 @@ class TestLazyImports:
         import importlib
 
         import explainability
+
         importlib.reload(explainability)
         assert hasattr(explainability, "GlobalShapExplainer")
 
     def test_meta_decomposition_no_torch_required(self):
         """MetaLearnerDecomposer doit fonctionner sans torch."""
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, 1, 1, 1], 0)})
         assert d.decompose([0.5] * 4).proba_suspect > 0
 
@@ -240,6 +248,7 @@ class TestLazyImports:
 # =====================================================================
 #  Tests mutation-killing pour meta_decomposition
 # =====================================================================
+
 
 class TestMetaDecompositionMutationKilling:
     """Tests ciblés pour tuer les mutants survivants de mutmut."""
@@ -253,13 +262,22 @@ class TestMetaDecompositionMutationKilling:
         import json
 
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], -0.3)})
         r = d.decompose([0.6, 0.4, 0.8, 0.1])
         parsed = json.loads(r.to_json())
         expected_keys = {
-            "feature_names", "feature_values", "coefficients", "contributions",
-            "intercept", "logit", "proba_suspect", "label", "threshold",
-            "top_drivers", "figures",
+            "feature_names",
+            "feature_values",
+            "coefficients",
+            "contributions",
+            "intercept",
+            "logit",
+            "proba_suspect",
+            "label",
+            "threshold",
+            "top_drivers",
+            "figures",
         }
         assert set(parsed.keys()) == expected_keys
 
@@ -267,6 +285,7 @@ class TestMetaDecompositionMutationKilling:
         import json
 
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], -0.3)})
         r = d.decompose([0.6, 0.4, 0.8, 0.1])
         parsed = json.loads(r.to_json())
@@ -285,6 +304,7 @@ class TestMetaDecompositionMutationKilling:
         import json
 
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], -0.3)})
         r = d.decompose([0.6, 0.4, 0.8, 0.1])
         parsed = json.loads(r.to_json())
@@ -293,6 +313,7 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_json_ensure_ascii_false(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], -0.3)})
         r = d.decompose([0.6, 0.4, 0.8, 0.1])
         # ensure_ascii=False means unicode chars are NOT escaped
@@ -301,6 +322,7 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_json_indent(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], -0.3)})
         r = d.decompose([0.6, 0.4, 0.8, 0.1])
         json_str = r.to_json()
@@ -310,6 +332,7 @@ class TestMetaDecompositionMutationKilling:
     # --- top_drivers: vérifier chaque champ du dict ---
     def test_top_drivers_each_field_exact(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([2.0, -1.0, 0.5, 0.1], 0.0)})
         r = d.decompose([1.0, 1.0, 1.0, 1.0])
         top = r.top_drivers(4)
@@ -322,6 +345,7 @@ class TestMetaDecompositionMutationKilling:
 
     def test_top_drivers_direction_fiable(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([-5.0, 0.1, 0.1, 0.1], 0.0)})
         r = d.decompose([1.0, 0.0, 0.0, 0.0])
         top = r.top_drivers(1)
@@ -330,6 +354,7 @@ class TestMetaDecompositionMutationKilling:
 
     def test_top_drivers_default_k_is_3(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, 2, 3, 4], 0)})
         r = d.decompose([1.0, 1.0, 1.0, 1.0])
         top = r.top_drivers()  # default k=3
@@ -337,6 +362,7 @@ class TestMetaDecompositionMutationKilling:
 
     def test_top_drivers_k_exceeds_features(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, 2, 3, 4], 0)})
         r = d.decompose([1.0, 1.0, 1.0, 1.0])
         top = r.top_drivers(10)  # k > n_features
@@ -345,47 +371,70 @@ class TestMetaDecompositionMutationKilling:
     # --- default threshold ---
     def test_default_threshold_is_05(self):
         from explainability.meta_decomposition import MetaDecomposition
+
         d = MetaDecomposition(
-            feature_names=["a"], feature_values=[1.0], coefficients=[1.0],
-            contributions=[1.0], intercept=0.0, logit=1.0,
-            proba_suspect=0.73, label="SUSPECT",
+            feature_names=["a"],
+            feature_values=[1.0],
+            coefficients=[1.0],
+            contributions=[1.0],
+            intercept=0.0,
+            logit=1.0,
+            proba_suspect=0.73,
+            label="SUSPECT",
         )
         assert d.threshold == 0.5
 
     def test_default_figures_is_empty_dict(self):
         from explainability.meta_decomposition import MetaDecomposition
+
         d = MetaDecomposition(
-            feature_names=["a"], feature_values=[1.0], coefficients=[1.0],
-            contributions=[1.0], intercept=0.0, logit=1.0,
-            proba_suspect=0.73, label="SUSPECT",
+            feature_names=["a"],
+            feature_values=[1.0],
+            coefficients=[1.0],
+            contributions=[1.0],
+            intercept=0.0,
+            logit=1.0,
+            proba_suspect=0.73,
+            label="SUSPECT",
         )
         assert d.figures == {}
 
     # --- Feature name constants V7 / V8 ---
     def test_v7_feature_names_exact(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, 1, 1, 1], 0)})
         assert d.feature_names == [
-            "score_v5_fiable", "score_v6_suspect", "disagreement", "interaction",
+            "score_v5_fiable",
+            "score_v6_suspect",
+            "disagreement",
+            "interaction",
         ]
 
     def test_v8_feature_names_exact(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1] * 7, 0)})
         assert d.feature_names == [
-            "score_v5_fiable", "score_v6_suspect", "score_camembert_fiable",
-            "disagreement_v5_v6", "disagreement_v5_cam",
-            "interaction_v5_v6", "min_fiable",
+            "score_v5_fiable",
+            "score_v6_suspect",
+            "score_camembert_fiable",
+            "disagreement_v5_v6",
+            "disagreement_v5_cam",
+            "interaction_v5_v6",
+            "min_fiable",
         ]
 
     def test_fallback_feature_names_other_dim(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1] * 5, 0)})
         assert d.feature_names == ["f_0", "f_1", "f_2", "f_3", "f_4"]
 
     # --- meta_data fallback keys ---
     def test_meta_data_model_key_fallback(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         mock = _MockLogReg([1, 1, 1, 1], 0)
         # "model" key instead of "meta_model"
         d = MetaLearnerDecomposer({"model": mock})
@@ -393,6 +442,7 @@ class TestMetaDecompositionMutationKilling:
 
     def test_meta_data_empty_keys_fallback_to_dict_itself(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         mock = _MockLogReg([1, 1, 1, 1], 0)
         # Neither "meta_model" nor "model" → falls back to the dict itself
         # But dict has no coef_ → ValueError expected
@@ -402,12 +452,14 @@ class TestMetaDecompositionMutationKilling:
     # --- custom threshold ---
     def test_custom_threshold(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, 1, 1, 1], 0)}, threshold=0.8)
         r = d.decompose([0.5, 0.5, 0.5, 0.5])
         assert r.threshold == 0.8
 
     def test_label_depends_on_threshold(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         # With default threshold=0.5 and z=0 → p=0.5 → SUSPECT (>= 0.5)
         d_low = MetaLearnerDecomposer({"meta_model": _MockLogReg([0, 0, 0, 0], 0)}, threshold=0.5)
         r_low = d_low.decompose([0, 0, 0, 0])
@@ -420,19 +472,23 @@ class TestMetaDecompositionMutationKilling:
     # --- sigmoid ---
     def test_sigmoid_zero(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         assert MetaLearnerDecomposer._sigmoid(0.0) == pytest.approx(0.5)
 
     def test_sigmoid_large_positive(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         assert MetaLearnerDecomposer._sigmoid(100.0) == pytest.approx(1.0)
 
     def test_sigmoid_large_negative(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         assert MetaLearnerDecomposer._sigmoid(-100.0) == pytest.approx(0.0, abs=1e-30)
 
     # --- decompose output type/structure ---
     def test_decompose_returns_lists(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], 0)})
         r = d.decompose([0.5, 0.5, 0.5, 0.5])
         assert isinstance(r.feature_names, list)
@@ -446,6 +502,7 @@ class TestMetaDecompositionMutationKilling:
     # --- feature_names from meta_data ---
     def test_custom_feature_names_from_meta_data(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         mock = _MockLogReg([1, 1, 1, 1], 0)
         names = ["alpha", "beta", "gamma", "delta"]
         d = MetaLearnerDecomposer({"meta_model": mock, "feature_names": names})
@@ -454,10 +511,16 @@ class TestMetaDecompositionMutationKilling:
     # --- direction boundary: contribution == 0 → FIABLE ---
     def test_direction_zero_contribution_is_fiable(self):
         from explainability.meta_decomposition import MetaDecomposition
+
         d = MetaDecomposition(
-            feature_names=["a", "b"], feature_values=[0.0, 1.0],
-            coefficients=[0.0, 1.0], contributions=[0.0, 1.0],
-            intercept=0.0, logit=1.0, proba_suspect=0.73, label="SUSPECT",
+            feature_names=["a", "b"],
+            feature_values=[0.0, 1.0],
+            coefficients=[0.0, 1.0],
+            contributions=[0.0, 1.0],
+            intercept=0.0,
+            logit=1.0,
+            proba_suspect=0.73,
+            label="SUSPECT",
         )
         top = d.top_drivers(2)
         zero_driver = next(t for t in top if t["contribution"] == 0.0)
@@ -466,12 +529,16 @@ class TestMetaDecompositionMutationKilling:
     # --- to_plotly_bar tests (kill mutants on the visualization) ---
     def test_to_plotly_bar_labels_fr_defaults(self):
         from explainability.meta_decomposition import MetaDecomposition, MetaLearnerDecomposer
+
         d = MetaDecomposition(
             feature_names=["score_v5_fiable", "score_v6_suspect", "disagreement", "interaction"],
             feature_values=[0.8, 0.3, 0.1, 0.05],
             coefficients=[1.5, -1.0, 0.5, 0.2],
             contributions=[1.2, -0.3, 0.05, 0.01],
-            intercept=-0.5, logit=0.46, proba_suspect=0.61, label="SUSPECT",
+            intercept=-0.5,
+            logit=0.46,
+            proba_suspect=0.61,
+            label="SUSPECT",
         )
         fig = MetaLearnerDecomposer.to_plotly_bar(d)
         # Check all default FR labels appear in the figure y-axis
@@ -482,12 +549,16 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_plotly_bar_colors(self):
         from explainability.meta_decomposition import MetaDecomposition, MetaLearnerDecomposer
+
         d = MetaDecomposition(
             feature_names=["a", "b"],
             feature_values=[1.0, 1.0],
             coefficients=[1.0, -1.0],
             contributions=[1.0, -1.0],
-            intercept=0.0, logit=0.0, proba_suspect=0.5, label="SUSPECT",
+            intercept=0.0,
+            logit=0.0,
+            proba_suspect=0.5,
+            label="SUSPECT",
         )
         fig = MetaLearnerDecomposer.to_plotly_bar(d)
         colors = list(fig.data[0].marker.color)
@@ -497,12 +568,16 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_plotly_bar_title_contains_proba_and_label(self):
         from explainability.meta_decomposition import MetaDecomposition, MetaLearnerDecomposer
+
         d = MetaDecomposition(
             feature_names=["a", "b"],
             feature_values=[1.0, 1.0],
             coefficients=[1.0, -1.0],
             contributions=[1.0, -1.0],
-            intercept=0.0, logit=0.0, proba_suspect=0.5, label="SUSPECT",
+            intercept=0.0,
+            logit=0.0,
+            proba_suspect=0.5,
+            label="SUSPECT",
         )
         fig = MetaLearnerDecomposer.to_plotly_bar(d)
         title_text = fig.layout.title.text
@@ -511,12 +586,16 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_plotly_bar_hover_contains_values(self):
         from explainability.meta_decomposition import MetaDecomposition, MetaLearnerDecomposer
+
         d = MetaDecomposition(
             feature_names=["a", "b"],
             feature_values=[0.75, 0.25],
             coefficients=[2.0, -1.0],
             contributions=[1.5, -0.25],
-            intercept=0.0, logit=1.25, proba_suspect=0.78, label="SUSPECT",
+            intercept=0.0,
+            logit=1.25,
+            proba_suspect=0.78,
+            label="SUSPECT",
         )
         fig = MetaLearnerDecomposer.to_plotly_bar(d)
         hover = list(fig.data[0].hovertext)
@@ -527,13 +606,22 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_plotly_bar_v8_labels(self):
         from explainability.meta_decomposition import MetaDecomposition, MetaLearnerDecomposer
+
         d = MetaDecomposition(
-            feature_names=["score_camembert_fiable", "disagreement_v5_v6",
-                           "disagreement_v5_cam", "interaction_v5_v6", "min_fiable"],
+            feature_names=[
+                "score_camembert_fiable",
+                "disagreement_v5_v6",
+                "disagreement_v5_cam",
+                "interaction_v5_v6",
+                "min_fiable",
+            ],
             feature_values=[0.5] * 5,
             coefficients=[1.0] * 5,
             contributions=[0.5] * 5,
-            intercept=0.0, logit=2.5, proba_suspect=0.92, label="SUSPECT",
+            intercept=0.0,
+            logit=2.5,
+            proba_suspect=0.92,
+            label="SUSPECT",
         )
         fig = MetaLearnerDecomposer.to_plotly_bar(d)
         y_labels = list(fig.data[0].y)
@@ -542,10 +630,16 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_plotly_bar_custom_labels_fr(self):
         from explainability.meta_decomposition import MetaDecomposition, MetaLearnerDecomposer
+
         d = MetaDecomposition(
-            feature_names=["a"], feature_values=[1.0],
-            coefficients=[1.0], contributions=[1.0],
-            intercept=0.0, logit=1.0, proba_suspect=0.73, label="SUSPECT",
+            feature_names=["a"],
+            feature_values=[1.0],
+            coefficients=[1.0],
+            contributions=[1.0],
+            intercept=0.0,
+            logit=1.0,
+            proba_suspect=0.73,
+            label="SUSPECT",
         )
         custom = {"a": "Mon Feature A"}
         fig = MetaLearnerDecomposer.to_plotly_bar(d, labels_fr=custom)
@@ -554,12 +648,16 @@ class TestMetaDecompositionMutationKilling:
     def test_to_plotly_bar_ordering_reversed(self):
         """Bars should be ordered with largest magnitude at top."""
         from explainability.meta_decomposition import MetaDecomposition, MetaLearnerDecomposer
+
         d = MetaDecomposition(
             feature_names=["small", "big", "medium"],
             feature_values=[1.0, 1.0, 1.0],
             coefficients=[0.1, 5.0, 1.0],
             contributions=[0.1, 5.0, 1.0],
-            intercept=0.0, logit=6.1, proba_suspect=0.99, label="SUSPECT",
+            intercept=0.0,
+            logit=6.1,
+            proba_suspect=0.99,
+            label="SUSPECT",
         )
         fig = MetaLearnerDecomposer.to_plotly_bar(d)
         y_labels = list(fig.data[0].y)
@@ -569,12 +667,16 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_plotly_bar_margin_and_height(self):
         from explainability.meta_decomposition import MetaDecomposition, MetaLearnerDecomposer
+
         d = MetaDecomposition(
             feature_names=["a", "b", "c"],
             feature_values=[1.0, 1.0, 1.0],
             coefficients=[1.0, 1.0, 1.0],
             contributions=[1.0, 1.0, 1.0],
-            intercept=0.0, logit=3.0, proba_suspect=0.95, label="SUSPECT",
+            intercept=0.0,
+            logit=3.0,
+            proba_suspect=0.95,
+            label="SUSPECT",
         )
         fig = MetaLearnerDecomposer.to_plotly_bar(d)
         assert fig.layout.margin.l == 200
@@ -588,6 +690,7 @@ class TestMetaDecompositionMutationKilling:
         import json
 
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1] * 7, 0)})
         r = d.decompose([1.0] * 7)
         parsed = json.loads(r.to_json())
@@ -595,13 +698,16 @@ class TestMetaDecompositionMutationKilling:
 
     def test_error_message_non_linear(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         class Fake:
             pass
+
         with pytest.raises(ValueError, match="coef_"):
             MetaLearnerDecomposer({"meta_model": Fake()})
 
     def test_error_message_dimension_mismatch(self):
         from explainability.meta_decomposition import MetaLearnerDecomposer
+
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, 1, 1, 1], 0)})
         with pytest.raises(ValueError, match="features"):
             d.decompose([0.5, 0.5])

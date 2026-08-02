@@ -6,7 +6,7 @@ import sys
 import pytest
 import torch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from pipeline.expert_detector import EmotionFeatureExtractor, _EmotionMLP
 
 
@@ -49,23 +49,23 @@ class TestEmotionMLP:
 
 class TestEmotionFeatureExtractor:
     def test_init_defaults(self):
-        efe = EmotionFeatureExtractor(model_dir='/nonexistent')
+        efe = EmotionFeatureExtractor(model_dir="/nonexistent")
         assert efe.MAX_LENGTH == 100
         assert efe.NUM_CLASSES == 7
         assert efe._loaded is False
 
     def test_load_missing_files(self):
-        efe = EmotionFeatureExtractor(model_dir='/nonexistent')
+        efe = EmotionFeatureExtractor(model_dir="/nonexistent")
         result = efe.load()
         assert result is False
         assert efe._loaded is False
 
     def test_get_emotion_features_raises_if_not_loaded(self):
-        efe = EmotionFeatureExtractor(model_dir='/nonexistent')
+        efe = EmotionFeatureExtractor(model_dir="/nonexistent")
         with pytest.raises(RuntimeError, match="non chargé"):
             efe.get_emotion_features(["test"])
 
     def test_feature_names(self):
         assert len(EmotionFeatureExtractor.FEATURE_NAMES) == 7
-        assert 'emo_colere' in EmotionFeatureExtractor.FEATURE_NAMES
-        assert 'emo_joie' in EmotionFeatureExtractor.FEATURE_NAMES
+        assert "emo_colere" in EmotionFeatureExtractor.FEATURE_NAMES
+        assert "emo_joie" in EmotionFeatureExtractor.FEATURE_NAMES

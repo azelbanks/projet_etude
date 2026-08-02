@@ -24,6 +24,7 @@ COLLECTION_NAME = "raw_posts"
 def _connect():
     if MONGO_USER and MONGO_PASSWORD:
         from urllib.parse import quote_plus
+
         uri = f"mongodb://{quote_plus(MONGO_USER)}:{quote_plus(MONGO_PASSWORD)}@{MONGO_HOST}:27017/?authSource=admin"
     else:
         uri = f"mongodb://{MONGO_HOST}:27017/"
@@ -53,12 +54,14 @@ def run_quality_check(collection: object) -> dict:
     report["missing_required_fields"] = missing if missing else "none"
 
     # 3. Empty text
-    empty_text = collection.count_documents({
-        "$or": [
-            {"text": ""},
-            {"text": None},
-        ]
-    })
+    empty_text = collection.count_documents(
+        {
+            "$or": [
+                {"text": ""},
+                {"text": None},
+            ]
+        }
+    )
     report["empty_text_count"] = empty_text
 
     # 4. Documents by language (ai_language field)

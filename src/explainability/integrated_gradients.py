@@ -134,6 +134,7 @@ class IGExplainer:
 
         # Détection MPS — on déplace le modèle sur CPU si demandé
         import torch
+
         self._original_device = self.clf.device
         if self.force_cpu and str(self._original_device).startswith("mps"):
             logger.info(
@@ -166,9 +167,7 @@ class IGExplainer:
 
     def _forward(self, input_ids, attention_mask):
         """Forward classification : logits[batch, n_classes]."""
-        outputs = self.clf.base_model(
-            input_ids=input_ids, attention_mask=attention_mask
-        )
+        outputs = self.clf.base_model(input_ids=input_ids, attention_mask=attention_mask)
         cls_repr = outputs.last_hidden_state[:, 0, :]
         return self.clf.head(cls_repr)
 
@@ -188,6 +187,7 @@ class IGExplainer:
     def _build_baseline(self, input_ids, attention_mask, strategy: str):
         """Construit une baseline selon la stratégie."""
         import torch
+
         tokenizer = self.clf.tokenizer
 
         if strategy == "pad":
@@ -199,12 +199,8 @@ class IGExplainer:
                 unk = tokenizer.convert_tokens_to_ids("<unk>")
             baseline = torch.full_like(input_ids, unk)
             # Garder [CLS]/[SEP] aux extrémités (sinon hors-distribution)
-            cls_id = (tokenizer.cls_token_id
-                      or tokenizer.bos_token_id
-                      or input_ids[0, 0].item())
-            sep_id = (tokenizer.sep_token_id
-                      or tokenizer.eos_token_id
-                      or input_ids[0, -1].item())
+            cls_id = tokenizer.cls_token_id or tokenizer.bos_token_id or input_ids[0, 0].item()
+            sep_id = tokenizer.sep_token_id or tokenizer.eos_token_id or input_ids[0, -1].item()
             baseline[:, 0] = cls_id
             # SEP à la fin de la séquence réelle
             seq_len = int(attention_mask.sum().item())
@@ -316,7 +312,10 @@ class IGExplainer:
         delta_val, attributions, strat_used, n_steps_used = best
         logger.info(
             "  IG device=%s baseline=%s n_steps=%d Δ=%.2e",
-            self._ig_device, strat_used, n_steps_used, delta_val,
+            self._ig_device,
+            strat_used,
+            n_steps_used,
+            delta_val,
         )
         # Tracker le nombre de steps réellement utilisé pour le rapport
         self._last_n_steps = n_steps_used
@@ -345,7 +344,7 @@ class IGExplainer:
         )
 
         if tag is None:
-            tag = f"{abs(hash(text)) % (16 ** 8):08x}"
+            tag = f"{abs(hash(text)) % (16**8):08x}"
         result.figures["heatmap"] = self._plot(result, tag)
         return result
 
@@ -358,12 +357,10 @@ class IGExplainer:
         import matplotlib.pyplot as plt
 
         attr = np.asarray(result.attributions)
-        tokens = [
-            t.replace("▁", " ").replace("Ġ", " ").strip() or t
-            for t in result.tokens
-        ]
+        tokens = [t.replace("▁", " ").replace("Ġ", " ").strip() or t for t in result.tokens]
         keep_idx = [
-            i for i, t in enumerate(result.tokens)
+            i
+            for i, t in enumerate(result.tokens)
             if t not in {"<s>", "</s>", "[CLS]", "[SEP]", "<pad>"}
         ]
         if not keep_idx:
@@ -391,7 +388,8 @@ class IGExplainer:
             f"{result.prediction_proba[result.target_class]:.2f} | "
             f"Δ_convergence={result.convergence_delta:.2e} | "
             f"n_steps={result.n_steps}",
-            fontsize=10, loc="left",
+            fontsize=10,
+            loc="left",
         )
         cbar = plt.colorbar(im, ax=ax, fraction=0.04, pad=0.02)
         cbar.set_label(
@@ -442,6 +440,8 @@ class IGExplainer:
             logger.warning(
                 "Completeness IG : |Δ|=%.4f (niveau=%s, seuil=%.2f). "
                 "Sur transformers profonds, |Δ| ≈ 0.05–0.15 est attendu.",
-                delta, level, tol,
+                delta,
+                level,
+                tol,
             )
         return ok

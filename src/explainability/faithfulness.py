@@ -129,6 +129,7 @@ class FaithfulnessEvaluator:
             Valeurs de k pour lesquelles calculer comprehensiveness/sufficiency.
         """
         import os
+
         os.makedirs(self.output_dir, exist_ok=True)
 
         X = np.asarray(X, dtype=float)
@@ -237,10 +238,8 @@ class FaithfulnessEvaluator:
         std = np.asarray(result.proba_curve_std)
 
         fig, ax = plt.subplots(figsize=(9, 5))
-        ax.plot(ks, mean, color="#FF1744", linewidth=2,
-                label="P(classe expliquée)")
-        ax.fill_between(ks, mean - std, mean + std, color="#FF1744", alpha=0.18,
-                        label="±1σ")
+        ax.plot(ks, mean, color="#FF1744", linewidth=2, label="P(classe expliquée)")
+        ax.fill_between(ks, mean - std, mean + std, color="#FF1744", alpha=0.18, label="±1σ")
         ax.set_xlabel("k = nombre de top features masquées")
         ax.set_ylabel(f"P(classe={self.class_index}) moyenne")
         ax.set_title(

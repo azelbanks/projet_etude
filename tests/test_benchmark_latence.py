@@ -16,21 +16,21 @@ import numpy as np
 import pandas as pd
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from pipeline.expert_detector import ExpertFakeNewsDetector
 
-_MODEL_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
-_MODEL_EXISTS = os.path.exists(os.path.join(_MODEL_DIR, 'model_expert_v5.pkl'))
+_MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models")
+_MODEL_EXISTS = os.path.exists(os.path.join(_MODEL_DIR, "model_expert_v5.pkl"))
 
 
 @pytest.mark.skipif(not _MODEL_EXISTS, reason="Model files not found")
 class TestBenchmarkLatence:
     """Benchmark d'inference pour documenter le temps moyen d'analyse."""
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def detector(self):
         det = ExpertFakeNewsDetector(model_dir=_MODEL_DIR)
-        det.load(suffix='expert_v5')
+        det.load(suffix="expert_v5")
         return det
 
     @pytest.fixture
@@ -66,13 +66,13 @@ class TestBenchmarkLatence:
         avg_ms = np.mean(times) * 1000
         p95_ms = np.percentile(times, 95) * 1000
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("  BENCHMARK LATENCE — TEXTE UNIQUE")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"  Temps moyen :  {avg_ms:.1f} ms")
         print(f"  P95 :          {p95_ms:.1f} ms")
         print("  Iterations :   10")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # CDC exige < 100ms par texte ; on verifie < 200ms (marge)
         assert avg_ms < 200, f"Latence moyenne trop elevee: {avg_ms:.0f}ms (CDC: <100ms)"
@@ -95,14 +95,14 @@ class TestBenchmarkLatence:
         avg_ms = np.mean(times) * 1000
         per_text_ms = avg_ms / len(sample_texts)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("  BENCHMARK LATENCE — BATCH DE 10 TEXTES")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"  Temps total moyen :    {avg_ms:.1f} ms")
         print(f"  Temps par texte :      {per_text_ms:.1f} ms")
-        print(f"  Debit :                {1000/per_text_ms:.0f} textes/sec")
+        print(f"  Debit :                {1000 / per_text_ms:.0f} textes/sec")
         print("  Iterations :           5")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # CDC: < 100ms/texte, soit < 1000ms pour 10 textes
         assert avg_ms < 1000, f"Batch trop lent: {avg_ms:.0f}ms pour 10 textes (CDC: <1000ms)"
@@ -119,13 +119,13 @@ class TestBenchmarkLatence:
         elapsed_ms = elapsed * 1000
         per_text_ms = elapsed_ms / 100
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("  BENCHMARK LATENCE — BATCH DE 100 TEXTES")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"  Temps total :          {elapsed_ms:.1f} ms")
         print(f"  Temps par texte :      {per_text_ms:.1f} ms")
-        print(f"  Debit :                {1000/per_text_ms:.0f} textes/sec")
-        print(f"{'='*60}")
+        print(f"  Debit :                {1000 / per_text_ms:.0f} textes/sec")
+        print(f"{'=' * 60}")
 
         assert len(result) == 100
         # CDC: < 100ms/texte, soit < 10s pour 100 textes

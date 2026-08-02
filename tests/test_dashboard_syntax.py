@@ -11,7 +11,7 @@ import py_compile
 
 import pytest
 
-_PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..')
+_PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 
 class TestSyntaxValidation:
@@ -19,7 +19,7 @@ class TestSyntaxValidation:
 
     def test_dashboard_app_compiles(self):
         """dashboard/app.py should be syntactically valid Python."""
-        path = os.path.join(_PROJECT_ROOT, 'dashboard', 'app.py')
+        path = os.path.join(_PROJECT_ROOT, "dashboard", "app.py")
         if not os.path.exists(path):
             pytest.skip("dashboard/app.py not found")
         try:
@@ -29,7 +29,7 @@ class TestSyntaxValidation:
 
     def test_main_app_compiles(self):
         """src/app/main.py should be syntactically valid Python."""
-        path = os.path.join(_PROJECT_ROOT, 'src', 'app', 'main.py')
+        path = os.path.join(_PROJECT_ROOT, "src", "app", "main.py")
         if not os.path.exists(path):
             pytest.skip("src/app/main.py not found")
         try:

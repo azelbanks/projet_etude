@@ -12,12 +12,13 @@ import sys
 import pandas as pd
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from collection.collect_bluesky import validate_text
 
 # -----------------------------------------------------------------------
 #  Tests de securite — injection et XSS
 # -----------------------------------------------------------------------
+
 
 class TestSecurityValidation:
     """Verify that potentially dangerous inputs are handled safely."""
@@ -30,8 +31,8 @@ class TestSecurityValidation:
         # The text passes validation (it's valid text), but should be
         # escaped before rendering in HTML context
         escaped = html.escape(result)
-        assert '<script>' not in escaped
-        assert '&lt;script&gt;' in escaped
+        assert "<script>" not in escaped
+        assert "&lt;script&gt;" in escaped
 
     def test_very_long_text_validation(self):
         """Extremely long text should still be handled."""
@@ -65,19 +66,20 @@ class TestSecurityValidation:
 #  Tests de validation pipeline — entrees limites
 # -----------------------------------------------------------------------
 
-_MODEL_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
-_MODEL_EXISTS = os.path.exists(os.path.join(_MODEL_DIR, 'model_expert_v5.pkl'))
+_MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models")
+_MODEL_EXISTS = os.path.exists(os.path.join(_MODEL_DIR, "model_expert_v5.pkl"))
 
 
 @pytest.mark.skipif(not _MODEL_EXISTS, reason="Model files not found")
 class TestPipelineInputValidation:
     """Verify pipeline handles edge-case inputs gracefully."""
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def detector(self):
         from pipeline.expert_detector import ExpertFakeNewsDetector
+
         det = ExpertFakeNewsDetector(model_dir=_MODEL_DIR)
-        det.load(suffix='expert_v5')
+        det.load(suffix="expert_v5")
         return det
 
     def test_html_in_prediction(self, detector):
@@ -85,18 +87,18 @@ class TestPipelineInputValidation:
         with_html = "<b>Scientists</b> discover <a href='x'>new</a> treatment for disease"
         result = detector.predict(pd.Series([with_html]))
         # Should produce valid output (no crash) with score in range
-        assert 0 <= result['ai_score_credibility'].iloc[0] <= 1
-        assert result['prediction_label'].iloc[0] in (0, 1)
+        assert 0 <= result["ai_score_credibility"].iloc[0] <= 1
+        assert result["prediction_label"].iloc[0] in (0, 1)
 
     def test_repeated_text_stability(self, detector):
         """Same text predicted twice should give identical results."""
         text = pd.Series(["The president announced new economic measures today."])
-        r1 = detector.predict(text)['ai_score_credibility'].iloc[0]
-        r2 = detector.predict(text)['ai_score_credibility'].iloc[0]
+        r1 = detector.predict(text)["ai_score_credibility"].iloc[0]
+        r2 = detector.predict(text)["ai_score_credibility"].iloc[0]
         assert r1 == r2, f"Non-deterministic prediction: {r1} vs {r2}"
 
     def test_single_word_input(self, detector):
         """Single word should produce valid output."""
         result = detector.predict(pd.Series(["hello"]))
         assert len(result) == 1
-        assert 0 <= result['ai_score_credibility'].iloc[0] <= 1
+        assert 0 <= result["ai_score_credibility"].iloc[0] <= 1

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 #  MongoDB connection helper
 # ---------------------------------------------------------------------------
 
+
 def get_mongo_collection(
     db_name: str = "thumalien_db",
     collection_name: str = "raw_posts",
@@ -61,6 +62,7 @@ def get_mongo_collection(
 
     if mongo_user and mongo_password:
         from urllib.parse import quote_plus
+
         auth_prefix = f"{quote_plus(mongo_user)}:{quote_plus(mongo_password)}@"
         candidates.append(f"mongodb://{auth_prefix}localhost:27017/")
         candidates.append(f"mongodb://{auth_prefix}mongodb:27017/")
@@ -85,6 +87,7 @@ def get_mongo_collection(
 #  get_overview_stats  -- single $facet aggregation
 # ---------------------------------------------------------------------------
 
+
 def get_overview_stats(collection) -> dict:
     """
     Return a dict of overview statistics computed entirely inside MongoDB.
@@ -107,7 +110,6 @@ def get_overview_stats(collection) -> dict:
             "$facet": {
                 # Total document count
                 "total": [{"$count": "count"}],
-
                 # Count by prediction_label
                 "by_label": [
                     {
@@ -117,7 +119,6 @@ def get_overview_stats(collection) -> dict:
                         }
                     }
                 ],
-
                 # Count by ai_emotion
                 "by_emotion": [
                     {
@@ -127,7 +128,6 @@ def get_overview_stats(collection) -> dict:
                         }
                     }
                 ],
-
                 # Count by ai_language
                 "by_language": [
                     {
@@ -137,14 +137,9 @@ def get_overview_stats(collection) -> dict:
                         }
                     }
                 ],
-
                 # Average credibility score (skip nulls)
                 "avg_cred": [
-                    {
-                        "$match": {
-                            "ai_score_credibility": {"$exists": True, "$ne": None}
-                        }
-                    },
+                    {"$match": {"ai_score_credibility": {"$exists": True, "$ne": None}}},
                     {
                         "$group": {
                             "_id": None,
@@ -173,21 +168,15 @@ def get_overview_stats(collection) -> dict:
     total_posts = facets.get("total", [{}])[0].get("count", 0) if facets.get("total") else 0
 
     by_label = {
-        doc["_id"]: doc["count"]
-        for doc in facets.get("by_label", [])
-        if doc["_id"] is not None
+        doc["_id"]: doc["count"] for doc in facets.get("by_label", []) if doc["_id"] is not None
     }
 
     by_emotion = {
-        doc["_id"]: doc["count"]
-        for doc in facets.get("by_emotion", [])
-        if doc["_id"] is not None
+        doc["_id"]: doc["count"] for doc in facets.get("by_emotion", []) if doc["_id"] is not None
     }
 
     by_language = {
-        doc["_id"]: doc["count"]
-        for doc in facets.get("by_language", [])
-        if doc["_id"] is not None
+        doc["_id"]: doc["count"] for doc in facets.get("by_language", []) if doc["_id"] is not None
     }
 
     avg_cred_docs = facets.get("avg_cred", [])
@@ -205,6 +194,7 @@ def get_overview_stats(collection) -> dict:
 # ---------------------------------------------------------------------------
 #  get_recent_posts
 # ---------------------------------------------------------------------------
+
 
 def get_recent_posts(collection, limit: int = 50) -> list[dict]:
     """
@@ -230,8 +220,7 @@ def get_recent_posts(collection, limit: int = 50) -> list[dict]:
 
     try:
         cursor = (
-            collection
-            .find({"text": {"$exists": True}}, projection)
+            collection.find({"text": {"$exists": True}}, projection)
             .sort("collected_at", -1)
             .limit(limit)
         )
@@ -244,6 +233,7 @@ def get_recent_posts(collection, limit: int = 50) -> list[dict]:
 # ---------------------------------------------------------------------------
 #  get_score_distribution  -- histogram of credibility scores
 # ---------------------------------------------------------------------------
+
 
 def get_score_distribution(collection, bins: int = 20) -> list[dict]:
     """
@@ -289,9 +279,11 @@ def get_score_distribution(collection, bins: int = 20) -> list[dict]:
         idx = boundaries.index(bucket_id) if bucket_id in boundaries else -1
         if idx < 0 or idx >= len(boundaries) - 1:
             continue
-        result.append({
-            "bin_start": boundaries[idx],
-            "bin_end": boundaries[idx + 1],
-            "count": doc["count"],
-        })
+        result.append(
+            {
+                "bin_start": boundaries[idx],
+                "bin_end": boundaries[idx + 1],
+                "count": doc["count"],
+            }
+        )
     return result

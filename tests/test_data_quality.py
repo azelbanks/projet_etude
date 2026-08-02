@@ -10,12 +10,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from collection.data_quality_check import print_report, run_quality_check
 
 # -----------------------------------------------------------------------
 #  Fixtures
 # -----------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_collection():
@@ -25,6 +26,7 @@ def mock_collection():
 # -----------------------------------------------------------------------
 #  run_quality_check
 # -----------------------------------------------------------------------
+
 
 class TestRunQualityCheck:
     """Tests for the run_quality_check() function."""
@@ -80,6 +82,7 @@ class TestRunQualityCheck:
 # -----------------------------------------------------------------------
 #  print_report (smoke test)
 # -----------------------------------------------------------------------
+
 
 class TestPrintReport:
     """Smoke tests for print_report() — verifies it doesn't crash."""

@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from transformers import AutoModel, AutoTokenizer
+
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
@@ -43,6 +44,7 @@ except ImportError:
 
 try:
     from codecarbon import EmissionsTracker
+
     CODECARBON_AVAILABLE = True
 except ImportError:
     CODECARBON_AVAILABLE = False
@@ -52,11 +54,18 @@ except ImportError:
 #  Dataset PyTorch
 # ================================================================
 
+
 class TextDataset(Dataset):
     """Dataset PyTorch pour le fine-tuning CamemBERT."""
 
-    def __init__(self, texts: list[str], labels: list[int], tokenizer, max_length: int = 128,
-                 sample_weights: list[float] | None = None):
+    def __init__(
+        self,
+        texts: list[str],
+        labels: list[int],
+        tokenizer,
+        max_length: int = 128,
+        sample_weights: list[float] | None = None,
+    ):
         self.texts = texts
         self.labels = labels
         self.tokenizer = tokenizer
@@ -70,23 +79,24 @@ class TextDataset(Dataset):
         encoding = self.tokenizer(
             self.texts[idx],
             truncation=True,
-            padding='max_length',
+            padding="max_length",
             max_length=self.max_length,
-            return_tensors='pt',
+            return_tensors="pt",
         )
         item = {
-            'input_ids': encoding['input_ids'].squeeze(0),
-            'attention_mask': encoding['attention_mask'].squeeze(0),
-            'label': torch.tensor(self.labels[idx], dtype=torch.long),
+            "input_ids": encoding["input_ids"].squeeze(0),
+            "attention_mask": encoding["attention_mask"].squeeze(0),
+            "label": torch.tensor(self.labels[idx], dtype=torch.long),
         }
         if self.sample_weights is not None:
-            item['weight'] = torch.tensor(self.sample_weights[idx], dtype=torch.float32)
+            item["weight"] = torch.tensor(self.sample_weights[idx], dtype=torch.float32)
         return item
 
 
 # ================================================================
 #  Classification Head
 # ================================================================
+
 
 class CamemBERTHead(nn.Module):
     """Classification head sur les embeddings CamemBERT [CLS]."""
@@ -108,6 +118,7 @@ class CamemBERTHead(nn.Module):
 #  CamemBERT Classifier
 # ================================================================
 
+
 class CamemBERTClassifier:
     """
     Fine-tuned CamemBERT pour detection de fake news FR courtes.
@@ -119,15 +130,15 @@ class CamemBERTClassifier:
     - max_length=128 tokens (suffisant pour textes courts)
     """
 
-    MODEL_NAME = 'camembert-base'
+    MODEL_NAME = "camembert-base"
     MAX_LENGTH = 128
 
-    def __init__(self, model_dir: str = 'models'):
+    def __init__(self, model_dir: str = "models"):
         self.model_dir = model_dir
         self.tokenizer = None
         self.base_model = None
         self.head = None
-        self.device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
         self._loaded = False
         self.training_metrics: dict = {}
 
@@ -146,18 +157,20 @@ class CamemBERTClassifier:
 
         # Freeze couches basses (0-8) — ne fine-tune que les couches hautes
         for name, param in self.base_model.named_parameters():
-            if 'encoder.layer' in name:
-                layer_num = int(name.split('encoder.layer.')[1].split('.')[0])
+            if "encoder.layer" in name:
+                layer_num = int(name.split("encoder.layer.")[1].split(".")[0])
                 if layer_num < 9:
                     param.requires_grad = False
-            elif 'embeddings' in name:
+            elif "embeddings" in name:
                 param.requires_grad = False
 
         trainable = sum(p.numel() for p in self.base_model.parameters() if p.requires_grad)
         total = sum(p.numel() for p in self.base_model.parameters())
         logger.info(
             "CamemBERT: %d/%d parametres entrainables (%.1f%%)",
-            trainable, total, 100 * trainable / total,
+            trainable,
+            total,
+            100 * trainable / total,
         )
 
     def fine_tune(
@@ -189,25 +202,25 @@ class CamemBERTClassifier:
         if track_emissions and CODECARBON_AVAILABLE:
             tracker = EmissionsTracker(
                 project_name="ThumaCheck_CamemBERT",
-                output_dir=os.path.dirname(self.model_dir) or '.',
+                output_dir=os.path.dirname(self.model_dir) or ".",
             )
             tracker.start()
 
         try:
             self._init_model()
 
-            texts = df['text_original'].astype(str).tolist()
-            labels = df['label'].astype(int).tolist()
+            texts = df["text_original"].astype(str).tolist()
+            labels = df["label"].astype(int).tolist()
 
             # Poids par echantillon : surpoids pour textes courts
             word_counts = [len(t.split()) for t in texts]
-            sample_weights = torch.tensor([
-                short_text_weight if wc < 30 else 1.0
-                for wc in word_counts
-            ], dtype=torch.float32)
+            sample_weights = torch.tensor(
+                [short_text_weight if wc < 30 else 1.0 for wc in word_counts], dtype=torch.float32
+            )
 
             # Split train/val (90/10)
             from sklearn.model_selection import train_test_split
+
             indices = list(range(len(texts)))
             train_idx, val_idx = train_test_split(
                 indices, test_size=0.1, stratify=labels, random_state=42
@@ -217,26 +230,35 @@ class CamemBERTClassifier:
             train_dataset = TextDataset(
                 [texts[i] for i in train_idx],
                 [labels[i] for i in train_idx],
-                self.tokenizer, self.MAX_LENGTH,
+                self.tokenizer,
+                self.MAX_LENGTH,
                 sample_weights=train_sample_weights,
             )
             val_dataset = TextDataset(
                 [texts[i] for i in val_idx],
                 [labels[i] for i in val_idx],
-                self.tokenizer, self.MAX_LENGTH,
+                self.tokenizer,
+                self.MAX_LENGTH,
             )
 
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
             val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
             # Optimizer (different LR pour base et head)
-            optimizer = torch.optim.AdamW([
-                {'params': [p for p in self.base_model.parameters() if p.requires_grad], 'lr': lr},
-                {'params': self.head.parameters(), 'lr': lr * 10},
-            ], weight_decay=0.01)
+            optimizer = torch.optim.AdamW(
+                [
+                    {
+                        "params": [p for p in self.base_model.parameters() if p.requires_grad],
+                        "lr": lr,
+                    },
+                    {"params": self.head.parameters(), "lr": lr * 10},
+                ],
+                weight_decay=0.01,
+            )
 
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, T_max=epochs * len(train_loader),
+                optimizer,
+                T_max=epochs * len(train_loader),
             )
 
             criterion = nn.CrossEntropyLoss()
@@ -252,9 +274,9 @@ class CamemBERTClassifier:
                 train_total = 0
 
                 for batch_idx, batch in enumerate(train_loader):
-                    input_ids = batch['input_ids'].to(self.device)
-                    attention_mask = batch['attention_mask'].to(self.device)
-                    batch_labels = batch['label'].to(self.device)
+                    input_ids = batch["input_ids"].to(self.device)
+                    attention_mask = batch["attention_mask"].to(self.device)
+                    batch_labels = batch["label"].to(self.device)
 
                     optimizer.zero_grad()
 
@@ -263,10 +285,10 @@ class CamemBERTClassifier:
                     logits = self.head(cls_output)
 
                     # Weighted loss (weights come from the Dataset via the batch)
-                    if 'weight' in batch:
-                        w = batch['weight'].to(self.device)
+                    if "weight" in batch:
+                        w = batch["weight"].to(self.device)
                         loss_per_sample = nn.functional.cross_entropy(
-                            logits, batch_labels, reduction='none'
+                            logits, batch_labels, reduction="none"
                         )
                         loss = (loss_per_sample * w).mean()
                     else:
@@ -288,25 +310,29 @@ class CamemBERTClassifier:
                     if (batch_idx + 1) % 50 == 0:
                         logger.info(
                             "Epoch %d/%d | Batch %d/%d | Loss: %.4f",
-                            epoch + 1, epochs, batch_idx + 1, len(train_loader), loss.item(),
+                            epoch + 1,
+                            epochs,
+                            batch_idx + 1,
+                            len(train_loader),
+                            loss.item(),
                         )
 
                 # --- Validation ---
                 val_metrics = self._evaluate(val_loader)
 
                 epoch_metrics = {
-                    'epoch': epoch + 1,
-                    'train_loss': train_loss / len(train_loader),
-                    'train_accuracy': train_correct / train_total,
-                    'val_accuracy': val_metrics['accuracy'],
-                    'val_f1': val_metrics['f1'],
-                    'val_precision': val_metrics['precision'],
-                    'val_recall': val_metrics['recall'],
+                    "epoch": epoch + 1,
+                    "train_loss": train_loss / len(train_loader),
+                    "train_accuracy": train_correct / train_total,
+                    "val_accuracy": val_metrics["accuracy"],
+                    "val_f1": val_metrics["f1"],
+                    "val_precision": val_metrics["precision"],
+                    "val_recall": val_metrics["recall"],
                 }
                 history.append(epoch_metrics)
 
                 print(
-                    f"  Epoch {epoch+1}/{epochs} | "
+                    f"  Epoch {epoch + 1}/{epochs} | "
                     f"Train Loss: {epoch_metrics['train_loss']:.4f} | "
                     f"Train Acc: {epoch_metrics['train_accuracy']:.4f} | "
                     f"Val F1: {val_metrics['f1']:.4f} | "
@@ -314,21 +340,21 @@ class CamemBERTClassifier:
                 )
 
                 # Save best model
-                if val_metrics['f1'] > best_val_f1:
-                    best_val_f1 = val_metrics['f1']
-                    self._save_checkpoint('best')
+                if val_metrics["f1"] > best_val_f1:
+                    best_val_f1 = val_metrics["f1"]
+                    self._save_checkpoint("best")
 
             self.training_metrics = {
-                'epochs': epochs,
-                'best_val_f1': best_val_f1,
-                'history': history,
-                'n_train': len(train_idx),
-                'n_val': len(val_idx),
-                'device': str(self.device),
+                "epochs": epochs,
+                "best_val_f1": best_val_f1,
+                "history": history,
+                "n_train": len(train_idx),
+                "n_val": len(val_idx),
+                "device": str(self.device),
             }
 
             # Restore best checkpoint
-            self._load_checkpoint('best')
+            self._load_checkpoint("best")
             self._loaded = True
 
             return self.training_metrics
@@ -336,7 +362,7 @@ class CamemBERTClassifier:
         finally:
             if tracker:
                 emissions = tracker.stop()
-                self.training_metrics['co2_emissions_kg'] = float(emissions)
+                self.training_metrics["co2_emissions_kg"] = float(emissions)
 
     def _evaluate(self, dataloader: DataLoader) -> dict:
         """Evalue sur un DataLoader. Retourne accuracy, f1, precision, recall."""
@@ -348,9 +374,9 @@ class CamemBERTClassifier:
 
         with torch.no_grad():
             for batch in dataloader:
-                input_ids = batch['input_ids'].to(self.device)
-                attention_mask = batch['attention_mask'].to(self.device)
-                labels = batch['label']
+                input_ids = batch["input_ids"].to(self.device)
+                attention_mask = batch["attention_mask"].to(self.device)
+                labels = batch["label"]
 
                 outputs = self.base_model(input_ids=input_ids, attention_mask=attention_mask)
                 cls_output = outputs.last_hidden_state[:, 0, :]
@@ -361,11 +387,12 @@ class CamemBERTClassifier:
                 all_labels.extend(labels.numpy())
 
         from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+
         return {
-            'accuracy': accuracy_score(all_labels, all_preds),
-            'f1': f1_score(all_labels, all_preds, zero_division=0),
-            'precision': precision_score(all_labels, all_preds, zero_division=0),
-            'recall': recall_score(all_labels, all_preds, zero_division=0),
+            "accuracy": accuracy_score(all_labels, all_preds),
+            "f1": f1_score(all_labels, all_preds, zero_division=0),
+            "precision": precision_score(all_labels, all_preds, zero_division=0),
+            "recall": recall_score(all_labels, all_preds, zero_division=0),
         }
 
     def predict(self, texts: list[str]) -> dict:
@@ -390,8 +417,8 @@ class CamemBERTClassifier:
 
         with torch.no_grad():
             for batch in loader:
-                input_ids = batch['input_ids'].to(self.device)
-                attention_mask = batch['attention_mask'].to(self.device)
+                input_ids = batch["input_ids"].to(self.device)
+                attention_mask = batch["attention_mask"].to(self.device)
 
                 outputs = self.base_model(input_ids=input_ids, attention_mask=attention_mask)
                 cls_output = outputs.last_hidden_state[:, 0, :]
@@ -404,9 +431,9 @@ class CamemBERTClassifier:
                 all_probas.extend(probas[:, 0])  # Proba de label 0 (fiable)
 
         return {
-            'predictions': np.array(all_preds),
-            'probabilities': np.array(all_probas),  # Score credibilite (0=suspect, 1=fiable)
-            'labels': ['FIABLE' if p == 0 else 'SUSPECT' for p in all_preds],
+            "predictions": np.array(all_preds),
+            "probabilities": np.array(all_probas),  # Score credibilite (0=suspect, 1=fiable)
+            "labels": ["FIABLE" if p == 0 else "SUSPECT" for p in all_preds],
         }
 
     def predict_credibility_scores(self, texts: list[str]) -> np.ndarray:
@@ -415,49 +442,55 @@ class CamemBERTClassifier:
         Compatible avec le pipeline ExpertFakeNewsDetector.
         """
         result = self.predict(texts)
-        return result['probabilities']
+        return result["probabilities"]
 
-    def _save_checkpoint(self, name: str = 'best'):
+    def _save_checkpoint(self, name: str = "best"):
         """Sauvegarde un checkpoint du modele."""
-        path = os.path.join(self.model_dir, f'camembert_{name}.pt')
-        torch.save({
-            'base_model_state': self.base_model.state_dict(),
-            'head_state': self.head.state_dict(),
-        }, path)
+        path = os.path.join(self.model_dir, f"camembert_{name}.pt")
+        torch.save(
+            {
+                "base_model_state": self.base_model.state_dict(),
+                "head_state": self.head.state_dict(),
+            },
+            path,
+        )
 
-    def _load_checkpoint(self, name: str = 'best'):
+    def _load_checkpoint(self, name: str = "best"):
         """Charge un checkpoint."""
-        path = os.path.join(self.model_dir, f'camembert_{name}.pt')
+        path = os.path.join(self.model_dir, f"camembert_{name}.pt")
         if not os.path.exists(path):
             logger.warning("Checkpoint non trouve : %s", path)
             return False
         checkpoint = torch.load(path, map_location=self.device, weights_only=True)
-        self.base_model.load_state_dict(checkpoint['base_model_state'])
-        self.head.load_state_dict(checkpoint['head_state'])
+        self.base_model.load_state_dict(checkpoint["base_model_state"])
+        self.head.load_state_dict(checkpoint["head_state"])
         return True
 
-    def save(self, suffix: str = 'camembert_fr'):
+    def save(self, suffix: str = "camembert_fr"):
         """Sauvegarde le modele final."""
-        base_path = os.path.join(self.model_dir, f'{suffix}.pt')
-        torch.save({
-            'base_model_state': self.base_model.state_dict(),
-            'head_state': self.head.state_dict(),
-            'config': {
-                'model_name': self.MODEL_NAME,
-                'max_length': self.MAX_LENGTH,
-                'hidden_size': self.base_model.config.hidden_size,
+        base_path = os.path.join(self.model_dir, f"{suffix}.pt")
+        torch.save(
+            {
+                "base_model_state": self.base_model.state_dict(),
+                "head_state": self.head.state_dict(),
+                "config": {
+                    "model_name": self.MODEL_NAME,
+                    "max_length": self.MAX_LENGTH,
+                    "hidden_size": self.base_model.config.hidden_size,
+                },
+                "metrics": self.training_metrics,
             },
-            'metrics': self.training_metrics,
-        }, base_path)
+            base_path,
+        )
         logger.info("CamemBERT sauvegarde : %s", base_path)
 
-    def load(self, suffix: str = 'camembert_fr') -> bool:
+    def load(self, suffix: str = "camembert_fr") -> bool:
         """Charge le modele sauvegarde."""
         if not TRANSFORMERS_AVAILABLE:
             logger.warning("transformers non disponible")
             return False
 
-        path = os.path.join(self.model_dir, f'{suffix}.pt')
+        path = os.path.join(self.model_dir, f"{suffix}.pt")
         if not os.path.exists(path):
             logger.warning("CamemBERT non trouve : %s", path)
             return False
@@ -471,21 +504,23 @@ class CamemBERTClassifier:
         # _save_checkpoint() ne contiennent pas la clé 'config'. Dans ce cas,
         # on déduit hidden_size depuis le base_model HuggingFace fraîchement
         # chargé (= taille standard pour camembert-base).
-        cfg = checkpoint.get('config') or {}
-        hidden_size = cfg.get('hidden_size', self.base_model.config.hidden_size)
+        cfg = checkpoint.get("config") or {}
+        hidden_size = cfg.get("hidden_size", self.base_model.config.hidden_size)
         self.head = CamemBERTHead(
             hidden_size=hidden_size,
             num_classes=2,
         ).to(self.device)
 
-        self.base_model.load_state_dict(checkpoint['base_model_state'])
-        self.head.load_state_dict(checkpoint['head_state'])
+        self.base_model.load_state_dict(checkpoint["base_model_state"])
+        self.head.load_state_dict(checkpoint["head_state"])
         self.base_model.eval()
         self.head.eval()
         self._loaded = True
-        self.training_metrics = checkpoint.get('metrics', {})
+        self.training_metrics = checkpoint.get("metrics", {})
 
-        logger.info("CamemBERT charge : %s (F1=%.4f)", path, self.training_metrics.get('best_val_f1', 0))
+        logger.info(
+            "CamemBERT charge : %s (F1=%.4f)", path, self.training_metrics.get("best_val_f1", 0)
+        )
         return True
 
     def extract_attention(self, text: str) -> dict:
@@ -505,11 +540,14 @@ class CamemBERTClassifier:
         self.head.eval()
 
         encoding = self.tokenizer(
-            text, truncation=True, padding='max_length',
-            max_length=self.MAX_LENGTH, return_tensors='pt',
+            text,
+            truncation=True,
+            padding="max_length",
+            max_length=self.MAX_LENGTH,
+            return_tensors="pt",
         )
-        input_ids = encoding['input_ids'].to(self.device)
-        attention_mask = encoding['attention_mask'].to(self.device)
+        input_ids = encoding["input_ids"].to(self.device)
+        attention_mask = encoding["attention_mask"].to(self.device)
 
         with torch.no_grad():
             outputs = self.base_model(
@@ -541,8 +579,8 @@ class CamemBERTClassifier:
             weights = weights / weights.max()
 
         return {
-            'tokens': tokens,
-            'attention_weights': weights.tolist(),
-            'prediction': 'FIABLE' if probas[0] > 0.5 else 'SUSPECT',
-            'score': float(probas[0]),
+            "tokens": tokens,
+            "attention_weights": weights.tolist(),
+            "prediction": "FIABLE" if probas[0] > 0.5 else "SUSPECT",
+            "score": float(probas[0]),
         }
