@@ -1,6 +1,18 @@
 # ThumaCheck — Social Media Intelligence & AI Monitor
 
-> **Built by [Niamato Consulting](https://github.com/azelbanks/thumacheck) (Azélie Bernard & Sébastien Lazcanotegui) for [Thumalien](https://thumalien.com), a fact-checking and media monitoring company.**
+> ### 📌 Cadre du projet
+>
+> **Thumalien** (le client), **Niamato Consulting** (l'agence) et **Sébastien
+> Lazcanotegui** (le co-auteur) sont des **entités fictives**. Elles constituent
+> une mise en situation professionnelle qui structure le projet : cahier des
+> charges, conformité RGPD, planification, répartition des rôles.
+>
+> **ThumaCheck est un projet personnel d'[Azélie Bernard](https://github.com/azelbanks).**
+> Le scénario est fictif ; tout le reste est réel — le code, les modèles
+> entraînés, les données collectées sur Bluesky, les métriques mesurées et les
+> analyses.
+
+> **Built by Niamato Consulting (Azélie Bernard & Sébastien Lazcanotegui) for Thumalien, a fact-checking and media monitoring company.** *(mise en situation — voir l'encadré ci-dessus)*
 
 ![CI](https://github.com/azelbanks/thumacheck/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
@@ -425,6 +437,10 @@ This project was developed as a two-person team. Here is my specific scope:
 - **Green IT**: CodeCarbon integration and carbon footprint tracking
 
 Sébastien Lazcanotegui contributed to: RoBERTa EN fine-tuning, Bluesky data collection infrastructure, Kafka scalability prototype, and deployment configuration.
+
+> *Rappel : Sébastien Lazcanotegui est un co-auteur fictif de la mise en
+> situation (voir l'encadré en tête de README). L'ensemble du travail est
+> d'Azélie Bernard.*
 
 ---
 

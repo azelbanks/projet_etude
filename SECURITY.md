@@ -5,8 +5,7 @@
 **N'ouvrez pas d'issue publique pour une vulnérabilité.**
 
 Utilisez l'onglet *Security → Report a vulnerability* du dépôt (GitHub Private
-Vulnerability Reporting), ou écrivez à l'adresse de contact de Niamato
-Consulting.
+Vulnerability Reporting).
 
 Merci d'inclure : la version concernée, les étapes de reproduction, l'impact
 estimé et, si vous en avez un, un correctif proposé.
