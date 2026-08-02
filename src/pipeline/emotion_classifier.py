@@ -14,6 +14,8 @@ Auteur : Niamato Consulting (pour Thumalien)
 import logging
 import os
 import pickle
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 import torch
@@ -87,9 +89,9 @@ class EmotionFeatureExtractor:
 
     def __init__(self, model_dir: str = "../models"):
         self.model_dir = model_dir
-        self.model = None
-        self.vocab = None
-        self.label_encoder = None
+        self.model: _EmotionMLP | None = None
+        self.vocab: dict[str, int] | None = None
+        self.label_encoder: Any = None
         self.device = torch.device("cpu")  # CPU pour inference en production
         self._loaded = False
 
@@ -124,7 +126,7 @@ class EmotionFeatureExtractor:
         logger.info("Modèle émotions chargé : %s", pt_path)
         return True
 
-    def get_emotion_features(self, texts: list[str]) -> np.ndarray:
+    def get_emotion_features(self, texts: Sequence[str] | np.ndarray) -> np.ndarray:
         """
         Retourne les 7 probabilités d'émotion pour chaque texte.
 
@@ -136,7 +138,9 @@ class EmotionFeatureExtractor:
         -------
         np.ndarray de shape (n_texts, 7)
         """
-        if not self._loaded:
+        # La garde porte sur les attributs reellement utilises plus bas, et non
+        # sur un drapeau qui pourrait diverger de l'etat effectif.
+        if not self._loaded or self.model is None or self.vocab is None:
             raise RuntimeError("Modèle émotions non chargé. Appelez load() d'abord.")
 
         oov_idx = self.vocab.get("<OOV>", self.vocab.get("<UNK>", 1))
@@ -172,7 +176,7 @@ class EmotionFeatureExtractor:
         Dict avec shap_values (n_texts, 7), feature_words, emotion_names
         ou None si SHAP non disponible
         """
-        if not self._loaded:
+        if not self._loaded or self.model is None or self.vocab is None:
             raise RuntimeError("Modele emotions non charge.")
 
         try:

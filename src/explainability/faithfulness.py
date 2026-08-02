@@ -156,7 +156,7 @@ class FaithfulnessEvaluator:
                 if np.isscalar(mask_value):
                     X_masked[i, top_feats] = mask_value
                 else:
-                    X_masked[i, top_feats] = mask_value[top_feats]
+                    X_masked[i, top_feats] = np.asarray(mask_value)[top_feats]
             proba_curve[:, k] = self.predict(X_masked)[:, self.class_index]
 
         # AOPC = (1 / (max_k+1)) * Σ (p_base - p_k)

@@ -103,8 +103,8 @@ class GlobalShapExplainer:
         self.class_index = class_index
         os.makedirs(output_dir, exist_ok=True)
 
-        self._shap_values = None
-        self._X = None
+        self._shap_values: np.ndarray | None = None
+        self._X: np.ndarray | None = None
 
     # ------------------------------------------------------------------
     #  Calcul des SHAP values
@@ -217,6 +217,8 @@ class GlobalShapExplainer:
             show=False,
             plot_type="dot",
         )
+        if self._X is None:
+            raise RuntimeError("Appelez fit() avant de tracer le beeswarm.")
         plt.title(
             f"SHAP Beeswarm — {self.model_name_for_title()}\n"
             f"top {max_display} features par mean(|SHAP|), n={self._X.shape[0]}",
@@ -232,6 +234,7 @@ class GlobalShapExplainer:
         self, mean_abs: np.ndarray, sorted_idx: np.ndarray, max_display: int = 20
     ) -> str:
         """Bar plot d'importance globale (figure 'classique')."""
+        import matplotlib
         import matplotlib.pyplot as plt
 
         top = sorted_idx[:max_display][::-1]  # bas vers haut
@@ -239,7 +242,7 @@ class GlobalShapExplainer:
         values = mean_abs[top]
 
         fig, ax = plt.subplots(figsize=(9, 7))
-        colors = plt.cm.viridis(np.linspace(0.3, 0.9, len(top)))
+        colors = matplotlib.colormaps["viridis"](np.linspace(0.3, 0.9, len(top)))
         ax.barh(range(len(top)), values, color=colors)
         ax.set_yticks(range(len(top)))
         ax.set_yticklabels(names, fontsize=9)

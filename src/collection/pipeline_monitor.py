@@ -16,7 +16,7 @@ class PipelineMonitor:
     METRICS_FILE = os.path.join(LOGS_DIR, "collection_metrics.jsonl")
 
     def __init__(self) -> None:
-        self._start_time = None
+        self._start_time: datetime.datetime | None = None
         self._reset()
 
     # ------------------------------------------------------------------
@@ -135,5 +135,5 @@ class PipelineMonitor:
         self.posts_new = 0
         self.duplicates_skipped = 0
         self.errors = 0
-        self.error_details = []
+        self.error_details: list[dict[str, str]] = []
         self.keywords_processed = 0

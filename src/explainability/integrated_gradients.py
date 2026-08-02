@@ -26,6 +26,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -149,7 +150,7 @@ class IGExplainer:
             self._ig_device = self._original_device
 
         # Lazy: importé à l'usage
-        self._lig = None
+        self._lig: Any = None
 
     def __del__(self):
         """Restaure le device d'origine en sortie de scope."""
@@ -286,7 +287,7 @@ class IGExplainer:
             if n not in n_steps_to_try and n >= self.n_steps:
                 n_steps_to_try.append(n)
 
-        best = None  # (delta, attributions, strat, n_steps)
+        best: tuple[Any, Any, str, int] | None = None  # (delta, attributions, strat, n_steps)
         converged = False
         for n_steps in n_steps_to_try:
             for strat in strategies:
@@ -309,6 +310,12 @@ class IGExplainer:
             if converged:
                 break
 
+        if best is None:
+            # Aucune combinaison (strategie, n_steps) n'a produit d'attribution :
+            # echouer explicitement plutot que sur un depaquetage de None.
+            raise RuntimeError(
+                "Integrated Gradients n'a produit aucune attribution (strategies ou n_steps vides)."
+            )
         delta_val, attributions, strat_used, n_steps_used = best
         logger.info(
             "  IG device=%s baseline=%s n_steps=%d Δ=%.2e",
