@@ -11,6 +11,11 @@ ENV GIT_SHA=${GIT_SHA} \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
+# Les modules internes s'importent par leur nom court (`from pipeline...`).
+# En test, pytest le permet via `pythonpath` dans pyproject.toml ; dans le
+# conteneur rien ne le fournissait — l'API ne pouvait pas demarrer du tout.
+ENV PYTHONPATH=/app/src
+
 # Dossier de travail dans le conteneur
 WORKDIR /app
 

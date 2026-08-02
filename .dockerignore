@@ -9,8 +9,14 @@ __pycache__/
 .github/
 .Trash-0/
 emissions.csv*
-models/*.pt
-models/*.pkl
+# Les modeles entrainés (15 Mo au total) DOIVENT etre embarques : sans eux
+# l'image demarre mais ne peut servir aucune prediction (/ready -> 503).
+# Seuls les poids transformer (> 100 Mo, non versionnes) sont exclus.
+models/camembert_best.pt
+models/camembert_fr.pt
+models/camembert_fr_v2.pt
+models/roberta_en.pt
+models/roberta_en_v2.pt
 notebooks/*.ipynb
 docs/pdf/
 *.bak

@@ -87,18 +87,34 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-$(echo ${{ github.sha }} | cut -c1-7) \
             uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 
-      - name: Wait for /health
+      # Sonde /ready et non /health : /health repond 200 des que le processus
+      # vit, meme sans aucun modele. Une image incapable de predire passerait
+      # donc le test — c'est arrive.
+      - name: Wait for /ready
         run: |
           for i in $(seq 1 30); do
-            if curl -fsS http://localhost:8000/health >/dev/null 2>&1; then
-              echo "API en ligne apres ${i}0s"
+            if curl -fsS http://localhost:8000/ready >/dev/null 2>&1; then
+              echo "Instance prete apres ${i}0s"
               exit 0
             fi
             sleep 10
           done
-          echo "::error::L'API n'a pas repondu sur /health en 300 s"
-          docker logs thumacheck-api
+          echo "::error::L'API n'est pas devenue prete en 300 s"
+          echo "--- /health ---"; curl -s http://localhost:8000/health || true
+          echo "--- logs ---";    docker logs thumacheck-api
           exit 1
+
+      - name: Check the image can actually predict
+        run: |
+          set -o pipefail
+          label=$(curl -fsS -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"SCANDALE: le gouvernement cache la VERITE!"}' | jq -r .label)
+          echo "label rendu : $label"
+          [ -n "$label" ] && [ "$label" != "null" ] || {
+            echo "::error::/predict n'a pas rendu de label"
+            exit 1
+          }
 
       - name: Check /version reports the deployed revision
         run: |
