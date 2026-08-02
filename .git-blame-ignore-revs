@@ -1,0 +1,6 @@
+# Revisions purement cosmetiques, ignorees par git blame.
+# Usage : git config blame.ignoreRevsFile .git-blame-ignore-revs
+# (GitHub applique ce fichier automatiquement.)
+
+# style: passe ruff format sur src/ et tests/
+f017b44f64923c968e06ae2d64b7f56f8dcbc1c0
