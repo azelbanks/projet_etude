@@ -27,11 +27,11 @@ décision automatisée.
 from __future__ import annotations
 
 __all__ = [
-    "GlobalShapExplainer",
     "CamembertAttentionExplainer",
+    "FaithfulnessEvaluator",
+    "GlobalShapExplainer",
     "IGExplainer",
     "MetaLearnerDecomposer",
-    "FaithfulnessEvaluator",
 ]
 
 

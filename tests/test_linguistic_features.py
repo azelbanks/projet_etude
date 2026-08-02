@@ -7,7 +7,6 @@ sensible values, and no missing data.
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from pipeline.expert_detector import LinguisticFeatureExtractor
 

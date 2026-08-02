@@ -23,19 +23,19 @@ Usage :
 Auteur : Niamato Consulting (pour Thumalien)
 """
 
-import os
 import logging
+import os
+
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-from typing import Dict, Optional, List
+from torch.utils.data import DataLoader, Dataset
 
 logger = logging.getLogger(__name__)
 
 try:
-    from transformers import AutoTokenizer, AutoModel
+    from transformers import AutoModel, AutoTokenizer
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
@@ -55,8 +55,8 @@ except ImportError:
 class TextDataset(Dataset):
     """Dataset PyTorch pour le fine-tuning CamemBERT."""
 
-    def __init__(self, texts: List[str], labels: List[int], tokenizer, max_length: int = 128,
-                 sample_weights: Optional[List[float]] = None):
+    def __init__(self, texts: list[str], labels: list[int], tokenizer, max_length: int = 128,
+                 sample_weights: list[float] | None = None):
         self.texts = texts
         self.labels = labels
         self.tokenizer = tokenizer
@@ -129,7 +129,7 @@ class CamemBERTClassifier:
         self.head = None
         self.device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
         self._loaded = False
-        self.training_metrics: Dict = {}
+        self.training_metrics: dict = {}
 
     def _init_model(self):
         """Initialise CamemBERT + classification head."""
@@ -168,7 +168,7 @@ class CamemBERTClassifier:
         lr: float = 2e-5,
         short_text_weight: float = 2.0,
         track_emissions: bool = True,
-    ) -> Dict:
+    ) -> dict:
         """
         Fine-tune CamemBERT sur les donnees FR.
 
@@ -338,7 +338,7 @@ class CamemBERTClassifier:
                 emissions = tracker.stop()
                 self.training_metrics['co2_emissions_kg'] = float(emissions)
 
-    def _evaluate(self, dataloader: DataLoader) -> Dict:
+    def _evaluate(self, dataloader: DataLoader) -> dict:
         """Evalue sur un DataLoader. Retourne accuracy, f1, precision, recall."""
         self.base_model.eval()
         self.head.eval()
@@ -368,7 +368,7 @@ class CamemBERTClassifier:
             'recall': recall_score(all_labels, all_preds, zero_division=0),
         }
 
-    def predict(self, texts: List[str]) -> Dict:
+    def predict(self, texts: list[str]) -> dict:
         """
         Prediction sur une liste de textes.
 
@@ -409,7 +409,7 @@ class CamemBERTClassifier:
             'labels': ['FIABLE' if p == 0 else 'SUSPECT' for p in all_preds],
         }
 
-    def predict_credibility_scores(self, texts: List[str]) -> np.ndarray:
+    def predict_credibility_scores(self, texts: list[str]) -> np.ndarray:
         """
         Retourne uniquement les scores de credibilite (0-1).
         Compatible avec le pipeline ExpertFakeNewsDetector.

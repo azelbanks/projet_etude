@@ -27,8 +27,8 @@ C'est ce qu'on veut afficher dans le dashboard V9 pour expliquer
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence
 
 import numpy as np
 
@@ -37,10 +37,10 @@ import numpy as np
 class MetaDecomposition:
     """Décomposition exacte d'une prédiction du méta-learner."""
 
-    feature_names: List[str]
-    feature_values: List[float]
-    coefficients: List[float]
-    contributions: List[float]  # β_i * x_i
+    feature_names: list[str]
+    feature_values: list[float]
+    coefficients: list[float]
+    contributions: list[float]  # β_i * x_i
     intercept: float
     logit: float  # z = intercept + Σ contributions
     proba_suspect: float  # σ(z)
@@ -48,7 +48,7 @@ class MetaDecomposition:
     threshold: float = 0.5
     figures: dict = field(default_factory=dict)
 
-    def top_drivers(self, k: int = 3) -> List[dict]:
+    def top_drivers(self, k: int = 3) -> list[dict]:
         """Top-k features par valeur absolue de contribution."""
         idx = np.argsort(np.abs(self.contributions))[::-1][:k]
         return [
@@ -190,7 +190,7 @@ class MetaLearnerDecomposer:
     @staticmethod
     def to_plotly_bar(
         decomposition: MetaDecomposition,
-        labels_fr: Optional[dict] = None,
+        labels_fr: dict | None = None,
     ):
         """
         Bar plot horizontal Plotly des contributions.
@@ -227,7 +227,7 @@ class MetaLearnerDecomposer:
             f"{n}<br>x={decomposition.feature_values[order[len(order)-1-i]]:.3f}"
             f"<br>β={decomposition.coefficients[order[len(order)-1-i]]:+.3f}"
             f"<br>β·x={v:+.4f}"
-            for i, (n, v) in enumerate(zip(names, vals))
+            for i, (n, v) in enumerate(zip(names, vals, strict=False))
         ]
 
         fig = go.Figure(
@@ -242,22 +242,22 @@ class MetaLearnerDecomposer:
         )
         fig.add_vline(x=0, line_dash="dot", line_color="rgba(255,255,255,0.3)")
         fig.update_layout(
-            title=dict(
-                text=(
+            title={
+                "text": (
                     f"Décomposition de la décision V8 — "
                     f"P(suspect)={decomposition.proba_suspect:.2f} → "
                     f"{decomposition.label}"
                 ),
-                x=0.5, font=dict(color="#E0E0E0", size=14),
-            ),
-            xaxis=dict(
-                title="Contribution β·x au logit (+ = pousse vers SUSPECT)",
-                zeroline=True, zerolinecolor="rgba(255,255,255,0.2)",
-            ),
-            margin=dict(t=60, b=40, l=200, r=20),
+                "x": 0.5, "font": {"color": "#E0E0E0", "size": 14},
+            },
+            xaxis={
+                "title": "Contribution β·x au logit (+ = pousse vers SUSPECT)",
+                "zeroline": True, "zerolinecolor": "rgba(255,255,255,0.2)",
+            },
+            margin={"t": 60, "b": 40, "l": 200, "r": 20},
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#E0E0E0"),
+            font={"color": "#E0E0E0"},
             height=max(280, len(names) * 38),
         )
         return fig

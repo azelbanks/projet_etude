@@ -4,14 +4,14 @@ Tests for collection/data_quality_check.py — quality report logic.
 Uses mock objects to simulate MongoDB without requiring a running instance.
 """
 
-import pytest
-from unittest.mock import MagicMock
-import sys
 import os
+import sys
+from unittest.mock import MagicMock
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-from collection.data_quality_check import run_quality_check, print_report
-
+from collection.data_quality_check import print_report, run_quality_check
 
 # -----------------------------------------------------------------------
 #  Fixtures

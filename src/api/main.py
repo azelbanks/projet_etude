@@ -6,12 +6,10 @@ Lancement :
 """
 
 import collections
-import json
 import logging
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import Dict, Optional
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
@@ -20,7 +18,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
+from pipeline.expert_detector import EmotionFeatureExtractor, ExpertFakeNewsDetector
 
 try:
     from codecarbon import EmissionsTracker
@@ -36,8 +34,8 @@ EMOTION_LABELS = ['colere', 'degout', 'joie', 'neutre', 'peur', 'surprise', 'tri
 # ---------------------------------------------------------------------------
 #  Global detector + emotion + energy instances
 # ---------------------------------------------------------------------------
-detector: Optional[ExpertFakeNewsDetector] = None
-emotion_extractor: Optional[EmotionFeatureExtractor] = None
+detector: ExpertFakeNewsDetector | None = None
+emotion_extractor: EmotionFeatureExtractor | None = None
 
 # Cumulative energy metrics for the API session
 _energy_metrics = {
@@ -48,7 +46,7 @@ _energy_metrics = {
     'energy_kwh': 0.0,
     'tracker_active': False,
 }
-_energy_tracker: Optional[object] = None
+_energy_tracker: object | None = None
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -58,7 +56,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.max_requests = max_requests
         self.window_seconds = window_seconds
-        self._requests: Dict[str, collections.deque] = {}
+        self._requests: dict[str, collections.deque] = {}
 
     async def dispatch(self, request: Request, call_next: object) -> JSONResponse:
         client_ip = request.client.host if request.client else 'unknown'
@@ -98,7 +96,7 @@ class EnergyTrackingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def _load_detector() -> Optional[ExpertFakeNewsDetector]:
+def _load_detector() -> ExpertFakeNewsDetector | None:
     """Try loading the best available model (V5 -> V4 -> V3 -> expert)."""
     model_dir = os.environ.get(
         "THUMALIEN_MODEL_DIR",
@@ -121,7 +119,7 @@ def _load_detector() -> Optional[ExpertFakeNewsDetector]:
     return None
 
 
-def _load_emotion_extractor() -> Optional[EmotionFeatureExtractor]:
+def _load_emotion_extractor() -> EmotionFeatureExtractor | None:
     """Load emotion feature extractor for API responses."""
     model_dir = os.environ.get(
         "THUMALIEN_MODEL_DIR",
@@ -218,7 +216,7 @@ class PredictResponse(BaseModel):
     score: float
     label: str
     language: str
-    emotions: Dict[str, float]
+    emotions: dict[str, float]
 
 
 class EnergyResponse(BaseModel):
@@ -240,7 +238,7 @@ class HealthResponse(BaseModel):
 #  Endpoints
 # ---------------------------------------------------------------------------
 @app.get("/health", response_model=HealthResponse)
-def health() -> Dict[str, object]:
+def health() -> dict[str, object]:
     return HealthResponse(
         status="ok",
         model_loaded=detector is not None,
@@ -250,7 +248,7 @@ def health() -> Dict[str, object]:
 
 
 @app.get("/energy", response_model=EnergyResponse)
-def energy() -> Dict[str, object]:
+def energy() -> dict[str, object]:
     """Return cumulative energy metrics for the API session."""
     # Update CO2 from tracker if available
     if _energy_tracker is not None:
@@ -270,7 +268,7 @@ def energy() -> Dict[str, object]:
 
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(req: PredictRequest) -> Dict[str, object]:
+def predict(req: PredictRequest) -> dict[str, object]:
     if detector is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -285,10 +283,9 @@ def predict(req: PredictRequest) -> Dict[str, object]:
     language = str(results["language"].iloc[0])
 
     # Emotion probabilities
-    emotions: Dict[str, float] = {}
+    emotions: dict[str, float] = {}
     if emotion_extractor is not None:
         try:
-            import numpy as np
             probas = emotion_extractor.get_emotion_features([text])[0]
             emotions = {
                 EMOTION_LABELS[i]: round(float(probas[i]), 4)
@@ -324,7 +321,7 @@ class ExplainResponse(BaseModel):
 
 
 @app.post("/explain", response_model=ExplainResponse)
-def explain(req: ExplainRequest) -> Dict[str, object]:
+def explain(req: ExplainRequest) -> dict[str, object]:
     """Return word-level explainability for a given text."""
     if detector is None:
         raise HTTPException(status_code=503, detail="Model not loaded")

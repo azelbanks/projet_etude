@@ -1,16 +1,17 @@
 """Tests pour ExpertFakeNewsDetector — init, save/load, health_check, predict."""
 
-import sys
 import os
-import pytest
-import numpy as np
+import sys
+
 import pandas as pd
-from unittest.mock import patch, MagicMock
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from pipeline.expert_detector import (
-    ExpertFakeNewsDetector, LinguisticFeatureExtractor, LanguageRouter,
     DatasetCleaner,
+    ExpertFakeNewsDetector,
+    LanguageRouter,
+    LinguisticFeatureExtractor,
 )
 
 

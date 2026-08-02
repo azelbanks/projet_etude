@@ -67,11 +67,11 @@ class TestBenchmarkLatence:
         p95_ms = np.percentile(times, 95) * 1000
 
         print(f"\n{'='*60}")
-        print(f"  BENCHMARK LATENCE — TEXTE UNIQUE")
+        print("  BENCHMARK LATENCE — TEXTE UNIQUE")
         print(f"{'='*60}")
         print(f"  Temps moyen :  {avg_ms:.1f} ms")
         print(f"  P95 :          {p95_ms:.1f} ms")
-        print(f"  Iterations :   10")
+        print("  Iterations :   10")
         print(f"{'='*60}")
 
         # CDC exige < 100ms par texte ; on verifie < 200ms (marge)
@@ -96,12 +96,12 @@ class TestBenchmarkLatence:
         per_text_ms = avg_ms / len(sample_texts)
 
         print(f"\n{'='*60}")
-        print(f"  BENCHMARK LATENCE — BATCH DE 10 TEXTES")
+        print("  BENCHMARK LATENCE — BATCH DE 10 TEXTES")
         print(f"{'='*60}")
         print(f"  Temps total moyen :    {avg_ms:.1f} ms")
         print(f"  Temps par texte :      {per_text_ms:.1f} ms")
         print(f"  Debit :                {1000/per_text_ms:.0f} textes/sec")
-        print(f"  Iterations :           5")
+        print("  Iterations :           5")
         print(f"{'='*60}")
 
         # CDC: < 100ms/texte, soit < 1000ms pour 10 textes
@@ -120,7 +120,7 @@ class TestBenchmarkLatence:
         per_text_ms = elapsed_ms / 100
 
         print(f"\n{'='*60}")
-        print(f"  BENCHMARK LATENCE — BATCH DE 100 TEXTES")
+        print("  BENCHMARK LATENCE — BATCH DE 100 TEXTES")
         print(f"{'='*60}")
         print(f"  Temps total :          {elapsed_ms:.1f} ms")
         print(f"  Temps par texte :      {per_text_ms:.1f} ms")

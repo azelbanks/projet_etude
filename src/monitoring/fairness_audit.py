@@ -5,15 +5,18 @@ Calcule des metriques de fairness par sous-groupe (langue, longueur de texte).
 Usage: python -m src.monitoring.fairness_audit
 """
 
-import os, sys, json, logging
-from datetime import datetime, timezone
+import json
+import logging
+import os
+import sys
+from datetime import UTC, datetime
+
 import numpy as np
 import pandas as pd
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'src'))
 
-from pipeline.expert_detector import ExpertFakeNewsDetector
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s - %(message)s')
@@ -33,7 +36,7 @@ def compute_fairness_metrics(texts, labels_true, languages, text_lengths, detect
     scores = results['ai_score_credibility'].values
 
     metrics = {
-        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'timestamp': datetime.now(UTC).isoformat(),
         'n_total': len(texts),
         'groups': {}
     }
@@ -110,7 +113,7 @@ def compute_fairness_metrics(texts, labels_true, languages, text_lengths, detect
     return metrics
 
 
-def write_fairness_report(report: dict, path: str = None) -> None:
+def write_fairness_report(report: dict, path: str | None = None) -> None:
     if path is None:
         path = os.path.join(PROJECT_ROOT, 'logs', 'fairness_audit.jsonl')
     os.makedirs(os.path.dirname(path), exist_ok=True)

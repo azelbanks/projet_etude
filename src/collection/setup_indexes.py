@@ -10,8 +10,9 @@ Environment variables (optional, falls back to no-auth local connection):
 
 import os
 from urllib.parse import quote_plus
-from pymongo import MongoClient, DESCENDING, ASCENDING, TEXT
+
 from dotenv import load_dotenv
+from pymongo import ASCENDING, DESCENDING, TEXT, MongoClient
 
 load_dotenv()
 

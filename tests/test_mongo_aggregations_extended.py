@@ -4,8 +4,7 @@ Tests etendus pour mongo_aggregations.py — branches non couvertes.
 Couvre les fonctions avec mocking MongoDB.
 """
 
-from unittest.mock import patch, MagicMock
-import pytest
+from unittest.mock import MagicMock, patch
 
 from pipeline.mongo_aggregations import (
     get_mongo_collection,

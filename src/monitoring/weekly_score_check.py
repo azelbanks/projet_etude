@@ -14,11 +14,11 @@ Environment variables (optional):
     MONGO_HOST      MongoDB host (default: localhost:27017)
 """
 
-import os
-import sys
 import json
 import logging
-from datetime import datetime, timezone
+import os
+import sys
+from datetime import UTC, datetime
 
 import numpy as np
 import pandas as pd
@@ -147,7 +147,7 @@ def run_scoring(df: pd.DataFrame, detector: ExpertFakeNewsDetector, track_emissi
             pass
 
     return {
-        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'timestamp': datetime.now(UTC).isoformat(),
         'n_sampled': n_total,
         'n_suspect': n_suspect,
         'suspect_rate': suspect_rate,

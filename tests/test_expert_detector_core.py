@@ -8,22 +8,17 @@ save/load, health_check, _make_log, _build_features, train).
 
 import os
 import tempfile
-import pickle
 
 import numpy as np
 import pandas as pd
 import pytest
-from unittest.mock import patch, MagicMock
-from scipy.sparse import csr_matrix, issparse
 
 from pipeline.expert_detector import (
     DatasetCleaner,
     EmotionFeatureExtractor,
-    LanguageRouter,
     ExpertFakeNewsDetector,
-    LinguisticFeatureExtractor,
+    LanguageRouter,
 )
-
 
 # ============================================================
 #  DatasetCleaner — prepare_bilingual_dataset, loaders

@@ -5,14 +5,14 @@ Uses unittest.mock to simulate MongoDB responses without requiring
 a running database. Tests the data transformation logic, not MongoDB itself.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-import sys
 import os
+import sys
+from unittest.mock import MagicMock
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from pipeline.mongo_aggregations import get_overview_stats, get_recent_posts, get_score_distribution
-
 
 # -----------------------------------------------------------------------
 #  Fixtures

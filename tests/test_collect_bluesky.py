@@ -5,13 +5,11 @@ Validates text validation, word counting, and language detection heuristics
 without requiring any external service (no Bluesky API, no MongoDB).
 """
 
-import pytest
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-from collection.collect_bluesky import validate_text, compute_word_count, detect_language_hint
-
+from collection.collect_bluesky import compute_word_count, detect_language_hint, validate_text
 
 # -----------------------------------------------------------------------
 #  validate_text

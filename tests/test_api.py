@@ -1,8 +1,8 @@
 """Tests for the Thumalien FastAPI API."""
 
-import sys
 import os
-from unittest.mock import MagicMock, patch
+import sys
+from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest

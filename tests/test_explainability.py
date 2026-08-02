@@ -19,6 +19,7 @@ import pytest
 PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(PROJ_ROOT, "src"))
 
+from explainability import MetaLearnerDecomposer
 
 # =====================================================================
 #  MetaLearnerDecomposer
@@ -181,8 +182,9 @@ class TestFaithfulnessEvaluator:
 
 class TestSerialization:
     def test_meta_decomposition_to_json(self):
-        from explainability.meta_decomposition import MetaLearnerDecomposer
         import json
+
+        from explainability.meta_decomposition import MetaLearnerDecomposer
 
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, 1, 1, 1], 0)})
         r = d.decompose([0.5, 0.5, 0.5, 0.5])
@@ -193,8 +195,9 @@ class TestSerialization:
         assert len(parsed["contributions"]) == 4
 
     def test_faithfulness_to_json(self, tmp_path):
-        from explainability.faithfulness import FaithfulnessEvaluator
         import json
+
+        from explainability.faithfulness import FaithfulnessEvaluator
 
         def fn(X):
             z = X @ np.array([1.0, 1.0])
@@ -222,6 +225,7 @@ class TestLazyImports:
         # On vérifie que `import explainability` ne casse pas, même si
         # captum n'est pas installé. La preuve est l'absence d'ImportError.
         import importlib
+
         import explainability
         importlib.reload(explainability)
         assert hasattr(explainability, "GlobalShapExplainer")
@@ -246,8 +250,9 @@ class TestMetaDecompositionMutationKilling:
 
     # --- to_json: vérifier CHAQUE clé et valeur exacte ---
     def test_to_json_all_keys_present(self):
-        from explainability.meta_decomposition import MetaLearnerDecomposer
         import json
+
+        from explainability.meta_decomposition import MetaLearnerDecomposer
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], -0.3)})
         r = d.decompose([0.6, 0.4, 0.8, 0.1])
         parsed = json.loads(r.to_json())
@@ -259,8 +264,9 @@ class TestMetaDecompositionMutationKilling:
         assert set(parsed.keys()) == expected_keys
 
     def test_to_json_values_match_dataclass(self):
-        from explainability.meta_decomposition import MetaLearnerDecomposer
         import json
+
+        from explainability.meta_decomposition import MetaLearnerDecomposer
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], -0.3)})
         r = d.decompose([0.6, 0.4, 0.8, 0.1])
         parsed = json.loads(r.to_json())
@@ -276,8 +282,9 @@ class TestMetaDecompositionMutationKilling:
         assert parsed["figures"] == r.figures
 
     def test_to_json_top_drivers_count(self):
-        from explainability.meta_decomposition import MetaLearnerDecomposer
         import json
+
+        from explainability.meta_decomposition import MetaLearnerDecomposer
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1, -1, 0.5, 0.2], -0.3)})
         r = d.decompose([0.6, 0.4, 0.8, 0.1])
         parsed = json.loads(r.to_json())
@@ -453,7 +460,7 @@ class TestMetaDecompositionMutationKilling:
             intercept=0.0, logit=1.0, proba_suspect=0.73, label="SUSPECT",
         )
         top = d.top_drivers(2)
-        zero_driver = [t for t in top if t["contribution"] == 0.0][0]
+        zero_driver = next(t for t in top if t["contribution"] == 0.0)
         assert zero_driver["direction"] == "FIABLE"  # 0 > 0 is False → FIABLE
 
     # --- to_plotly_bar tests (kill mutants on the visualization) ---
@@ -578,8 +585,9 @@ class TestMetaDecompositionMutationKilling:
 
     def test_to_json_top_drivers_uses_5(self):
         """to_json calls top_drivers(5), verify the count."""
-        from explainability.meta_decomposition import MetaLearnerDecomposer
         import json
+
+        from explainability.meta_decomposition import MetaLearnerDecomposer
         d = MetaLearnerDecomposer({"meta_model": _MockLogReg([1] * 7, 0)})
         r = d.decompose([1.0] * 7)
         parsed = json.loads(r.to_json())

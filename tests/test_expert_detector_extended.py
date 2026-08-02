@@ -6,23 +6,23 @@ from ~37% to significantly higher by testing uncovered methods
 with mocks for heavy dependencies.
 """
 
-import sys
 import os
-import pytest
+import sys
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
-from unittest.mock import patch, MagicMock, PropertyMock
-from scipy.sparse import csr_matrix, hstack
+import pytest
+from scipy.sparse import csr_matrix
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from pipeline.expert_detector import (
-    ExpertFakeNewsDetector,
-    LinguisticFeatureExtractor,
     DatasetCleaner,
-    LanguageRouter,
     EmotionFeatureExtractor,
+    ExpertFakeNewsDetector,
+    LanguageRouter,
+    LinguisticFeatureExtractor,
 )
-
 
 # ================================================================
 #  Fixtures
@@ -249,7 +249,7 @@ class TestSaveLoad:
         trained_detector.model_dir = str(tmp_path / "models")
         trained_detector.training_metrics = {'cv_f1_mean': 0.95}
 
-        with patch('pipeline.expert_detector.joblib.dump') as mock_dump:
+        with patch('pipeline.detector.joblib.dump') as mock_dump:
             trained_detector.save(suffix='test')
 
         assert mock_dump.call_count == 3
@@ -267,7 +267,7 @@ class TestSaveLoad:
         d.vectorizer = "fake_vec"
         d.training_metrics = {}
 
-        with patch('pipeline.expert_detector.joblib.dump'):
+        with patch('pipeline.detector.joblib.dump'):
             d.save(suffix='test')
 
         assert os.path.isdir(d.model_dir)
@@ -280,8 +280,8 @@ class TestSaveLoad:
         os.makedirs(model_dir, exist_ok=True)
 
         # Use real picklable objects instead of MagicMock
-        from sklearn.linear_model import LogisticRegression
         from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.linear_model import LogisticRegression
 
         real_model = LogisticRegression()
         real_vectorizer = TfidfVectorizer()
@@ -305,8 +305,8 @@ class TestSaveLoad:
     def test_load_without_metrics_file(self, tmp_path):
         """Load works even if metrics file is missing."""
         import joblib
-        from sklearn.linear_model import LogisticRegression
         from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.linear_model import LogisticRegression
 
         model_dir = str(tmp_path / "models")
         os.makedirs(model_dir, exist_ok=True)

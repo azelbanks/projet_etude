@@ -1,16 +1,18 @@
-import os
-import sys
-import re
-import json
-import time
 import datetime
-import random
 import hashlib
+import json
 import logging
+import os
+import random
+import re
+import sys
+import time
 from pathlib import Path
+
 from atproto import Client
-from pymongo import MongoClient, UpdateOne
 from dotenv import load_dotenv
+from pymongo import MongoClient, UpdateOne
+
 from src.collection.pipeline_monitor import PipelineMonitor
 
 # ---------------------------------------------------------------------------
@@ -64,7 +66,7 @@ def _load_search_config():
     """Charge la config de recherche depuis config/search_config.json ou fallback."""
     if _CONFIG_PATH.exists():
         try:
-            with open(_CONFIG_PATH, 'r', encoding='utf-8') as f:
+            with open(_CONFIG_PATH, encoding='utf-8') as f:
                 cfg = json.load(f)
             logger.info('Search config loaded from %s (%d FR, %d EN terms)',
                         _CONFIG_PATH, len(cfg.get('fr', [])), len(cfg.get('en', [])))
@@ -94,7 +96,7 @@ def load_excluded_handles():
     path = os.path.abspath(_EXCLUDED_HANDLES_FILE)
     if not os.path.exists(path):
         return set()
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, encoding='utf-8') as f:
         return {line.strip() for line in f if line.strip()}
 
 EXCLUDED_HANDLES = load_excluded_handles()
@@ -161,7 +163,7 @@ def detect_language_hint(text: str) -> str:
 
     # Methode principale : langdetect (probabiliste, fiable)
     try:
-        from langdetect import detect, DetectorFactory
+        from langdetect import DetectorFactory, detect
         DetectorFactory.seed = 0
         lang = detect(text_without_urls[:500])
         if lang == 'fr':
@@ -222,12 +224,11 @@ def extract_metadata(post: object) -> dict:
     # 1. Détection des Images
     has_image = False
     image_url = None
-    if hasattr(post, 'embed') and post.embed:
-        if hasattr(post.embed, 'images'):
-            has_image = True
-            # On prend la première image (fullsize)
-            if len(post.embed.images) > 0:
-                image_url = post.embed.images[0].fullsize
+    if hasattr(post, 'embed') and post.embed and hasattr(post.embed, 'images'):
+        has_image = True
+        # On prend la première image (fullsize)
+        if len(post.embed.images) > 0:
+            image_url = post.embed.images[0].fullsize
     
     # 2. Gestion des Langues déclarées
     langs = getattr(post.record, 'langs', [])
@@ -412,6 +413,7 @@ def _load_inference_models():
         return True
 
     import pickle as _pickle
+
     import torch
 
     # S'assurer que src/ est dans le path pour importer pipeline.*
@@ -448,7 +450,7 @@ def _load_inference_models():
         _emotion_model.eval()
 
         # V5 detector
-        from pipeline.expert_detector import ExpertFakeNewsDetector, EmotionFeatureExtractor
+        from pipeline.expert_detector import EmotionFeatureExtractor, ExpertFakeNewsDetector
         _detector = ExpertFakeNewsDetector(model_dir=model_dir, use_emotions=True)
         _detector.load(suffix='expert_v5')
         _emo_extractor = EmotionFeatureExtractor(model_dir=model_dir)

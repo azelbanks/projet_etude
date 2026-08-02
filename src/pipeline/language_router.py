@@ -9,12 +9,13 @@ Auteur : Niamato Consulting (pour Thumalien)
 """
 
 import logging
-from typing import Optional
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 try:
-    from langdetect import detect, DetectorFactory
+    from langdetect import DetectorFactory, detect
     DetectorFactory.seed = 0
     LANGDETECT_AVAILABLE = True
 except ImportError:

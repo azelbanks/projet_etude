@@ -24,8 +24,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Optional, Sequence
 
 import numpy as np
 
@@ -289,5 +289,5 @@ class GlobalShapExplainer:
     # ------------------------------------------------------------------
 
     @property
-    def shap_values(self) -> Optional[np.ndarray]:
+    def shap_values(self) -> np.ndarray | None:
         return self._shap_values

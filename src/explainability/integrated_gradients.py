@@ -21,11 +21,11 @@ et sur RoBERTa (en chargeant un checkpoint compatible).
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 import numpy as np
 
@@ -129,10 +129,8 @@ class IGExplainer:
 
         # Forcer eager attention pour IG : SDPA empêche les gradients
         # de s'écouler proprement (transformers >= 4.40).
-        try:
+        with contextlib.suppress(Exception):
             self.clf.base_model.config._attn_implementation = "eager"
-        except Exception:
-            pass
 
         # Détection MPS — on déplace le modèle sur CPU si demandé
         import torch
@@ -223,8 +221,8 @@ class IGExplainer:
     def explain(
         self,
         text: str,
-        tag: Optional[str] = None,
-        target_class: Optional[int] = None,
+        tag: str | None = None,
+        target_class: int | None = None,
     ) -> IGResult:
         """
         Attribue la prédiction par token via Layer IG.
@@ -347,7 +345,7 @@ class IGExplainer:
         )
 
         if tag is None:
-            tag = "{:08x}".format(abs(hash(text)) % (16 ** 8))
+            tag = f"{abs(hash(text)) % (16 ** 8):08x}"
         result.figures["heatmap"] = self._plot(result, tag)
         return result
 

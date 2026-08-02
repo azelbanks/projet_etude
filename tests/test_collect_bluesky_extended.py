@@ -1,14 +1,18 @@
 """Tests etendus pour collect_bluesky — fonctions utilitaires + mocks."""
 
-import sys
 import os
+import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from collection.collect_bluesky import (
-    validate_text, compute_word_count, detect_language_hint,
-    load_excluded_handles, SEARCH_CONFIG,
+    SEARCH_CONFIG,
+    compute_word_count,
+    detect_language_hint,
+    load_excluded_handles,
+    validate_text,
 )
 
 

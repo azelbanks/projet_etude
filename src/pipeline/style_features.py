@@ -171,8 +171,8 @@ class StyleFeatureExtractorV6:
             common_short = {'je', 'tu', 'il', 'on', 'le', 'la', 'de', 'a', 'i', '\u00e0',
                             'y', 'or', 'et', 'en', 'du', 'un', 'au', 'ne', 'se', 'me',
                             'te', 'ce', 'ma', 'sa', 'ta', 'is', 'am', 'an', 'as', 'at',
-                            'be', 'by', 'do', 'go', 'he', 'if', 'in', 'it', 'me', 'my',
-                            'no', 'of', 'on', 'or', 'so', 'to', 'up', 'us', 'we'}
+                            'be', 'by', 'do', 'go', 'he', 'if', 'in', 'it', 'my',
+                            'no', 'of', 'so', 'to', 'up', 'us', 'we'}
             anomalous = sum(1 for w in words_lower if 1 <= len(w) <= 2 and w not in common_short)
             results[i, 27] = anomalous / n_words if n_words > 0 else 0
         return results

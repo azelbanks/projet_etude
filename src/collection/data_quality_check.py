@@ -5,11 +5,12 @@ Usage:
     python3 src/collection/data_quality_check.py
 """
 
+import datetime
 import os
 import sys
-import datetime
-from pymongo import MongoClient
+
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 

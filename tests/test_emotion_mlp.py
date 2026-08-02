@@ -1,13 +1,13 @@
 """Tests pour _EmotionMLP et EmotionFeatureExtractor."""
 
-import sys
 import os
+import sys
+
 import pytest
-import numpy as np
 import torch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-from pipeline.expert_detector import _EmotionMLP, EmotionFeatureExtractor
+from pipeline.expert_detector import EmotionFeatureExtractor, _EmotionMLP
 
 
 class TestEmotionMLP:

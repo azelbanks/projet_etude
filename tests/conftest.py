@@ -1,7 +1,8 @@
-import pytest
-import pandas as pd
 import os
 import sys
+
+import pandas as pd
+import pytest
 
 # Add src to path so pipeline imports work
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

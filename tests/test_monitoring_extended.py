@@ -7,21 +7,19 @@ fetch_recent_posts, main.
 
 import json
 import os
-import tempfile
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pandas as pd
 import pytest
 
 from monitoring.weekly_score_check import (
-    run_scoring,
-    write_report,
+    SAMPLE_SIZE,
+    SUSPECT_RATE_ALERT_THRESHOLD,
     _build_mongo_uri,
     fetch_recent_posts,
     main,
-    SAMPLE_SIZE,
-    SUSPECT_RATE_ALERT_THRESHOLD,
+    run_scoring,
+    write_report,
 )
 
 

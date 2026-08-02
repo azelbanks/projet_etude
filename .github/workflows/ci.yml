@@ -7,29 +7,37 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-type-check:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip
-      - run: pip install ruff mypy
+      # Version epinglee : ruff active de nouvelles regles a chaque release,
+      # une version flottante fait echouer la CI sans changement de code.
+      - run: pip install ruff==0.16.1
       - run: ruff check src/ tests/
       - run: ruff format --check src/ tests/
 
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip
       - run: pip install -r requirements.txt
       - run: pip install pytest pytest-cov
-      - run: pytest tests/ --tb=short -q --co 2>&1 | tail -1
-        name: Collect tests
-      - run: pytest tests/ -x --tb=short -q --ignore=tests/test_benchmark_latence.py --ignore=tests/test_pipeline_integration.py --ignore=tests/test_inference_cycle.py --ignore=tests/test_collection_cycle.py
-        name: Run unit tests
+      # pipefail obligatoire : sans lui le `| tail` masque l'echec de collecte.
+      - name: Collect tests
+        run: set -o pipefail && pytest tests/ --tb=short -q --co 2>&1 | tail -1
+      - name: Run unit tests
+        run: |
+          pytest tests/ -x --tb=short -q \
+            --ignore=tests/test_benchmark_latence.py \
+            --ignore=tests/test_pipeline_integration.py \
+            --ignore=tests/test_inference_cycle.py \
+            --ignore=tests/test_collection_cycle.py

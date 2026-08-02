@@ -9,11 +9,11 @@ sensationalism vocabulary, and readability metrics.
 Auteur : Niamato Consulting (pour Thumalien)
 """
 
-import re
 import logging
+import re
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 

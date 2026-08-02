@@ -7,6 +7,7 @@ skipped when the model files are not present on disk.
 """
 
 import os
+
 import numpy as np
 import pandas as pd
 import pytest

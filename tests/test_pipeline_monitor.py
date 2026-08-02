@@ -1,9 +1,9 @@
 """Tests pour PipelineMonitor — monitoring du pipeline de collecte."""
 
-import sys
-import os
 import json
-import tempfile
+import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -50,7 +50,7 @@ class TestPipelineMonitorCycle:
         monitor.record_keyword("test", "en", added=1)
         monitor.end_cycle()
         assert os.path.exists(PipelineMonitor.METRICS_FILE)
-        with open(PipelineMonitor.METRICS_FILE, 'r') as f:
+        with open(PipelineMonitor.METRICS_FILE) as f:
             line = f.readline()
             data = json.loads(line)
             assert data['posts_new'] == 1
@@ -60,8 +60,8 @@ class TestPipelineMonitorCycle:
             monitor.start_cycle()
             monitor.record_keyword(f"kw{i}", "en", added=i + 1)
             monitor.end_cycle()
-        with open(PipelineMonitor.METRICS_FILE, 'r') as f:
-            lines = [l for l in f if l.strip()]
+        with open(PipelineMonitor.METRICS_FILE) as f:
+            lines = [line for line in f if line.strip()]
         assert len(lines) == 3
 
     def test_reset_between_cycles(self, monitor):

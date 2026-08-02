@@ -31,8 +31,8 @@ gère le masquage en espace tokens plutôt que features tabulaires.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional, Sequence
 
 import numpy as np
 
@@ -43,9 +43,9 @@ class FaithfulnessResult:
 
     n_samples: int
     n_features: int
-    k_values: List[int]  # nombre de features masquées à chaque pas
-    proba_curve_mean: List[float]  # P(classe) moyenne après k masquages
-    proba_curve_std: List[float]
+    k_values: list[int]  # nombre de features masquées à chaque pas
+    proba_curve_mean: list[float]  # P(classe) moyenne après k masquages
+    proba_curve_std: list[float]
     aopc: float
     comprehensiveness_at_k: dict  # k -> mean delta
     sufficiency_at_k: dict
@@ -108,7 +108,7 @@ class FaithfulnessEvaluator:
         self,
         X: np.ndarray,
         attributions: np.ndarray,
-        max_k: Optional[int] = None,
+        max_k: int | None = None,
         mask_value: float | np.ndarray = 0.0,
         comprehensiveness_ks: Sequence[int] = (1, 3, 5, 10),
     ) -> FaithfulnessResult:
@@ -229,6 +229,7 @@ class FaithfulnessEvaluator:
 
     def _plot_curve(self, result: FaithfulnessResult) -> str:
         import os
+
         import matplotlib.pyplot as plt
 
         ks = np.asarray(result.k_values)

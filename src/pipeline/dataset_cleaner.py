@@ -8,12 +8,11 @@ Gestion multi-sources : Kaggle, FakeNewsNet, CONSTRAINT, CredibilityCorpus.
 Auteur : Niamato Consulting (pour Thumalien)
 """
 
-import re
-import os
 import logging
-import numpy as np
+import os
+import re
+
 import pandas as pd
-from typing import Dict, Optional, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -127,16 +126,16 @@ class DatasetCleaner:
         cls,
         fake_path: str,
         true_path: str,
-        french_path: Optional[str] = None,
-        kaggle_fr_dir: Optional[str] = None,
-        fakenewsnet_dir: Optional[str] = None,
-        constraint_dir: Optional[str] = None,
-        credibility_dir: Optional[str] = None,
+        french_path: str | None = None,
+        kaggle_fr_dir: str | None = None,
+        fakenewsnet_dir: str | None = None,
+        constraint_dir: str | None = None,
+        credibility_dir: str | None = None,
         remove_short: int = 20,
         social_remove_short: int = 5,
         french_oversample: int = 3,
         social_oversample: int = 2,
-        en_subsample: Optional[int] = None,
+        en_subsample: int | None = None,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -337,7 +336,7 @@ class DatasetCleaner:
         return df_short
 
     @classmethod
-    def audit_reuters_leakage(cls, df_true: pd.DataFrame) -> Dict:
+    def audit_reuters_leakage(cls, df_true: pd.DataFrame) -> dict:
         """
         Quantifie le biais Reuters dans le dataset True.csv.
 

@@ -26,7 +26,6 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -38,16 +37,16 @@ class AttentionResult:
     """Résultat d'une analyse attention pour un texte."""
 
     text: str
-    tokens: List[str]
+    tokens: list[str]
     # cls_attention[layer][head][token] -> attention de [CLS] vers `token`
-    cls_attention_per_head: List[List[List[float]]]
-    cls_attention_avg_heads: List[List[float]]  # [layer][token]
-    cls_attention_last_layer: List[float]  # par token, dernière couche, moyenne têtes
+    cls_attention_per_head: list[list[list[float]]]
+    cls_attention_avg_heads: list[list[float]]  # [layer][token]
+    cls_attention_last_layer: list[float]  # par token, dernière couche, moyenne têtes
     prediction_label: str
     prediction_proba_suspect: float
     prediction_proba_fiable: float
-    ground_truth: Optional[str] = None
-    error_type: Optional[str] = None  # TP / FP / FN / TN
+    ground_truth: str | None = None
+    error_type: str | None = None  # TP / FP / FN / TN
     figures: dict = field(default_factory=dict)
 
     def to_json(self) -> str:
@@ -104,7 +103,7 @@ class CamembertAttentionExplainer:
     #  Extraction des attention weights
     # ------------------------------------------------------------------
 
-    def _forward_with_attentions(self, text: str) -> Tuple:
+    def _forward_with_attentions(self, text: str) -> tuple:
         """Forward pass qui renvoie (tokens, attentions, logits, probas)."""
         import torch
 
@@ -146,8 +145,8 @@ class CamembertAttentionExplainer:
     def explain(
         self,
         text: str,
-        ground_truth: Optional[str] = None,
-        tag: Optional[str] = None,
+        ground_truth: str | None = None,
+        tag: str | None = None,
     ) -> AttentionResult:
         """
         Calcule l'attention pour un texte et produit la figure heatmap.
@@ -189,7 +188,7 @@ class CamembertAttentionExplainer:
         )
 
         if tag is None:
-            tag = "{:08x}".format(abs(hash(text)) % (16 ** 8))
+            tag = f"{abs(hash(text)) % (16 ** 8):08x}"
 
         result.figures["heatmap"] = self._plot_heatmap(result, tag)
         result.figures["per_layer"] = self._plot_per_layer_heatmap(result, tag)
@@ -200,7 +199,7 @@ class CamembertAttentionExplainer:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _error_type(pred: str, gt: Optional[str]) -> Optional[str]:
+    def _error_type(pred: str, gt: str | None) -> str | None:
         if gt is None:
             return None
         gt = gt.upper()
@@ -241,10 +240,7 @@ class CamembertAttentionExplainer:
         tokens_kept = [tokens[i] for i in keep_idx]
 
         # Normaliser pour la viz (max=1 sur la portion gardée)
-        if attn_kept.max() > 0:
-            attn_norm = attn_kept / attn_kept.max()
-        else:
-            attn_norm = attn_kept
+        attn_norm = attn_kept / attn_kept.max() if attn_kept.max() > 0 else attn_kept
 
         fig, ax = plt.subplots(figsize=(max(8, len(tokens_kept) * 0.4), 2.4))
         im = ax.imshow(
@@ -259,7 +255,7 @@ class CamembertAttentionExplainer:
         ax.set_yticks([])
 
         title_parts = [
-            f"Attention [CLS] → tokens (dernière couche, moyenne têtes)",
+            "Attention [CLS] → tokens (dernière couche, moyenne têtes)",
             f"Prédiction: {result.prediction_label} "
             f"(P_suspect={result.prediction_proba_suspect:.2f})",
         ]
@@ -325,11 +321,11 @@ class CamembertAttentionExplainer:
         tokens = [self._clean_token(t) for t in result.tokens]
 
         spans = []
-        for tok, a in zip(tokens, attn):
+        for tok, a in zip(tokens, attn, strict=False):
             if tok in {"<s>", "</s>", "[CLS]", "[SEP]", "<pad>"}:
                 continue
             # Rouge plus saturé = plus d'attention
-            r = int(255)
+            r = 255
             g = int(255 * (1 - a))
             b = int(255 * (1 - a))
             spans.append(

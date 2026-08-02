@@ -22,12 +22,11 @@ import logging
 import os
 import sys
 import time
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 try:
-    from confluent_kafka import Consumer, KafkaError, KafkaException
+    from confluent_kafka import Consumer, KafkaError
     KAFKA_AVAILABLE = True
 except ImportError:
     KAFKA_AVAILABLE = False
@@ -59,11 +58,11 @@ class ThumaCheckKafkaConsumer:
     def __init__(
         self,
         topic: str = 'thumacheck-texts',
-        output_topic: Optional[str] = 'thumacheck-results',
+        output_topic: str | None = 'thumacheck-results',
         bootstrap_servers: str = 'localhost:9092',
         group_id: str = 'thumacheck-consumer-group',
         batch_size: int = 10,
-        model_dir: Optional[str] = None,
+        model_dir: str | None = None,
     ):
         if not KAFKA_AVAILABLE:
             raise RuntimeError(
@@ -108,7 +107,7 @@ class ThumaCheckKafkaConsumer:
                 detector.load(suffix=suffix)
                 logger.info("Kafka consumer: modele charge (%s)", suffix)
                 return detector
-        raise RuntimeError("Aucun modele trouve dans %s" % self.model_dir)
+        raise RuntimeError(f"Aucun modele trouve dans {self.model_dir}")
 
     def _init_producer(self):
         """Initialise un producer Kafka pour les resultats (optionnel)."""
@@ -144,7 +143,6 @@ class ThumaCheckKafkaConsumer:
 
     def _consume_loop(self):
         """Boucle de consommation principale."""
-        import pandas as pd
 
         batch_texts = []
         batch_ids = []

@@ -7,11 +7,10 @@ EMOTION_LABELS, CSS constants, helper functions.
 
 import os
 import sys
-import importlib
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
-import pytest
-from unittest.mock import patch, MagicMock, PropertyMock
 
 # ---------------------------------------------------------------------------
 #  Import the actual dashboard module with Streamlit mocked
@@ -194,7 +193,7 @@ class TestPlotlyLayout:
         assert 'paper_bgcolor' in layout
 
     def test_merges_xaxis(self):
-        layout = app._plotly_layout(xaxis=dict(title='Score'))
+        layout = app._plotly_layout(xaxis={'title': 'Score'})
         assert layout['xaxis']['title'] == 'Score'
         assert 'gridcolor' in layout['xaxis']  # default preserved
 

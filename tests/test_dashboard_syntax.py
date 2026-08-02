@@ -8,8 +8,8 @@ their dependencies.
 
 import os
 import py_compile
-import pytest
 
+import pytest
 
 _PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..')
 

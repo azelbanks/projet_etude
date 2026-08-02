@@ -5,11 +5,11 @@ Covers _load_inference_models() and run_inference_cycle() (lines ~300-476)
 with thorough mocking -- no actual file I/O, no model loading, no MongoDB.
 """
 
-import sys
 import os
-import pytest
+import sys
+from unittest.mock import MagicMock, mock_open, patch
+
 import numpy as np
-from unittest.mock import patch, MagicMock, mock_open, call
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
@@ -167,8 +167,8 @@ class TestRunInferenceCycle:
     def test_full_cycle_without_stage1(self, mock_load, mock_model,
                                        mock_detector, mock_le):
         """Full cycle with 2 documents, no Stage1 pipeline."""
-        import torch
         import pandas as pd
+        import torch
 
         mock_load.return_value = True
 
@@ -215,8 +215,8 @@ class TestRunInferenceCycle:
     def test_full_cycle_with_stage1(self, mock_load, mock_model,
                                      mock_detector, mock_le):
         """Full cycle with Stage1 pipeline active."""
-        import torch
         import pandas as pd
+        import torch
 
         mock_load.return_value = True
 
@@ -261,8 +261,8 @@ class TestRunInferenceCycle:
     def test_stage1_factuel_keeps_v5_label(self, mock_load, mock_model,
                                             mock_detector, mock_le):
         """When Stage1 says 'factuel', v9_label equals v5_label (no reclassification)."""
-        import torch
         import pandas as pd
+        import torch
 
         mock_load.return_value = True
         fake_logits = torch.tensor([[0.1, 0.9]])
@@ -331,8 +331,8 @@ class TestRunInferenceCycle:
     def test_text_truncated_to_max_len(self, mock_load, mock_model,
                                         mock_detector, mock_le):
         """Texts longer than _emotion_max_len are truncated."""
-        import torch
         import pandas as pd
+        import torch
 
         mock_load.return_value = True
 
@@ -373,8 +373,8 @@ class TestRunInferenceCycle:
     def test_short_text_padded_to_max_len(self, mock_load, mock_model,
                                            mock_detector, mock_le):
         """Texts shorter than _emotion_max_len are padded."""
-        import torch
         import pandas as pd
+        import torch
 
         mock_load.return_value = True
 
@@ -412,8 +412,8 @@ class TestRunInferenceCycle:
     def test_stage1_exception_handled_gracefully(self, mock_load, mock_model,
                                                    mock_detector, mock_le):
         """If Stage1 predict_proba raises, post_types remain None."""
-        import torch
         import pandas as pd
+        import torch
 
         mock_load.return_value = True
 
@@ -460,8 +460,8 @@ class TestRunInferenceCycle:
                                                           mock_detector,
                                                           mock_le):
         """V9 logic: opinion + v5_label=1 => v9_label reclassified to 0."""
-        import torch
         import pandas as pd
+        import torch
 
         mock_load.return_value = True
 

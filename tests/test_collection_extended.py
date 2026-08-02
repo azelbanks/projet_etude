@@ -3,18 +3,14 @@ Tests etendus pour collection/ — fonctions utilitaires et mocking.
 """
 
 import os
-from unittest.mock import patch, MagicMock
-
-import pandas as pd
-import pytest
+from unittest.mock import MagicMock, patch
 
 from collection.collect_bluesky import (
-    validate_text,
     compute_word_count,
     detect_language_hint,
     extract_metadata,
+    validate_text,
 )
-
 
 # ============================================================
 #  validate_text — returns (bool, str)

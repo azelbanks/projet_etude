@@ -7,9 +7,9 @@ detection, and numeric integrity of the extracted features.
 
 import os
 import sys
+
 import numpy as np
 import pandas as pd
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'dashboard'))
 from app import StyleFeatureExtractorV6

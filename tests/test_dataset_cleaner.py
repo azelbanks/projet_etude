@@ -1,8 +1,8 @@
 """Tests pour DatasetCleaner — nettoyage biais Reuters et préparation datasets."""
 
-import sys
 import os
-import pytest
+import sys
+
 import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

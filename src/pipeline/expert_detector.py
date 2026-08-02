@@ -15,16 +15,16 @@ Auteur : Niamato Consulting (pour Thumalien)
 """
 
 from .dataset_cleaner import DatasetCleaner
-from .linguistic_features import LinguisticFeatureExtractor
+from .detector import ExpertFakeNewsDetector
 from .emotion_classifier import EmotionFeatureExtractor, _EmotionMLP
 from .language_router import LanguageRouter
-from .detector import ExpertFakeNewsDetector
+from .linguistic_features import LinguisticFeatureExtractor
 
 __all__ = [
     "DatasetCleaner",
-    "LinguisticFeatureExtractor",
     "EmotionFeatureExtractor",
-    "_EmotionMLP",
-    "LanguageRouter",
     "ExpertFakeNewsDetector",
+    "LanguageRouter",
+    "LinguisticFeatureExtractor",
+    "_EmotionMLP",
 ]

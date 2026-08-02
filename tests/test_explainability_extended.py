@@ -7,18 +7,16 @@ MetaLearnerDecomposer, FaithfulnessValidator.
 """
 
 import json
-import os
 import tempfile
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 
 from explainability.attention_viz import AttentionResult
 from explainability.integrated_gradients import IGResult
-from explainability.shap_global import GlobalShapResult
 from explainability.meta_decomposition import MetaLearnerDecomposer
-
+from explainability.shap_global import GlobalShapResult
 
 # ============================================================
 #  Dataclass serialization
@@ -143,7 +141,6 @@ class TestSHAPGlobalExplainerMocked:
     def test_init_stores_params(self):
         """Init should store model and feature_names."""
         from explainability.shap_global import GlobalShapExplainer
-        import tempfile
         explainer = GlobalShapExplainer(
             model=MagicMock(),
             feature_names=['a', 'b', 'c'],
@@ -155,7 +152,6 @@ class TestSHAPGlobalExplainerMocked:
     def test_explain_feature_mismatch_raises(self):
         """Should raise ValueError when X columns != feature_names."""
         from explainability.shap_global import GlobalShapExplainer
-        import tempfile
         explainer = GlobalShapExplainer(
             model=MagicMock(),
             feature_names=['a', 'b'],

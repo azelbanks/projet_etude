@@ -16,9 +16,8 @@ Usage from the dashboard::
         recent = get_recent_posts(collection, limit=50)
 """
 
-import os
 import logging
-from typing import Dict, List, Optional
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,7 @@ def get_mongo_collection(
     mongo_password = os.environ.get("MONGO_PASSWORD", "")
 
     # Build candidate URIs
-    candidates: List[str] = []
+    candidates: list[str] = []
     if mongo_uri_env:
         candidates.append(mongo_uri_env)
 
@@ -86,7 +85,7 @@ def get_mongo_collection(
 #  get_overview_stats  -- single $facet aggregation
 # ---------------------------------------------------------------------------
 
-def get_overview_stats(collection) -> Dict:
+def get_overview_stats(collection) -> dict:
     """
     Return a dict of overview statistics computed entirely inside MongoDB.
 
@@ -207,7 +206,7 @@ def get_overview_stats(collection) -> Dict:
 #  get_recent_posts
 # ---------------------------------------------------------------------------
 
-def get_recent_posts(collection, limit: int = 50) -> List[Dict]:
+def get_recent_posts(collection, limit: int = 50) -> list[dict]:
     """
     Return the *limit* most recent posts as a list of dicts.
 
@@ -246,7 +245,7 @@ def get_recent_posts(collection, limit: int = 50) -> List[Dict]:
 #  get_score_distribution  -- histogram of credibility scores
 # ---------------------------------------------------------------------------
 
-def get_score_distribution(collection, bins: int = 20) -> List[Dict]:
+def get_score_distribution(collection, bins: int = 20) -> list[dict]:
     """
     Return histogram data of credibility scores computed inside MongoDB.
 
@@ -282,7 +281,7 @@ def get_score_distribution(collection, bins: int = 20) -> List[Dict]:
         logger.error("MongoDB score distribution aggregation failed: %s", exc)
         return []
 
-    result: List[Dict] = []
+    result: list[dict] = []
     for doc in raw:
         bucket_id = doc["_id"]
         if bucket_id == "_other":

@@ -4,9 +4,9 @@ pipeline_monitor.py — Lightweight monitoring for the Bluesky collection pipeli
 Writes one JSON line per collection cycle to logs/collection_metrics.jsonl.
 """
 
+import datetime
 import json
 import os
-import datetime
 
 
 class PipelineMonitor:
@@ -115,7 +115,7 @@ class PipelineMonitor:
             return []
         lines = []
         try:
-            with open(cls.METRICS_FILE, "r", encoding="utf-8") as f:
+            with open(cls.METRICS_FILE, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line:

@@ -6,25 +6,26 @@ All heavy dependencies (transformers models, torch downloads) are mocked
 so that tests run without GPU or network access.
 """
 
-import sys
 import os
-import pytest
+import sys
+
 import numpy as np
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 torch = pytest.importorskip("torch", reason="PyTorch required")
 
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import MagicMock, patch
+
 import torch.nn as nn
 
 from pipeline.camembert_classifier import (
-    CamemBERTHead,
-    CamemBERTClassifier,
-    TextDataset,
     TRANSFORMERS_AVAILABLE,
+    CamemBERTClassifier,
+    CamemBERTHead,
+    TextDataset,
 )
-
 
 # -----------------------------------------------------------------------
 #  Helpers

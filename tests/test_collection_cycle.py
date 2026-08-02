@@ -1,10 +1,8 @@
 """Tests pour run_collection_cycle et extract_metadata avec mocks."""
 
-import sys
 import os
-import pytest
-import datetime
-from unittest.mock import MagicMock, patch, PropertyMock
+import sys
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from collection.collect_bluesky import extract_metadata, run_collection_cycle

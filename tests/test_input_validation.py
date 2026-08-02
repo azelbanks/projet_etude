@@ -5,16 +5,15 @@ Verifie que les textes utilisateur sont correctement valides et sanitizes
 avant d'etre traites par le pipeline ou affiches dans le dashboard.
 """
 
+import html
 import os
 import sys
-import html
 
-import pytest
 import pandas as pd
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from collection.collect_bluesky import validate_text
-
 
 # -----------------------------------------------------------------------
 #  Tests de securite — injection et XSS
@@ -59,7 +58,7 @@ class TestSecurityValidation:
         ]
         for text in cases:
             ok, result = validate_text(text)
-            assert isinstance(ok, bool), f"Failed on: {repr(text)}"
+            assert isinstance(ok, bool), f"Failed on: {text!r}"
 
 
 # -----------------------------------------------------------------------

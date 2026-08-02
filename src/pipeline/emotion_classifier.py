@@ -11,18 +11,18 @@ keeping total pipeline under 1.5ms for real-time requirements.
 Auteur : Niamato Consulting (pour Thumalien)
 """
 
-import os
 import logging
+import os
+import pickle
+
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, List
 
 logger = logging.getLogger(__name__)
 
 try:
-    from codecarbon import EmissionsTracker
+    from codecarbon import EmissionsTracker  # noqa: F401  (sonde de disponibilite)
     CODECARBON_AVAILABLE = True
 except ImportError:
     CODECARBON_AVAILABLE = False
@@ -116,7 +116,7 @@ class EmotionFeatureExtractor:
         logger.info("Modèle émotions chargé : %s", pt_path)
         return True
 
-    def get_emotion_features(self, texts: List[str]) -> np.ndarray:
+    def get_emotion_features(self, texts: list[str]) -> np.ndarray:
         """
         Retourne les 7 probabilités d'émotion pour chaque texte.
 
@@ -147,7 +147,7 @@ class EmotionFeatureExtractor:
 
         return probas
 
-    def explain_emotions(self, texts: List[str], n_background: int = 50) -> Optional[Dict]:
+    def explain_emotions(self, texts: list[str], n_background: int = 50) -> dict | None:
         """
         SHAP explainability pour le modele emotion.
 

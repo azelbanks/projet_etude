@@ -11,9 +11,8 @@ Usage:
     Use isinstance checks or Protocol-based type hints.
 """
 
-from typing import Dict, List, Optional, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-import numpy as np
 import pandas as pd
 
 
@@ -29,7 +28,7 @@ class ClassifierProtocol(Protocol):
         """Load pre-trained model from disk."""
         ...
 
-    def predict(self, texts: List[str]) -> pd.DataFrame:
+    def predict(self, texts: list[str]) -> pd.DataFrame:
         """Predict labels and scores for a list of texts.
 
         Returns a DataFrame with at least columns:
@@ -47,7 +46,7 @@ class ClassifierProtocol(Protocol):
 class ExplainableModel(Protocol):
     """Interface for models that support explainability."""
 
-    def explain_prediction(self, text: str, top_n: int = 10) -> Dict:
+    def explain_prediction(self, text: str, top_n: int = 10) -> dict:
         """Return word-level attribution for a single text.
 
         Returns a dict with at least:

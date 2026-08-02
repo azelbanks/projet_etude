@@ -1,9 +1,8 @@
 """Tests pour setup_indexes.py — creation d'index MongoDB."""
 
-import sys
 import os
-import pytest
-from unittest.mock import MagicMock, patch, call
+import sys
+from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from collection.setup_indexes import setup_indexes, setup_schema_validation

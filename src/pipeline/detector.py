@@ -13,41 +13,36 @@ Main detector class orchestrating the full V9 cascade pipeline:
 Auteur : Niamato Consulting (pour Thumalien)
 """
 
-import os
 import logging
-import pickle
+import os
+
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
-from typing import Dict, Optional, List, Tuple
-
-import torch
-
+from scipy.sparse import csr_matrix, hstack
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import VotingClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import LinearSVC
-from sklearn.ensemble import VotingClassifier
-from sklearn.model_selection import (
-    StratifiedKFold,
-    cross_validate,
-    train_test_split,
-)
 from sklearn.metrics import (
+    accuracy_score,
     classification_report,
     confusion_matrix,
-    accuracy_score,
     f1_score,
     precision_score,
     recall_score,
     roc_auc_score,
 )
-from sklearn.calibration import CalibratedClassifierCV
-from scipy.sparse import hstack
+from sklearn.model_selection import (
+    StratifiedKFold,
+    cross_validate,
+)
+from sklearn.svm import LinearSVC
 
 from .dataset_cleaner import DatasetCleaner
-from .linguistic_features import LinguisticFeatureExtractor
-from .emotion_classifier import EmotionFeatureExtractor, _EmotionMLP
+from .emotion_classifier import EmotionFeatureExtractor
 from .language_router import LanguageRouter
+from .linguistic_features import LinguisticFeatureExtractor
 
 try:
     from codecarbon import EmissionsTracker
@@ -56,7 +51,7 @@ except ImportError:
     CODECARBON_AVAILABLE = False
 
 try:
-    from langdetect import detect, DetectorFactory
+    from langdetect import DetectorFactory
     DetectorFactory.seed = 0
     LANGDETECT_AVAILABLE = True
 except ImportError:
@@ -91,15 +86,15 @@ class ExpertFakeNewsDetector:
 
     def __init__(self, model_dir: str = '../models', use_emotions: bool = False,  # -> None
                  threshold: float = 0.44,
-                 threshold_fr: Optional[float] = None,
-                 threshold_en: Optional[float] = None):
+                 threshold_fr: float | None = None,
+                 threshold_en: float | None = None):
         self.model_dir = model_dir
-        self.vectorizer: Optional[TfidfVectorizer] = None
+        self.vectorizer: TfidfVectorizer | None = None
         self.model = None
         self.is_trained = False
-        self.training_metrics: Dict = {}
+        self.training_metrics: dict = {}
         self.use_emotions = use_emotions
-        self.emotion_extractor: Optional[EmotionFeatureExtractor] = None
+        self.emotion_extractor: EmotionFeatureExtractor | None = None
         self.threshold = threshold
         # Per-language thresholds (P3 — seuils adaptatifs par langue)
         # When set, predict() uses these instead of the single threshold
@@ -140,9 +135,9 @@ class ExpertFakeNewsDetector:
     def _build_features(
         self,
         texts_clean: np.ndarray,
-        texts_original: Optional[np.ndarray] = None,
+        texts_original: np.ndarray | None = None,
         fit: bool = False,
-    ) -> "scipy.sparse.csr_matrix":
+    ) -> csr_matrix:
         """
         Construit la matrice de features combinée.
 
@@ -183,8 +178,8 @@ class ExpertFakeNewsDetector:
         model_type: str = 'logreg',
         n_folds: int = 5,
         track_emissions: bool = True,
-        emissions_dir: Optional[str] = None,
-    ) -> Dict:
+        emissions_dir: str | None = None,
+    ) -> dict:
         """
         Entraîne avec validation croisée stratifiée.
 
@@ -233,7 +228,7 @@ class ExpertFakeNewsDetector:
 
             # TF-IDF optimisé (paramètres adaptés en mode bilingue)
             max_features = 30000 if bilingual else 20000
-            min_df = 3 if bilingual else 3
+            min_df = 3
             # En mode bilingue, conserver les accents FR (sémantiques : "ou"/"où", "a"/"à")
             strip = None if bilingual else 'unicode'
 
@@ -403,7 +398,7 @@ class ExpertFakeNewsDetector:
 
     # ---- Évaluation ----
 
-    def evaluate_holdout(self, df: pd.DataFrame) -> Dict:
+    def evaluate_holdout(self, df: pd.DataFrame) -> dict:
         """
         Évaluation complète sur un jeu de test holdout.
 
@@ -661,7 +656,7 @@ class ExpertFakeNewsDetector:
 
     # ---- Explainability ----
 
-    def explain_prediction(self, text: str, top_n: int = 10) -> Dict:
+    def explain_prediction(self, text: str, top_n: int = 10) -> dict:
         """
         Explication per-instance basée sur les coefficients LogReg.
 
@@ -873,7 +868,7 @@ class ExpertFakeNewsDetector:
 
     # ---- Health check ----
 
-    def health_check(self) -> Dict:
+    def health_check(self) -> dict:
         """
         Run reference test cases through predict() and verify scores
         fall within expected ranges.
