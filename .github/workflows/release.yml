@@ -1,0 +1,115 @@
+name: release
+
+# Construit et publie l'image de l'API sur GitHub Container Registry.
+#
+# - push sur main  -> tags `main` et `sha-<court>` (deploiement continu)
+# - tag v*         -> tags semver (`v1.2.3`, `1.2`, `1`) + `latest`
+#
+# L'image porte GIT_SHA et BUILD_TIME, exposes par l'endpoint /version : c'est
+# ce qui permet de verifier qu'un deploiement ou un rollback a bien pris effet.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Derive image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            BUILD_TIME=${{ github.event.repository.updated_at }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Verifie que l'image publiee demarre et se declare prete. Sans cette etape,
+  # une image cassee serait publiee sans que personne ne s'en apercoive avant
+  # le deploiement.
+  smoke-test:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start the published image
+        run: |
+          docker run -d --name thumacheck-api -p 8000:8000 \
+            -e GIT_SHA=${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-$(echo ${{ github.sha }} | cut -c1-7) \
+            uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+
+      - name: Wait for /health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/health >/dev/null 2>&1; then
+              echo "API en ligne apres ${i}0s"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::L'API n'a pas repondu sur /health en 300 s"
+          docker logs thumacheck-api
+          exit 1
+
+      - name: Check /version reports the deployed revision
+        run: |
+          set -o pipefail
+          got=$(curl -fsS http://localhost:8000/version | jq -r .git_sha)
+          echo "git_sha rapporte : $got"
+          [ "$got" = "${{ github.sha }}" ] || {
+            echo "::error::/version annonce $got au lieu de ${{ github.sha }}"
+            exit 1
+          }
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker logs thumacheck-api || true

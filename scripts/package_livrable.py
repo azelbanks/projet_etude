@@ -64,8 +64,7 @@ def step1_generate_pdfs():
     """Regenere tous les PDF depuis les MD."""
     print("[1/4] Regeneration des PDF...")
     result = subprocess.run(
-        [sys.executable, str(DOCS_DIR / "generate_pdf.py")],
-        capture_output=True, text=True
+        [sys.executable, str(DOCS_DIR / "generate_pdf.py")], capture_output=True, text=True
     )
     if result.returncode != 0:
         print(f"  ERREUR: {result.stderr}")
@@ -83,8 +82,7 @@ def step2_assemble_groupe():
             from PyPDF2 import PdfMerger
         except ImportError:
             print("  pypdf/PyPDF2 non disponible — copie du rapport seul")
-            shutil.copy2(PDF_DIR / "rapport_projet_thumalien.pdf",
-                         OUTPUT_DIR / PDF_GROUPE)
+            shutil.copy2(PDF_DIR / "rapport_projet_thumalien.pdf", OUTPUT_DIR / PDF_GROUPE)
             return
 
     merger = PdfMerger()
@@ -125,7 +123,7 @@ def step4_create_zip():
     """Cree le ZIP final."""
     print(f"[4/4] Creation du ZIP -> {ZIP_NAME}.zip")
     zip_path = ROOT / f"{ZIP_NAME}"
-    shutil.make_archive(str(zip_path), 'zip', str(OUTPUT_DIR))
+    shutil.make_archive(str(zip_path), "zip", str(OUTPUT_DIR))
     final_size = (ROOT / f"{ZIP_NAME}.zip").stat().st_size / (1024 * 1024)
     print(f"  OK — {ZIP_NAME}.zip ({final_size:.1f} MB)")
 
@@ -143,7 +141,7 @@ def main():
     step4_create_zip()
 
     print(f"\n{'=' * 60}")
-    print(f"Contenu du ZIP :")
+    print("Contenu du ZIP :")
     for f in sorted(OUTPUT_DIR.iterdir()):
         size_kb = f.stat().st_size / 1024
         print(f"  {f.name} ({size_kb:.0f} KB)")

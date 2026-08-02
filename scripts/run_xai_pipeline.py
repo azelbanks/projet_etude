@@ -59,6 +59,7 @@ log = logging.getLogger("run_xai")
 #  Helpers généraux
 # =====================================================================
 
+
 def load_gold_set() -> pd.DataFrame:
     """
     Charge le gold test set annoté. Colonnes normalisées :
@@ -121,13 +122,14 @@ def select_examples(df: pd.DataFrame, predictions: np.ndarray, k: int = 1) -> di
 #  Feature engineering : V6 (style + emotions) au vol
 # =====================================================================
 
+
 def build_v6_features(texts: pd.Series) -> tuple[np.ndarray, list]:
     """
     Construit la matrice X (n, 35) — 28 style + 7 émotions — comme dans le
     notebook 24, et renvoie aussi la liste des 35 noms de features.
     """
-    from pipeline.style_features import StyleFeatureExtractorV6
     from pipeline.expert_detector import EmotionFeatureExtractor
+    from pipeline.style_features import StyleFeatureExtractorV6
 
     X_style = StyleFeatureExtractorV6.extract(texts)
     feat_names = list(StyleFeatureExtractorV6.FEATURE_NAMES)
@@ -141,8 +143,13 @@ def build_v6_features(texts: pd.Series) -> tuple[np.ndarray, list]:
         X = np.hstack([X_style, X_emo])
         # Noms d'émotions cohérents avec le dashboard
         emo_names = [
-            "emo_anger", "emo_disgust", "emo_joy", "emo_neutral",
-            "emo_fear", "emo_surprise", "emo_sadness",
+            "emo_anger",
+            "emo_disgust",
+            "emo_joy",
+            "emo_neutral",
+            "emo_fear",
+            "emo_surprise",
+            "emo_sadness",
         ]
         feat_names += emo_names[: X_emo.shape[1]]
     else:
@@ -176,9 +183,11 @@ def compute_v5_v6_scores(
 #  Étape 1 : SHAP global sur V6
 # =====================================================================
 
+
 def step_shap_global(gold_df: pd.DataFrame) -> dict:
     log.info("[1/6] SHAP global sur V6")
     import joblib
+
     from explainability.shap_global import GlobalShapExplainer
 
     v6 = joblib.load(PROJ_ROOT / "models" / "model_style_v6.joblib")
@@ -207,10 +216,12 @@ def step_shap_global(gold_df: pd.DataFrame) -> dict:
 #  Étape 2 : Faithfulness test
 # =====================================================================
 
+
 def step_faithfulness(gold_df: pd.DataFrame) -> dict:
     log.info("[2/6] Faithfulness test sur V6")
     import joblib
     import shap
+
     from explainability.faithfulness import FaithfulnessEvaluator
 
     v6 = joblib.load(PROJ_ROOT / "models" / "model_style_v6.joblib")
@@ -241,13 +252,16 @@ def step_faithfulness(gold_df: pd.DataFrame) -> dict:
         output_dir=str(OUTPUT_DIR),
     )
     cmp = ev.compare_with_random(
-        X_in, sv,
+        X_in,
+        sv,
         n_random_seeds=5,
         max_k=min(20, X_in.shape[1]),
     )
     log.info(
         "  AOPC attribution=%.4f | random=%.4f (uplift=%+.4f)",
-        cmp["aopc_attribution"], cmp["aopc_random_mean"], cmp["aopc_uplift"],
+        cmp["aopc_attribution"],
+        cmp["aopc_random_mean"],
+        cmp["aopc_uplift"],
     )
     return {
         "aopc_attribution": cmp["aopc_attribution"],
@@ -263,6 +277,7 @@ def step_faithfulness(gold_df: pd.DataFrame) -> dict:
 #  Étape 3 : Décomposition méta-learner V8
 # =====================================================================
 
+
 def step_meta_decomposition(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
     """
     Calcule X_meta au vol pour le gold set, applique V8, décompose 3
@@ -270,6 +285,7 @@ def step_meta_decomposition(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
     """
     log.info("[3/6] Décomposition méta-learner V8")
     import joblib
+
     from explainability.meta_decomposition import MetaLearnerDecomposer
 
     v8 = joblib.load(PROJ_ROOT / "models" / "model_hybrid_v8.joblib")
@@ -299,15 +315,26 @@ def step_meta_decomposition(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
     min_fiable = np.minimum(score_v5, score_cam)
 
     if uses_cam:
-        X_meta = np.column_stack([
-            score_v5, score_v6, score_cam,
-            disagreement_v5_v6, disagreement_v5_cam,
-            interaction_v5_v6, min_fiable,
-        ])
+        X_meta = np.column_stack(
+            [
+                score_v5,
+                score_v6,
+                score_cam,
+                disagreement_v5_v6,
+                disagreement_v5_cam,
+                interaction_v5_v6,
+                min_fiable,
+            ]
+        )
     else:
-        X_meta = np.column_stack([
-            score_v5, score_v6, disagreement_v5_v6, interaction_v5_v6,
-        ])
+        X_meta = np.column_stack(
+            [
+                score_v5,
+                score_v6,
+                disagreement_v5_v6,
+                interaction_v5_v6,
+            ]
+        )
 
     np.save(CACHE_DIR / "X_meta_gold.npy", X_meta)
 
@@ -320,7 +347,7 @@ def step_meta_decomposition(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
         "feature_names": decomposer.feature_names,
         "coef": decomposer.coef.tolist(),
         "intercept": decomposer.intercept,
-        "n_samples": int(len(gold_df)),
+        "n_samples": len(gold_df),
         "samples": [],
     }
     import matplotlib.pyplot as plt
@@ -344,7 +371,7 @@ def step_meta_decomposition(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
             ax.set_xlabel("Contribution β·x au logit (+ = pousse vers SUSPECT)", fontsize=10)
             ax.set_title(
                 f"Décomposition V8 — {err_type} (id={i})\n"
-                f'"{ex["text"][:80]}{"..." if len(ex["text"])>80 else ""}"\n'
+                f'"{ex["text"][:80]}{"..." if len(ex["text"]) > 80 else ""}"\n'
                 f"logit z = {d.logit:+.3f} → P(suspect) = {d.proba_suspect:.3f} → {d.label}",
                 fontsize=10,
             )
@@ -354,20 +381,25 @@ def step_meta_decomposition(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
             plt.savefig(fig_path, dpi=150, bbox_inches="tight")
             plt.close(fig)
 
-            out["samples"].append({
-                "error_type": err_type,
-                "sample_idx": i,
-                "text": ex["text"][:160],
-                "logit": d.logit,
-                "proba_suspect": d.proba_suspect,
-                "label": d.label,
-                "ground_truth": "SUSPECT" if ex["label_int"] == 1 else "FIABLE",
-                "top_drivers": d.top_drivers(5),
-                "figure": str(fig_path),
-            })
+            out["samples"].append(
+                {
+                    "error_type": err_type,
+                    "sample_idx": i,
+                    "text": ex["text"][:160],
+                    "logit": d.logit,
+                    "proba_suspect": d.proba_suspect,
+                    "label": d.label,
+                    "ground_truth": "SUSPECT" if ex["label_int"] == 1 else "FIABLE",
+                    "top_drivers": d.top_drivers(5),
+                    "figure": str(fig_path),
+                }
+            )
             log.info(
                 "  %s id=%d → P=%.3f (%s, vrai=%s)",
-                err_type, i, d.proba_suspect, d.label,
+                err_type,
+                i,
+                d.proba_suspect,
+                d.label,
                 "SUSPECT" if ex["label_int"] == 1 else "FIABLE",
             )
     return out
@@ -376,6 +408,7 @@ def step_meta_decomposition(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
 # =====================================================================
 #  Étape 4 : Attention CamemBERT
 # =====================================================================
+
 
 def _try_load_camembert():
     """Charge CamemBERT en essayant camembert_fr (full) puis camembert_best."""
@@ -403,15 +436,21 @@ def step_attention(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
         return {"skipped": True, "reason": "camembert_not_loaded"}
 
     from explainability.attention_viz import CamembertAttentionExplainer
+
     explainer = CamembertAttentionExplainer(cam_classifier, output_dir=str(OUTPUT_DIR))
 
     # Filtre FR pour CamemBERT (heuristique simple)
     df_fr = gold_df.copy()
     # Non-capturing group (?:...) pour éviter le warning pandas sur les groupes
-    df_fr["language"] = df_fr["text"].str.contains(
-        r"\b(?:le|la|de|des|et|une|sont|avec|pour|dans|que|qui|pas|mais|c'est|n'est)\b",
-        regex=True, case=False,
-    ).map({True: "fr", False: "en"})
+    df_fr["language"] = (
+        df_fr["text"]
+        .str.contains(
+            r"\b(?:le|la|de|des|et|une|sont|avec|pour|dans|que|qui|pas|mais|c'est|n'est)\b",
+            regex=True,
+            case=False,
+        )
+        .map({True: "fr", False: "en"})
+    )
     df_fr = df_fr[df_fr["language"] == "fr"].reset_index(drop=True)
     if df_fr.empty:
         log.warning("  Aucun texte FR dans le gold — skip attention")
@@ -437,7 +476,10 @@ def step_attention(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
             }
             log.info(
                 "  %s id=%d → %s (P=%.2f)",
-                err_type, ex["id"], res.prediction_label, res.prediction_proba_suspect,
+                err_type,
+                ex["id"],
+                res.prediction_label,
+                res.prediction_proba_suspect,
             )
     return out
 
@@ -445,6 +487,7 @@ def step_attention(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
 # =====================================================================
 #  Étape 5 : Layer Integrated Gradients
 # =====================================================================
+
 
 def step_integrated_gradients(gold_df: pd.DataFrame, cam_classifier=None) -> dict:
     """
@@ -465,20 +508,26 @@ def step_integrated_gradients(gold_df: pd.DataFrame, cam_classifier=None) -> dic
         return {"skipped": True, "reason": "camembert_not_loaded"}
 
     from explainability.integrated_gradients import IGExplainer
+
     explainer = IGExplainer(
         cam_classifier,
         output_dir=str(OUTPUT_DIR),
-        n_steps=200,                    # transformers : 200 = bon compromis
+        n_steps=200,  # transformers : 200 = bon compromis
         target_class=1,
         baseline_strategy="auto",
     )
 
     # Filtre FR (heuristique simple, idem step_attention)
     df = gold_df.copy()
-    df["language"] = df["text"].str.contains(
-        r"\b(?:le|la|de|des|et|une|sont|avec|pour|dans|que|qui|pas|mais|c'est|n'est)\b",
-        regex=True, case=False,
-    ).map({True: "fr", False: "en"})
+    df["language"] = (
+        df["text"]
+        .str.contains(
+            r"\b(?:le|la|de|des|et|une|sont|avec|pour|dans|que|qui|pas|mais|c'est|n'est)\b",
+            regex=True,
+            case=False,
+        )
+        .map({True: "fr", False: "en"})
+    )
     df_fr = df[(df["language"] == "fr") & (df["text"].str.len() > 30)].reset_index(drop=True)
     if df_fr.empty:
         return {"skipped": True, "reason": "no_french_in_gold"}
@@ -534,8 +583,12 @@ def step_integrated_gradients(gold_df: pd.DataFrame, cam_classifier=None) -> dic
             }
             log.info(
                 "  %s id=%d P=%.3f target=%s Δ=%.2e completeness=%s",
-                err_type, row["id"], p_suspect[i], target_name,
-                res.convergence_delta, ok,
+                err_type,
+                row["id"],
+                p_suspect[i],
+                target_name,
+                res.convergence_delta,
+                ok,
             )
         except Exception as e:
             log.warning("  IG échoué pour id=%d : %s", row["id"], e)
@@ -625,21 +678,27 @@ def build_index(results: dict, n_gold: int) -> Path:
     comp5 = fmt(comp.get(5))
 
     meta = results.get("meta_decomposition", {})
-    meta_coefs = "\n".join(
-        f"- `{n}` : β={c:+.3f}"
-        for n, c in zip(meta.get("feature_names", []), meta.get("coef", []))
-    ) or "_(non généré)_"
+    meta_coefs = (
+        "\n".join(
+            f"- `{n}` : β={c:+.3f}"
+            for n, c in zip(meta.get("feature_names", []), meta.get("coef", []))
+        )
+        or "_(non généré)_"
+    )
     meta_intercept = meta.get("intercept")
     if isinstance(meta_intercept, (int, float)):
         meta_coefs += f"\n- `intercept` : β₀={meta_intercept:+.3f}"
 
-    meta_samples = "\n".join(
-        f"- **{s['error_type']}** id={s['sample_idx']} → "
-        f"P(suspect)={s['proba_suspect']:.3f} ({s['label']}, vrai={s['ground_truth']}) — "
-        f"top contributeur : `{s['top_drivers'][0]['feature']}` "
-        f"({s['top_drivers'][0]['contribution']:+.3f})"
-        for s in meta.get("samples", [])
-    ) or "_(non généré)_"
+    meta_samples = (
+        "\n".join(
+            f"- **{s['error_type']}** id={s['sample_idx']} → "
+            f"P(suspect)={s['proba_suspect']:.3f} ({s['label']}, vrai={s['ground_truth']}) — "
+            f"top contributeur : `{s['top_drivers'][0]['feature']}` "
+            f"({s['top_drivers'][0]['contribution']:+.3f})"
+            for s in meta.get("samples", [])
+        )
+        or "_(non généré)_"
+    )
 
     attn = results.get("attention", {})
     attn_rows_list = []
@@ -647,17 +706,19 @@ def build_index(results: dict, n_gold: int) -> Path:
         info = attn.get(k)
         if isinstance(info, dict) and "figures" in info:
             fig = os.path.basename(info["figures"].get("heatmap", ""))
-            attn_rows_list.append(
-                f"| {k} | {info.get('p_suspect', 0):.3f} | `{fig}` |"
-            )
-    attn_rows = "\n".join(attn_rows_list) or \
-        "_(non généré — `transformers` ou modèle CamemBERT manquant)_"
+            attn_rows_list.append(f"| {k} | {info.get('p_suspect', 0):.3f} | `{fig}` |")
+    attn_rows = (
+        "\n".join(attn_rows_list) or "_(non généré — `transformers` ou modèle CamemBERT manquant)_"
+    )
 
     def _ig_level(d):
         a = abs(d)
-        if a < 0.01: return "✓ axiomatique"
-        if a < 0.05: return "✓ pratique"
-        if a < 0.15: return "~ indicatif"
+        if a < 0.01:
+            return "✓ axiomatique"
+        if a < 0.05:
+            return "✓ pratique"
+        if a < 0.15:
+            return "~ indicatif"
         return "✗ rejet"
 
     ig = results.get("integrated_gradients", {})
@@ -670,18 +731,22 @@ def build_index(results: dict, n_gold: int) -> Path:
         delta = info.get("convergence_delta", 0)
         target = info.get("target_explained", "?")
         ig_rows_list.append(
-            f"| {sid} | {p:.3f} | {target} | {delta:+.2e} | "
-            f"{_ig_level(delta)} | `{fig}` |"
+            f"| {sid} | {p:.3f} | {target} | {delta:+.2e} | {_ig_level(delta)} | `{fig}` |"
         )
-    ig_rows = "\n".join(ig_rows_list) or \
-        "_(non généré — `captum` ou modèle manquant)_"
+    ig_rows = "\n".join(ig_rows_list) or "_(non généré — `captum` ou modèle manquant)_"
 
     md = INDEX_TEMPLATE.format(
-        date=date.today().isoformat(), n_gold=n_gold,
-        aopc_attr=aopc_attr, aopc_rand=aopc_rand, uplift=uplift,
-        comp1=comp1, comp5=comp5,
-        meta_coefs=meta_coefs, meta_samples=meta_samples,
-        attn_rows=attn_rows, ig_rows=ig_rows,
+        date=date.today().isoformat(),
+        n_gold=n_gold,
+        aopc_attr=aopc_attr,
+        aopc_rand=aopc_rand,
+        uplift=uplift,
+        comp1=comp1,
+        comp5=comp5,
+        meta_coefs=meta_coefs,
+        meta_samples=meta_samples,
+        attn_rows=attn_rows,
+        ig_rows=ig_rows,
     )
     path = OUTPUT_DIR / "INDEX.md"
     path.write_text(md, encoding="utf-8")
@@ -693,10 +758,13 @@ def build_index(results: dict, n_gold: int) -> Path:
 #  Main
 # =====================================================================
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--skip", action="append", default=[],
+        "--skip",
+        action="append",
+        default=[],
         choices=["shap", "faithfulness", "meta", "attention", "ig"],
         help="Étapes à sauter (peut être répété).",
     )
@@ -704,9 +772,12 @@ def main():
 
     t0 = time.time()
     gold = load_gold_set()
-    log.info("Gold set chargé : %d posts (%d suspects, %d fiables)",
-             len(gold), int((gold["label_int"] == 1).sum()),
-             int((gold["label_int"] == 0).sum()))
+    log.info(
+        "Gold set chargé : %d posts (%d suspects, %d fiables)",
+        len(gold),
+        int((gold["label_int"] == 1).sum()),
+        int((gold["label_int"] == 0).sum()),
+    )
 
     # CamemBERT chargé une seule fois (réutilisé par méta + attention + IG)
     cam_clf = None

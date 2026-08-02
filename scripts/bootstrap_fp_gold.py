@@ -55,9 +55,9 @@ def bootstrap_fp_reduction():
 def bootstrap_fisher_pvalue():
     """Bootstrap p-value for Fisher's exact test on FP counts."""
     from scipy.stats import fisher_exact
-    table = [[FP_V9, N_FIABLE - FP_V9],
-             [FP_V5, N_FIABLE - FP_V5]]
-    _, p = fisher_exact(table, alternative='less')
+
+    table = [[FP_V9, N_FIABLE - FP_V9], [FP_V5, N_FIABLE - FP_V5]]
+    _, p = fisher_exact(table, alternative="less")
     return p
 
 
@@ -72,7 +72,7 @@ def main():
 
     median, ci_low, ci_high, reductions = bootstrap_fp_reduction()
 
-    print(f"\nResultats :")
+    print("\nResultats :")
     print(f"  Median reduction  = {median:.1%}")
     print(f"  IC 95%            = [{ci_low:.1%}, {ci_high:.1%}]")
     print(f"  IC ne contient pas 0 : {'OUI' if ci_high < 0 else 'NON'}")
@@ -83,8 +83,8 @@ def main():
     except ImportError:
         print("  (scipy non disponible pour Fisher exact)")
 
-    print(f"\nConclusion : la reduction des FP est statistiquement significative")
-    print(f"(IC 95% entierement negatif = V9 produit moins de FP que V5)")
+    print("\nConclusion : la reduction des FP est statistiquement significative")
+    print("(IC 95% entierement negatif = V9 produit moins de FP que V5)")
     print("=" * 60)
 
 
