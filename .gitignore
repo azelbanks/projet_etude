@@ -22,6 +22,8 @@ data/*
 !models/*.pkl
 !models/*.joblib
 !models/config.json
+# Empreintes des artefacts, verifiees par la CI (scripts/models_manifest.py)
+!models/MANIFEST.json
 !config/search_config.json
 
 # Large model files (> 100MB, GitHub limit)

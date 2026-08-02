@@ -50,7 +50,7 @@ class TestRunProxy:
 
     def test_log_metrics_forwards_each_key(self):
         fake = MagicMock()
-        with patch.object(mlflow_tracker, "mlflow", fake):
+        with patch.object(mlflow_tracker, "mlflow", fake, create=True):
             _RunProxy(MagicMock()).log_metrics({"f1": 0.913, "accuracy": 0.91})
         assert fake.log_metric.call_count == 2
         fake.log_metric.assert_any_call("f1", 0.913)
@@ -59,14 +59,14 @@ class TestRunProxy:
     def test_log_params_stringifies_values(self):
         """log_param recoit des chaines : MLFlow refuse certains types natifs."""
         fake = MagicMock()
-        with patch.object(mlflow_tracker, "mlflow", fake):
+        with patch.object(mlflow_tracker, "mlflow", fake, create=True):
             _RunProxy(MagicMock()).log_params({"C": 1.0, "solver": "lbfgs"})
         fake.log_param.assert_any_call("C", "1.0")
         fake.log_param.assert_any_call("solver", "lbfgs")
 
     def test_log_artifact_skips_missing_file(self):
         fake = MagicMock()
-        with patch.object(mlflow_tracker, "mlflow", fake):
+        with patch.object(mlflow_tracker, "mlflow", fake, create=True):
             _RunProxy(MagicMock()).log_artifact("/chemin/vraiment/inexistant.pkl")
         fake.log_artifact.assert_not_called()
 
@@ -74,7 +74,7 @@ class TestRunProxy:
         artefact = tmp_path / "model.pkl"
         artefact.write_bytes(b"contenu")
         fake = MagicMock()
-        with patch.object(mlflow_tracker, "mlflow", fake):
+        with patch.object(mlflow_tracker, "mlflow", fake, create=True):
             _RunProxy(MagicMock()).log_artifact(str(artefact))
         fake.log_artifact.assert_called_once_with(str(artefact))
 
@@ -85,7 +85,7 @@ class TestRunProxy:
 
     def test_empty_metrics_forwards_nothing(self):
         fake = MagicMock()
-        with patch.object(mlflow_tracker, "mlflow", fake):
+        with patch.object(mlflow_tracker, "mlflow", fake, create=True):
             _RunProxy(MagicMock()).log_metrics({})
         fake.log_metric.assert_not_called()
 
@@ -104,7 +104,7 @@ class TestTrackExperiment:
     def test_sets_tracking_uri_and_experiment(self):
         fake = self._fake_mlflow()
         with (
-            patch.object(mlflow_tracker, "mlflow", fake),
+            patch.object(mlflow_tracker, "mlflow", fake, create=True),
             patch.object(mlflow_tracker, "MLFLOW_AVAILABLE", True),
         ):
             with track_experiment("V5_TF-IDF_LogReg"):
@@ -116,7 +116,7 @@ class TestTrackExperiment:
     def test_run_name_is_passed_through(self):
         fake = self._fake_mlflow()
         with (
-            patch.object(mlflow_tracker, "mlflow", fake),
+            patch.object(mlflow_tracker, "mlflow", fake, create=True),
             patch.object(mlflow_tracker, "MLFLOW_AVAILABLE", True),
         ):
             with track_experiment("mon_run"):
@@ -126,7 +126,7 @@ class TestTrackExperiment:
     def test_params_logged_before_body_runs(self):
         fake = self._fake_mlflow()
         with (
-            patch.object(mlflow_tracker, "mlflow", fake),
+            patch.object(mlflow_tracker, "mlflow", fake, create=True),
             patch.object(mlflow_tracker, "MLFLOW_AVAILABLE", True),
         ):
             with track_experiment("run", params={"C": 1.0, "max_iter": 500}):
@@ -137,7 +137,7 @@ class TestTrackExperiment:
     def test_yields_run_proxy_with_id(self):
         fake = self._fake_mlflow()
         with (
-            patch.object(mlflow_tracker, "mlflow", fake),
+            patch.object(mlflow_tracker, "mlflow", fake, create=True),
             patch.object(mlflow_tracker, "MLFLOW_AVAILABLE", True),
         ):
             with track_experiment("run") as proxy:
@@ -147,7 +147,7 @@ class TestTrackExperiment:
     def test_metrics_logged_from_body(self):
         fake = self._fake_mlflow()
         with (
-            patch.object(mlflow_tracker, "mlflow", fake),
+            patch.object(mlflow_tracker, "mlflow", fake, create=True),
             patch.object(mlflow_tracker, "MLFLOW_AVAILABLE", True),
         ):
             with track_experiment("run") as proxy:
@@ -158,7 +158,7 @@ class TestTrackExperiment:
         """Une erreur d'entrainement ne doit pas etre avalee par le tracker."""
         fake = self._fake_mlflow()
         with (
-            patch.object(mlflow_tracker, "mlflow", fake),
+            patch.object(mlflow_tracker, "mlflow", fake, create=True),
             patch.object(mlflow_tracker, "MLFLOW_AVAILABLE", True),
         ):
             with pytest.raises(ValueError, match="echec entrainement"):
