@@ -439,4 +439,3 @@ poids de modèles ni les jeux de données — voir la section « Portée » du f
 
 `main` est protégée : toute modification passe par une pull request dont la CI
 doit être verte (lint, formatage, types, 575 tests, couverture ≥ 78 %).
-# test
