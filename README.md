@@ -266,6 +266,55 @@ Pour la cascade complète, déposez les poids dans `models/` (ou pointez
 `THUMALIEN_MODEL_DIR` vers leur emplacement) ; `cascade_full` passe alors à
 `true`.
 
+**Vérifier l'état des artefacts :**
+
+```bash
+python scripts/models_manifest.py status   # présents / manquants, cascade complète ou non
+python scripts/models_manifest.py verify   # empreintes SHA-256 (exécuté par la CI)
+```
+
+Les 29 artefacts versionnés sont empreintés dans `models/MANIFEST.json` : la CI
+échoue si l'un d'eux est altéré, supprimé ou ajouté sans suivi.
+
+---
+
+## Image Docker & déploiement
+
+L'API est publiée sur GitHub Container Registry à chaque push sur `main` :
+
+```bash
+docker pull ghcr.io/azelbanks/thumacheck:main
+docker run -p 8000:8000 ghcr.io/azelbanks/thumacheck:main \
+  uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+```
+
+Tags disponibles : `main`, `sha-<court>` (chaque révision), et `vX.Y.Z` / `latest`
+sur les tags git.
+
+### Endpoints d'exploitation
+
+| Endpoint | Rôle |
+|---|---|
+| `/health` | **Vivacité** — 200 dès que le processus tourne |
+| `/ready` | **Disponibilité** — 200 seulement si une prédiction est possible, sinon **503** |
+| `/version` | Révision git, modèle chargé, état de la cascade |
+
+La distinction `/health` / `/ready` compte : un orchestrateur qui route sur
+`/health` envoie du trafic à une instance dont le modèle n'est pas encore
+chargé. Le `HEALTHCHECK` de l'image sonde `/ready`.
+
+`/version` permet de vérifier qu'un déploiement — ou un rollback — a bien pris
+effet :
+
+```json
+{"api_version": "1.0.0", "git_sha": "a1b2c3d", "model_suffix": "expert_v5",
+ "cascade_full": false, "build_time": "2026-08-02T10:00:00Z"}
+```
+
+Le workflow `release.yml` construit l'image, la publie, puis **démarre l'image
+publiée** et vérifie que `/version` annonce bien la révision attendue — une
+image cassée n'atteint pas un déploiement.
+
 ---
 
 ## Tests

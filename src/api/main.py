@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -38,6 +38,9 @@ EMOTION_LABELS = ["colere", "degout", "joie", "neutre", "peur", "surprise", "tri
 # ---------------------------------------------------------------------------
 detector: ExpertFakeNewsDetector | None = None
 emotion_extractor: EmotionFeatureExtractor | None = None
+# Suffixe du modele effectivement charge — expose par /version pour tracer
+# quelle version sert le trafic (verification de deploiement / rollback).
+_loaded_model_suffix: str | None = None
 
 # Cumulative energy metrics for the API session
 _energy_metrics: dict[str, Any] = {
@@ -115,6 +118,8 @@ def _load_detector() -> ExpertFakeNewsDetector | None:
             try:
                 det = ExpertFakeNewsDetector(model_dir=model_dir)
                 det.load(suffix=suffix)
+                global _loaded_model_suffix
+                _loaded_model_suffix = suffix
                 logger.info("Model loaded: %s", suffix)
                 return det
             except Exception:
@@ -264,6 +269,33 @@ class HealthResponse(BaseModel):
     cascade_missing: list[str]
 
 
+class VersionResponse(BaseModel):
+    """Identite exacte de l'instance servie.
+
+    Indispensable pour verifier un deploiement ou un rollback : sans cela on
+    ne peut pas savoir quelle revision et quel modele repondent reellement.
+    """
+
+    api_version: str
+    git_sha: str
+    model_suffix: str | None
+    cascade_full: bool
+    build_time: str | None
+
+
+class ReadyResponse(BaseModel):
+    """Sonde de disponibilite, distincte de /health (vivacite).
+
+    /health repond des que le processus tourne ; /ready ne repond 200 que si
+    l'instance peut reellement servir une prediction. Un orchestrateur doit
+    router le trafic sur /ready, sinon il envoie des requetes a une instance
+    dont le modele n'est pas encore charge.
+    """
+
+    ready: bool
+    reason: str | None
+
+
 # ---------------------------------------------------------------------------
 #  Endpoints
 # ---------------------------------------------------------------------------
@@ -278,6 +310,27 @@ def health() -> HealthResponse:
         cascade_full=not missing,
         cascade_missing=missing,
     )
+
+
+@app.get("/version", response_model=VersionResponse)
+def version() -> VersionResponse:
+    """Revision, modele et etat de cascade de l'instance servie."""
+    return VersionResponse(
+        api_version=app.version,
+        git_sha=os.environ.get("GIT_SHA", "unknown"),
+        model_suffix=_loaded_model_suffix,
+        cascade_full=not _missing_cascade_models(),
+        build_time=os.environ.get("BUILD_TIME"),
+    )
+
+
+@app.get("/ready", response_model=ReadyResponse)
+def ready(response: Response) -> ReadyResponse:
+    """503 tant que l'instance ne peut pas servir de prediction."""
+    if detector is None:
+        response.status_code = 503
+        return ReadyResponse(ready=False, reason="model_not_loaded")
+    return ReadyResponse(ready=True, reason=None)
 
 
 @app.get("/energy", response_model=EnergyResponse)

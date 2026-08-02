@@ -1,0 +1,128 @@
+{
+  "note": "Les poids listes dans optional_weights depassent la limite de 100 Mo de GitHub et ne sont pas versionnes. Leur absence place la cascade en mode degrade — voir la section « Modeles non versionnes » du README.",
+  "optional_weights": {
+    "camembert_best.pt": "CamemBERT — meilleur checkpoint d'entrainement",
+    "camembert_fr.pt": "CamemBERT FR fine-tune — etage FR de la cascade V9",
+    "camembert_fr_v2.pt": "CamemBERT FR v2 — variante textes ultra-courts",
+    "roberta_en.pt": "RoBERTa EN fine-tune — etage EN de la cascade V9",
+    "roberta_en_v2.pt": "RoBERTa EN v2 — +4.3 % F1 vs v1"
+  },
+  "versioned_artifacts": {
+    "config.json": {
+      "bytes": 738,
+      "sha256": "149dc5389d9443b535763ed9044a1379edab2233d90c52a6536cc4af68be4692"
+    },
+    "emotion_bilingual.pt": {
+      "bytes": 6421267,
+      "sha256": "89e15be53c2f62e6158381ccb19a44eb9eea1cb20513fd64c7c317b9d4b3a8a0"
+    },
+    "emotion_label_encoder_bilingual.pickle": {
+      "bytes": 467,
+      "sha256": "8af56e6e14f8493affef2a341748aa50cb65ff29f34de6ce5ccac784df58ef46"
+    },
+    "emotion_vocab_bilingual.pickle": {
+      "bytes": 341482,
+      "sha256": "65aac41ab877f0a0445be856162d769fc2f81978c709b68ece0475bfa40a47f5"
+    },
+    "hybrid_meta_learner.joblib": {
+      "bytes": 1119,
+      "sha256": "f49974ddc1283fcc993e1747896b99a19639b471602a70f5074f272b5463477c"
+    },
+    "logreg_baseline.pkl": {
+      "bytes": 40863,
+      "sha256": "f32d78f19db65a136550f9650092ea1004f433e887b09665bf323fe0b15ea827"
+    },
+    "metrics_expert.pkl": {
+      "bytes": 653,
+      "sha256": "332306bccc131af3f079802706f20d8554ac8bfe0f6ca9b7be8671953cd9c54d"
+    },
+    "metrics_expert_v2.pkl": {
+      "bytes": 657,
+      "sha256": "f662506e3d2ead60fc870f6d689e49b9322f103c86e961749200f8e0587b3ab9"
+    },
+    "metrics_expert_v3.pkl": {
+      "bytes": 657,
+      "sha256": "5312f31286a8c16257c71107df54b4a492627414830f78c870fc24fb27b81b1e"
+    },
+    "metrics_expert_v4.pkl": {
+      "bytes": 657,
+      "sha256": "cda5ae334567b7346457730cda9cb9a13e9d20ef9cfdcc328eff6c961e3588c0"
+    },
+    "metrics_expert_v5.pkl": {
+      "bytes": 659,
+      "sha256": "f9ef9b6faa4aad5849422a997212452fad9eb7b1adc802b68276e30aa9d91ee7"
+    },
+    "metrics_expert_v5_bluesky.pkl": {
+      "bytes": 503,
+      "sha256": "6f0dddaace7fc8ca608d7311bf65c48fe023fe7bec59922809768071be21da7e"
+    },
+    "model_expert.pkl": {
+      "bytes": 240959,
+      "sha256": "55c178d7a7e8011ced316025a5c63554e44f906a5fc9a3db00934f623e032c6a"
+    },
+    "model_expert_v2.pkl": {
+      "bytes": 240959,
+      "sha256": "96ca9862ad07c9e855816853e3aed4023f8f12a69d4fd228e129d37697ff7f26"
+    },
+    "model_expert_v3.pkl": {
+      "bytes": 240959,
+      "sha256": "609c4226a98c430a72e0bec31716d3c37a57a8c2e6ef786bec6e1c7737d92b1c"
+    },
+    "model_expert_v4.pkl": {
+      "bytes": 240991,
+      "sha256": "070593276d7d1f7651228780ed80bac8b364d6b64a5c26e296c591bdcf02d28e"
+    },
+    "model_expert_v5.pkl": {
+      "bytes": 240991,
+      "sha256": "c141f3c63fecd2518ee0751b25c384ac7c0f488bcf9cccfe341bd5c8289ba591"
+    },
+    "model_expert_v5_bluesky.pkl": {
+      "bytes": 160991,
+      "sha256": "f1e2d46241225c80779a3ac34082a91d5506432df405188e11ace41fe6b377a1"
+    },
+    "model_hybrid_v7.joblib": {
+      "bytes": 1258,
+      "sha256": "f15de3c7aba4c0ec470d72158558915331c9cb0d7954d75c42ca6a92f04aea4a"
+    },
+    "model_hybrid_v8.joblib": {
+      "bytes": 1397,
+      "sha256": "1802cd541d0285f0c6f295cff0a1d321a1a32701dcdf50ec1479e376e70e8b8e"
+    },
+    "model_style_v6.joblib": {
+      "bytes": 927043,
+      "sha256": "6e731d41dec43d7a6dbc5846a171aa87c2e751cc1a1e95fe45c5a3103a96787b"
+    },
+    "stage1_fact_opinion.joblib": {
+      "bytes": 104812,
+      "sha256": "df9f1b185830566ace137751ea42f1dff294b5b972f2eaadcc6ede0712e06c8a"
+    },
+    "tfidf_expert.pkl": {
+      "bytes": 1177799,
+      "sha256": "0bd4f76c94e40ca00a3292621b2f49eebe7f7e4322d20998386a3ec8052a555a"
+    },
+    "tfidf_expert_v2.pkl": {
+      "bytes": 1176078,
+      "sha256": "cf7b4c0ecae8ee8cc7efd9d1a5f47c6c0a439840724fac7c2c94a871acbd7b97"
+    },
+    "tfidf_expert_v3.pkl": {
+      "bytes": 1176078,
+      "sha256": "6874258ac59ca02d6b8752a99673379fcfb5d648f3cc22056b1d38671d53d379"
+    },
+    "tfidf_expert_v4.pkl": {
+      "bytes": 1171172,
+      "sha256": "1afcee5f758d0d22a7ba988a1b396631cffdef035923d95662c596c036eb11f1"
+    },
+    "tfidf_expert_v5.pkl": {
+      "bytes": 1171265,
+      "sha256": "1ee58f9acc7b5ad4052245e3119d5dd0ab276708e51717402c8baec3a90197b4"
+    },
+    "tfidf_expert_v5_bluesky.pkl": {
+      "bytes": 785321,
+      "sha256": "fcb45ce812735fa6d99979bac66baf6611930cb9ff344262cbb7744a840a8e53"
+    },
+    "tfidf_vectorizer.pkl": {
+      "bytes": 184261,
+      "sha256": "3f29487e50a5beecc71ac3cfdd3157d8851c4d3501671e4075b15168f404380b"
+    }
+  }
+}

@@ -12,7 +12,6 @@ Usage :
 Les captures sont sauvegardees dans docs/figures/screenshots/
 """
 
-import sys
 import time
 from pathlib import Path
 
@@ -73,6 +72,7 @@ def main():
 
     # Check if dashboard is running
     import urllib.request
+
     try:
         urllib.request.urlopen("http://localhost:8501/", timeout=3)
     except Exception:
@@ -85,7 +85,9 @@ def main():
             placeholder = OUTPUT_DIR / f"{name}.png"
             if not placeholder.exists():
                 # Create a minimal placeholder text file
-                placeholder.write_text(f"[Placeholder — lancer le dashboard puis re-executer capture_dashboard.py]")
+                placeholder.write_text(
+                    "[Placeholder — lancer le dashboard puis re-executer capture_dashboard.py]"
+                )
                 print(f"  [PLACEHOLDER] {name}.png")
         return
 

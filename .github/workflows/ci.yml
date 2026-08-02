@@ -24,6 +24,9 @@ jobs:
       # dans pyproject.toml pour la dette restante et la marche a suivre.
       - name: Type check
         run: mypy
+      # Detecte tout artefact de modele altere, supprime ou ajoute sans suivi.
+      - name: Verify model manifest
+        run: python scripts/models_manifest.py verify
 
   test:
     runs-on: ubuntu-latest
